@@ -3,7 +3,6 @@ package suprsend
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -60,7 +59,7 @@ func (b *brandsService) List(ctx context.Context, opts *BrandListOptions) (*Bran
 		return nil, err
 	}
 	if httpResponse.StatusCode >= 400 {
-		return nil, errors.New(string(responseBody))
+		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
 	}
 	var brandList BrandList
 	err = json.Unmarshal(responseBody, &brandList)
@@ -94,7 +93,7 @@ func (b *brandsService) Get(ctx context.Context, brandId string) (*Brand, error)
 		return nil, err
 	}
 	if httpResponse.StatusCode >= 400 {
-		return nil, errors.New(httpResponse.Status)
+		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
 	}
 	var brand Brand
 	err = json.Unmarshal(responseBody, &brand)
@@ -122,7 +121,7 @@ func (b *brandsService) Upsert(ctx context.Context, brandId string, payload *Bra
 		return nil, err
 	}
 	if httpResponse.StatusCode >= 400 {
-		return nil, errors.New(httpResponse.Status)
+		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
 	}
 	var brand Brand
 	err = json.Unmarshal(responseBody, &brand)

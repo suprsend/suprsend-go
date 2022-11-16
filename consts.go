@@ -8,11 +8,11 @@ const (
 	DEFAULT_UAT_URL = "https://collector-staging.suprsend.workers.dev/"
 
 	// an Event should not have apparent body size of more than 100KB
-	SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES          = 100 * 1024 // 100 * 1024
+	SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES          = 100 * 1024
 	SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES_READABLE = "100KB"
 
 	// a API call should not have apparent body size of more than 800KB
-	BODY_MAX_APPARENT_SIZE_IN_BYTES          = 800 * 1024 // 800 * 1024
+	BODY_MAX_APPARENT_SIZE_IN_BYTES          = 800 * 1024
 	BODY_MAX_APPARENT_SIZE_IN_BYTES_READABLE = "800KB"
 
 	// in general url-size wont exceed 2048 chars or 2048 utf-8 bytes
@@ -29,7 +29,7 @@ const (
 
 	ALLOW_ATTACHMENTS_IN_BULK_API = true
 
-	ATTACHMENT_UPLOAD_ENABLED = true
+	ATTACHMENT_UPLOAD_ENABLED = false
 
 	// single Identity event limit
 	IDENTITY_SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES          = 2 * 1024

@@ -13,14 +13,21 @@ type bulkSubscribersService struct {
 	client *Client
 }
 
-func (b *bulkSubscribersService) NewInstance() *BulkSubscribers {
-	return &BulkSubscribers{
+func (b *bulkSubscribersService) NewInstance() BulkSubscribers {
+	return &bulkSubscribers{
 		client:   b.client,
 		response: &BulkResponse{},
 	}
 }
 
-type BulkSubscribers struct {
+type BulkSubscribers interface {
+	Append(subscribers ...Subscriber)
+	Save() (*BulkResponse, error)
+}
+
+var _ BulkEvents = &bulkEvents{}
+
+type bulkSubscribers struct {
 	client *Client
 	//
 	_subscribers    []subscriber
@@ -35,7 +42,7 @@ type pendingIdentityEventRecord struct {
 	recordSize int
 }
 
-func (b *BulkSubscribers) _validateSubscriberEvents() error {
+func (b *bulkSubscribers) _validateSubscriberEvents() error {
 	if len(b._subscribers) == 0 {
 		return fmt.Errorf("users list is empty in bulk request")
 	}
@@ -67,7 +74,7 @@ func (b *BulkSubscribers) _validateSubscriberEvents() error {
 	return nil
 }
 
-func (b *BulkSubscribers) _chunkify(startIdx int) {
+func (b *bulkSubscribers) _chunkify(startIdx int) {
 	currChunk := newBulkSubscribersChunk(b.client)
 	b.chunks = append(b.chunks, currChunk)
 	for relIdx, rec := range b._pendingRecords[startIdx:] {
@@ -81,25 +88,24 @@ func (b *BulkSubscribers) _chunkify(startIdx int) {
 	}
 }
 
-func (b *BulkSubscribers) Append(subscribers ...Subscriber) error {
-	if len(subscribers) == 0 {
-		return fmt.Errorf("users list empty. must pass one or more users")
-	}
+func (b *bulkSubscribers) Append(subscribers ...Subscriber) {
 	for _, sub := range subscribers {
+		if sub == nil {
+			continue
+		}
 		if subStruct, ok := sub.(*subscriber); ok {
 			subCopy := subscriber{}
 			copier.CopyWithOption(&subCopy, subStruct, copier.Option{DeepCopy: true})
 			b._subscribers = append(b._subscribers, subCopy)
 		}
 	}
-	return nil
 }
 
-func (b *BulkSubscribers) Trigger() (*BulkResponse, error) {
+func (b *bulkSubscribers) Trigger() (*BulkResponse, error) {
 	return b.Save()
 }
 
-func (b *BulkSubscribers) Save() (*BulkResponse, error) {
+func (b *bulkSubscribers) Save() (*BulkResponse, error) {
 	err := b._validateSubscriberEvents()
 	if err != nil {
 		return nil, err
@@ -184,21 +190,20 @@ func (b *bulkSubscribersChunk) trigger() error {
 	//
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
-		return err
-	}
-	defer httpResponse.Body.Close()
+		suprResponse := b.formatAPIResponse(nil, err)
+		b.response = suprResponse
 
-	suprResponse, err := b.formatAPIResponse(httpResponse, nil)
-	if err != nil {
-		return err
+	} else {
+		defer httpResponse.Body.Close()
+		suprResponse := b.formatAPIResponse(httpResponse, nil)
+		b.response = suprResponse
 	}
-	b.response = suprResponse
 	return nil
 }
 
-func (b *bulkSubscribersChunk) formatAPIResponse(httpRes *http.Response, err error) (*chunkResponse, error) {
+func (b *bulkSubscribersChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
 	//
-	responseMakerFunc := func(statusCode int, errMsg string) *chunkResponse {
+	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
 		failedRecords := []map[string]interface{}{}
 		if statusCode >= 400 {
 			for _, c := range b._chunk {
@@ -223,12 +228,15 @@ func (b *bulkSubscribersChunk) formatAPIResponse(httpRes *http.Response, err err
 		}
 	}
 	if err != nil {
-		return responseMakerFunc(500, err.Error()), nil
+		return bulkRespFunc(500, err.Error())
+
+	} else if httpRes != nil {
+		respBody, err := io.ReadAll(httpRes.Body)
+		if err != nil {
+			return bulkRespFunc(500, err.Error())
+		}
+		//
+		return bulkRespFunc(httpRes.StatusCode, string(respBody))
 	}
-	respBody, err := io.ReadAll(httpRes.Body)
-	if err != nil {
-		return responseMakerFunc(500, err.Error()), nil
-	}
-	//
-	return responseMakerFunc(httpRes.StatusCode, string(respBody)), nil
+	return nil
 }

@@ -12,17 +12,6 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-type ClientSetting struct {
-	ApiKey    string
-	ApiSecret string
-	isUAT     bool
-	baseUrl   string
-	debug     bool
-	//
-	sdkVersion string
-	userAgent  string
-}
-
 type Client struct {
 	ApiKey    string
 	ApiSecret string
@@ -36,6 +25,7 @@ type Client struct {
 	isUAT   bool
 	baseUrl string
 	debug   bool
+	timeout int
 	//
 	sdkVersion string
 	userAgent  string
@@ -62,13 +52,16 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 			return nil, err
 		}
 	}
+	if c.timeout <= 0 {
+		c.timeout = 30
+	}
 	c.setDerivedBaseUrl()
 	err = c.basicValidation()
 	if err != nil {
 		return nil, err
 	}
 	if c.httpClient == nil {
-		c.httpClient = defaultHTTPClient(c.debug)
+		c.httpClient = defaultHTTPClient(c.debug, c.timeout)
 	}
 	c.commonHeaders = map[string]string{
 		"Content-Type": "application/json; charset=utf-8",
@@ -87,17 +80,17 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 	return c, nil
 }
 
-func defaultHTTPClient(debug bool) *http.Client {
+func defaultHTTPClient(debug bool, timeout int) *http.Client {
 	if debug {
 		return &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: time.Duration(timeout) * time.Second,
 			Transport: LoggingRoundTripper{
 				Proxied: http.DefaultTransport,
 			},
 		}
 	} else {
 		return &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: time.Duration(timeout) * time.Second,
 		}
 	}
 }
@@ -131,11 +124,11 @@ func (c *Client) basicValidation() error {
 	return nil
 }
 
-func (c *Client) TriggerWorkflow(wf *Workflow) (*SuprsendResponse, error) {
+func (c *Client) TriggerWorkflow(wf *Workflow) (*Response, error) {
 	return c.workflowTrigger.Trigger(wf)
 }
 
-func (c *Client) TrackEvent(event *Event) (*SuprsendResponse, error) {
+func (c *Client) TrackEvent(event *Event) (*Response, error) {
 	return c.eventCollector.Collect(event)
 }
 

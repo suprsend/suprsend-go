@@ -77,10 +77,10 @@ func (b *bulkWorkflows) _chunkify(startIdx int) {
 }
 
 func (b *bulkWorkflows) Append(workflows ...*Workflow) {
-	if len(workflows) == 0 {
-		return
-	}
 	for _, wf := range workflows {
+		if wf == nil {
+			continue
+		}
 		wfCopy := Workflow{}
 		copier.CopyWithOption(&wfCopy, wf, copier.Option{DeepCopy: true})
 		b._workflows = append(b._workflows, wfCopy)
@@ -177,21 +177,20 @@ func (b *bulkWorkflowsChunk) trigger() error {
 	//
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
-		return err
-	}
-	defer httpResponse.Body.Close()
+		suprResponse := b.formatAPIResponse(nil, err)
+		b.response = suprResponse
 
-	suprResponse, err := b.formatAPIResponse(httpResponse, nil)
-	if err != nil {
-		return err
+	} else {
+		defer httpResponse.Body.Close()
+		suprResponse := b.formatAPIResponse(httpResponse, nil)
+		b.response = suprResponse
 	}
-	b.response = suprResponse
 	return nil
 }
 
-func (b *bulkWorkflowsChunk) formatAPIResponse(httpRes *http.Response, err error) (*chunkResponse, error) {
+func (b *bulkWorkflowsChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
 	//
-	responseMakerFunc := func(statusCode int, errMsg string) *chunkResponse {
+	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
 		failedRecords := []map[string]interface{}{}
 		if statusCode >= 400 {
 			for _, c := range b._chunk {
@@ -216,12 +215,15 @@ func (b *bulkWorkflowsChunk) formatAPIResponse(httpRes *http.Response, err error
 		}
 	}
 	if err != nil {
-		return responseMakerFunc(500, err.Error()), nil
+		return bulkRespFunc(500, err.Error())
+
+	} else if httpRes != nil {
+		respBody, err := io.ReadAll(httpRes.Body)
+		if err != nil {
+			return bulkRespFunc(500, err.Error())
+		}
+		//
+		return bulkRespFunc(httpRes.StatusCode, string(respBody))
 	}
-	respBody, err := io.ReadAll(httpRes.Body)
-	if err != nil {
-		return responseMakerFunc(500, err.Error()), nil
-	}
-	//
-	return responseMakerFunc(httpRes.StatusCode, string(respBody)), nil
+	return nil
 }

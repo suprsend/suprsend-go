@@ -34,3 +34,10 @@ func WithHTTPClient(client *http.Client) ClientOption {
 		return nil
 	}
 }
+
+func WithTimeout(timeoutInSeconds int) ClientOption {
+	return func(c *Client) error {
+		c.timeout = timeoutInSeconds
+		return nil
+	}
+}

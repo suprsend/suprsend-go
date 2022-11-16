@@ -15,7 +15,7 @@ func (l LoggingRoundTripper) RoundTrip(req *http.Request) (res *http.Response, e
 	// read request body for logging
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		log.Printf("error reading request body: %v", err)
+		log.Printf("DEBUG: error reading request body: %v", err)
 		return nil, err
 	}
 	// prepare request log

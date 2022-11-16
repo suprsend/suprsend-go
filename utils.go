@@ -11,7 +11,7 @@ import (
 )
 
 func CurrentTimeFormatted() string {
-	t := time.Now()
+	t := time.Now().UTC()
 	return t.Format(HEADER_DATE_FMT)
 }
 
@@ -96,12 +96,6 @@ func getApparentWorkflowBodySize(body map[string]interface{}, isPartOfBulk bool)
 				// if attachment is allowed in bulk api, then calculate size based on whether auto Upload is enabled
 				if ATTACHMENT_UPLOAD_ENABLED {
 					// If auto upload enabled, To calculate size, replace attachment size with equivalent url size
-					// extra_bytes += num_attachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
-					// # -- remove attachments->data key to calculate data size
-					// apparent_body = copy.deepcopy(body)
-					// for attach_data in apparent_body["data"]["$attachments"]:
-					//     del attach_data["data"]
-					// # ----
 					extraBytes += numAttachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
 					// -- remove attachments->data key to calculate data size
 					bodyCopy := map[string]interface{}{}
@@ -117,15 +111,11 @@ func getApparentWorkflowBodySize(body map[string]interface{}, isPartOfBulk bool)
 				}
 			} else {
 				// If attachment not allowed, then remove data->$attachments before calculating size
-				// apparent_body = copy.deepcopy(body)
-				// apparent_body["data"].pop("$attachments", None)
 				bodyCopy := map[string]interface{}{}
 				copier.CopyWithOption(&bodyCopy, &body, copier.Option{DeepCopy: true})
 
 				delete(bodyCopy["data"].(map[string]interface{}), "$attachments")
-
 				apparentBody = bodyCopy
-
 			}
 		} else {
 			if ATTACHMENT_UPLOAD_ENABLED {
@@ -188,16 +178,13 @@ func getApparentEventSize(event map[string]interface{}, isPartOfBulk bool) (int,
 					apparentBody = eventCopy
 				} else {
 					// if auto upload is not enabled, attachment data will be passed as it is.
-
 				}
-
 			} else {
 				// If attachment not allowed, then remove data->$attachments before calculating size
 				eventCopy := map[string]interface{}{}
 				copier.CopyWithOption(&eventCopy, &event, copier.Option{DeepCopy: true})
 
 				delete(eventCopy["properties"].(map[string]interface{}), "$attachments")
-
 				apparentBody = eventCopy
 			}
 		} else {
@@ -214,9 +201,7 @@ func getApparentEventSize(event map[string]interface{}, isPartOfBulk bool) (int,
 				apparentBody = eventCopy
 			} else {
 				// if auto upload is not enabled, attachment data will be passed as it is.
-
 			}
-
 		}
 	}
 	// ------
@@ -236,102 +221,3 @@ func getApparentIdentityEventSize(event map[string]interface{}) (int, error) {
 	}
 	return len(bodyBytes), nil
 }
-
-/*
-
-def get_apparent_identity_event_size(event: Dict) -> int:
-    body_size = len(json.dumps(event, ensure_ascii=False).encode('utf-8'))
-    return body_size
-
-def get_apparent_event_size(event: Dict, is_part_of_bulk: bool) -> int:
-    # ---
-    extra_bytes = 0
-    apparent_body = event
-    # ---
-    if event.get("properties") and event["properties"].get("$attachments"):
-        num_attachments = len(event["properties"]["$attachments"])
-        if is_part_of_bulk:
-            if ALLOW_ATTACHMENTS_IN_BULK_API:
-                # if attachment is allowed in bulk api, then calculate size based on whether auto Upload is enabled
-                if ATTACHMENT_UPLOAD_ENABLED:
-                    # If auto upload enabled, To calculate size, replace attachment size with equivalent url size
-                    extra_bytes += num_attachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
-                    # -- remove attachments->data key to calculate data size
-                    apparent_body = copy.deepcopy(event)
-                    for attach_data in apparent_body["properties"]["$attachments"]:
-                        del attach_data["data"]
-                    # ----
-                else:
-                    # if auto upload is not enabled, attachment data will be passed as it is.
-                    pass
-            else:
-                # If attachment not allowed, then remove data->$attachments before calculating size
-                apparent_body = copy.deepcopy(event)
-                apparent_body["properties"].pop("$attachments", None)
-        else:
-            if ATTACHMENT_UPLOAD_ENABLED:
-                # if auto upload enabled, to calculate size, replace attachment size with equivalent url size
-                extra_bytes += num_attachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
-                # -- remove attachments->data key to calculate data size
-                apparent_body = copy.deepcopy(event)
-                for attach_data in apparent_body["properties"]["$attachments"]:
-                    del attach_data["data"]
-                # ----
-            else:
-                # if auto upload is not enabled, attachment data will be passed as it is.
-                pass
-
-    # ---
-    body_size = len(json.dumps(apparent_body, ensure_ascii=False).encode('utf-8'))
-    apparent_size = body_size + extra_bytes
-    # --
-    return apparent_size
-
-
-def get_apparent_workflow_body_size(body: Dict, is_part_of_bulk: bool) -> int:
-    # ---
-    extra_bytes = WORKFLOW_RUNTIME_KEYS_POTENTIAL_SIZE_IN_BYTES
-    apparent_body = body
-    # ---
-    if body.get("data") and body["data"].get("$attachments"):
-        num_attachments = len(body["data"]["$attachments"])
-        if is_part_of_bulk:
-            if ALLOW_ATTACHMENTS_IN_BULK_API:
-                # if attachment is allowed in bulk api, then calculate size based on whether auto Upload is enabled
-                if ATTACHMENT_UPLOAD_ENABLED:
-                    # If auto upload enabled, To calculate size, replace attachment size with equivalent url size
-                    extra_bytes += num_attachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
-                    # -- remove attachments->data key to calculate data size
-                    apparent_body = copy.deepcopy(body)
-                    for attach_data in apparent_body["data"]["$attachments"]:
-                        del attach_data["data"]
-                    # ----
-                else:
-                    # if auto upload is not enabled, attachment data will be passed as it is.
-                    pass
-            else:
-                # If attachment not allowed, then remove data->$attachments before calculating size
-                apparent_body = copy.deepcopy(body)
-                apparent_body["data"].pop("$attachments", None)
-        else:
-            if ATTACHMENT_UPLOAD_ENABLED:
-                # if auto upload enabled, to calculate size, replace attachment size with equivalent url size
-                extra_bytes += num_attachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
-                # -- remove attachments->data key to calculate data size
-                apparent_body = copy.deepcopy(body)
-                for attach_data in apparent_body["data"]["$attachments"]:
-                    del attach_data["data"]
-                # ----
-            else:
-                # if auto upload is not enabled, attachment data will be passed as it is.
-                pass
-
-    # ---
-    body_size = len(json.dumps(apparent_body, ensure_ascii=False).encode('utf-8'))
-    apparent_body_size = body_size + extra_bytes
-    # --
-    return apparent_body_size
-
-
-
-*/

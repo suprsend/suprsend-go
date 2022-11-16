@@ -143,19 +143,19 @@ func newEventCollectorInstance(client *Client) *eventsCollector {
 	return ec
 }
 
-func (e *eventsCollector) Collect(event *Event) (*SuprsendResponse, error) {
+func (e *eventsCollector) Collect(event *Event) (*Response, error) {
 	eventMap, _, err := event.getFinalJson(e.client, false)
 	if err != nil {
 		return nil, err
 	}
-	suprResp, err := e.Send(eventMap)
+	suprResp, err := e.send(eventMap)
 	if err != nil {
 		return nil, err
 	}
 	return suprResp, nil
 }
 
-func (e *eventsCollector) Send(eventMap map[string]interface{}) (*SuprsendResponse, error) {
+func (e *eventsCollector) send(eventMap map[string]interface{}) (*Response, error) {
 	// prepare http.Request object
 	request, err := e.client.prepareHttpRequest("POST", e._url, eventMap)
 	if err != nil {
@@ -174,21 +174,14 @@ func (e *eventsCollector) Send(eventMap map[string]interface{}) (*SuprsendRespon
 	return suprResponse, nil
 }
 
-func (e *eventsCollector) formatAPIResponse(httpRes *http.Response) (*SuprsendResponse, error) {
-	var res *SuprsendResponse
-	//
+func (e *eventsCollector) formatAPIResponse(httpRes *http.Response) (*Response, error) {
 	respBody, err := io.ReadAll(httpRes.Body)
 	if err != nil {
 		return nil, err
 	}
 	if httpRes.StatusCode >= 400 {
-		res = &SuprsendResponse{
-			Success: false, Status: "fail", StatusCode: httpRes.StatusCode, Message: string(respBody),
-		}
-	} else {
-		res = &SuprsendResponse{
-			Success: true, Status: "success", StatusCode: httpRes.StatusCode, Message: string(respBody),
-		}
+		return nil, fmt.Errorf("code: %v. message: %v", httpRes.StatusCode, string(respBody))
+
 	}
-	return res, nil
+	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }

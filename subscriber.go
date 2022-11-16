@@ -23,7 +23,7 @@ func (s *subscribersService) GetInstance(distinctId string) Subscriber {
 }
 
 type Subscriber interface {
-	Save() (*SuprsendResponse, error)
+	Save() (*Response, error)
 	//
 	AppendKV(string, interface{})
 	Append(map[string]interface{})
@@ -103,7 +103,7 @@ func (s *subscriber) validateEventSize(event map[string]interface{}) (map[string
 }
 
 func (s *subscriber) getEvents() []map[string]interface{} {
-	// Don't mutate the original array. Make a copy of _events
+	// TOOD: Don't mutate the original array. Make a copy of _events
 	allEvents := s._events[:]
 	for _, e := range allEvents {
 		e["properties"] = s._superProps
@@ -154,11 +154,7 @@ func (s *subscriber) validateBody(isPartOfBulk bool) ([]string, error) {
 	return warningsList, nil
 }
 
-func (s *subscriber) getErrorResponse(err error) *SuprsendResponse {
-	return &SuprsendResponse{Success: false, Status: "fail", StatusCode: 500, Message: err.Error()}
-}
-
-func (s *subscriber) Save() (*SuprsendResponse, error) {
+func (s *subscriber) Save() (*Response, error) {
 	if _, err := s.validateBody(false); err != nil {
 		return nil, err
 	}
@@ -177,8 +173,7 @@ func (s *subscriber) Save() (*SuprsendResponse, error) {
 	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
-		return s.getErrorResponse(err), nil
-		// return nil, err
+		return nil, err
 	}
 	defer httpResponse.Body.Close()
 	suprResponse, err := s.formatAPIResponse(httpResponse)
@@ -188,23 +183,15 @@ func (s *subscriber) Save() (*SuprsendResponse, error) {
 	return suprResponse, nil
 }
 
-func (s *subscriber) formatAPIResponse(httpRes *http.Response) (*SuprsendResponse, error) {
-	var res *SuprsendResponse
-	//
+func (s *subscriber) formatAPIResponse(httpRes *http.Response) (*Response, error) {
 	respBody, err := io.ReadAll(httpRes.Body)
 	if err != nil {
 		return nil, err
 	}
 	if httpRes.StatusCode >= 400 {
-		res = &SuprsendResponse{
-			Success: false, Status: "fail", StatusCode: httpRes.StatusCode, Message: string(respBody),
-		}
-	} else {
-		res = &SuprsendResponse{
-			Success: true, Status: "success", StatusCode: httpRes.StatusCode, Message: string(respBody),
-		}
+		return nil, fmt.Errorf("code: %v. message: %v", httpRes.StatusCode, string(respBody))
 	}
-	return res, nil
+	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }
 
 func (s *subscriber) _collectEvent(discardIfError bool) {

@@ -72,19 +72,19 @@ func newWorkflowTriggerInstance(client *Client) *workflowTrigger {
 	return wt
 }
 
-func (w *workflowTrigger) Trigger(workflow *Workflow) (*SuprsendResponse, error) {
+func (w *workflowTrigger) Trigger(workflow *Workflow) (*Response, error) {
 	wfBody, _, err := workflow.getFinalJson(w.client, false)
 	if err != nil {
 		return nil, err
 	}
-	suprResp, err := w.Send(wfBody)
+	suprResp, err := w.send(wfBody)
 	if err != nil {
 		return nil, err
 	}
 	return suprResp, nil
 }
 
-func (w *workflowTrigger) Send(wfBody map[string]interface{}) (*SuprsendResponse, error) {
+func (w *workflowTrigger) send(wfBody map[string]interface{}) (*Response, error) {
 	// prepare http.Request object
 	request, err := w.client.prepareHttpRequest("POST", w._url, wfBody)
 	if err != nil {
@@ -102,21 +102,13 @@ func (w *workflowTrigger) Send(wfBody map[string]interface{}) (*SuprsendResponse
 	return suprResponse, nil
 }
 
-func (w *workflowTrigger) formatAPIResponse(httpRes *http.Response) (*SuprsendResponse, error) {
-	var res *SuprsendResponse
-	//
+func (w *workflowTrigger) formatAPIResponse(httpRes *http.Response) (*Response, error) {
 	respBody, err := io.ReadAll(httpRes.Body)
 	if err != nil {
 		return nil, err
 	}
 	if httpRes.StatusCode >= 400 {
-		res = &SuprsendResponse{
-			Success: false, Status: "fail", StatusCode: httpRes.StatusCode, Message: string(respBody),
-		}
-	} else {
-		res = &SuprsendResponse{
-			Success: true, Status: "success", StatusCode: httpRes.StatusCode, Message: string(respBody),
-		}
+		return nil, fmt.Errorf("code: %v. message: %v", httpRes.StatusCode, string(respBody))
 	}
-	return res, nil
+	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }

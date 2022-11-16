@@ -31,7 +31,7 @@ func GetRequestSignature(urlStr string, httpVerb string, content interface{},
 		contentMd5 = hex.EncodeToString(md5Hash[:])
 	}
 	// Proper Url encoding
-	requestUri, err := getUri(urlStr)
+	requestUrlPath, err := getUrlPath(urlStr)
 	if err != nil {
 		return contentBody, contentMd5, err
 	}
@@ -42,7 +42,7 @@ func GetRequestSignature(urlStr string, httpVerb string, content interface{},
 		contentMd5,
 		headers["Content-Type"],
 		headers["Date"],
-		requestUri,
+		requestUrlPath,
 	)
 	// fmt.Printf("stringToSign:\n%s", stringToSign)
 	// ----- HMAC-SHA-256
@@ -54,7 +54,7 @@ func GetRequestSignature(urlStr string, httpVerb string, content interface{},
 	return contentBody, sig, nil
 }
 
-func getUri(urlStr string) (string, error) {
+func getUrlPath(urlStr string) (string, error) {
 	u, err := url.ParseRequestURI(urlStr)
 	if err != nil {
 		return "", err

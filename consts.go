@@ -2,7 +2,7 @@ package suprsend
 
 const (
 	//
-	VERSION = "0.1.0"
+	VERSION = "0.2.0"
 	//
 	DEFAULT_URL     = "https://hub.suprsend.com/"
 	DEFAULT_UAT_URL = "https://collector-staging.suprsend.workers.dev/"

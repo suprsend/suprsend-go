@@ -441,8 +441,8 @@ func subscriberListExample() {
 				},
 			},
 		},
-		IdempotencyKey: "asdasda",
-		BrandId:        "sadasdaasdsada",
+		IdempotencyKey: "",
+		BrandId:        "",
 	}
 	res, err := suprClient.SubscriberLists.Broadcast(ctx, broadcastParams)
 	if err != nil {

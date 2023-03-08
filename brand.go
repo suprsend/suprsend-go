@@ -28,12 +28,6 @@ type BrandList struct {
 	Results []*Brand         `json:"results"`
 }
 
-type ListApiMetaInfo struct {
-	Count  int `json:"count"`
-	Limit  int `json:"limit"`
-	Offset int `json:"offset"`
-}
-
 type BrandListOptions struct {
 	Limit  int
 	Offset int

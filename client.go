@@ -16,13 +16,13 @@ type Client struct {
 	ApiKey    string
 	ApiSecret string
 	//
-	Users         *subscribersService
-	Brands        *brandsService
-	BulkWorkflows *bulkWorkflowsService
-	BulkEvents    *bulkEventsService
-	BulkUsers     *bulkSubscribersService
+	Users           *subscribersService
+	Brands          *brandsService
+	SubscriberLists *subscriberListsService
+	BulkWorkflows   *bulkWorkflowsService
+	BulkEvents      *bulkEventsService
+	BulkUsers       *bulkSubscribersService
 	//
-	isUAT   bool
 	baseUrl string
 	debug   bool
 	timeout int
@@ -70,6 +70,7 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 	//
 	c.Users = &subscribersService{client: c}
 	c.Brands = newBrandService(c)
+	c.SubscriberLists = newSubscriberListsService(c)
 	c.BulkUsers = &bulkSubscribersService{client: c}
 	c.BulkEvents = &bulkEventsService{client: c}
 	c.BulkWorkflows = &bulkWorkflowsService{client: c}
@@ -97,13 +98,9 @@ func defaultHTTPClient(debug bool, timeout int) *http.Client {
 
 func (c *Client) setDerivedBaseUrl() {
 	baseUrl := c.baseUrl
-	// if url not passed, set url based on server env
+	// if url not passed, set default url
 	if baseUrl == "" {
-		if c.isUAT {
-			baseUrl = DEFAULT_UAT_URL
-		} else {
-			baseUrl = DEFAULT_URL
-		}
+		baseUrl = DEFAULT_URL
 	}
 	if !strings.HasSuffix(baseUrl, "/") {
 		baseUrl = baseUrl + "/"

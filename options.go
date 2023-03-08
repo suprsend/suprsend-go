@@ -7,13 +7,6 @@ import (
 
 type ClientOption func(c *Client) error
 
-func WithIsUAT(isUAT bool) ClientOption {
-	return func(c *Client) error {
-		c.isUAT = isUAT
-		return nil
-	}
-}
-
 func WithBaseUrl(baseUrl string) ClientOption {
 	return func(c *Client) error {
 		c.baseUrl = strings.TrimSpace(baseUrl)

@@ -1,9 +1,16 @@
 package suprsend
 
+import "fmt"
+
 type Response struct {
 	Success    bool   `json:"success"`
 	StatusCode int    `json:"status_code"`
 	Message    string `json:"message"`
+}
+
+func (r Response) String() string {
+	return fmt.Sprintf("Response{Success: %v, StatusCode: %v, Message: %v}",
+		r.Success, r.StatusCode, r.Message)
 }
 
 type BulkResponse struct {
@@ -13,6 +20,11 @@ type BulkResponse struct {
 	Success       int
 	Failure       int
 	Warnings      []string
+}
+
+func (r BulkResponse) String() string {
+	return fmt.Sprintf("BulkResponse{Status: %v, Total: %v, Success: %v, Failure: %v, Warnings: %v}",
+		r.Status, r.Total, r.Success, r.Failure, len(r.Warnings))
 }
 
 func (b *BulkResponse) mergeChunkResponse(chResponse *chunkResponse) {

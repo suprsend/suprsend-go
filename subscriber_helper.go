@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
-
-	"github.com/google/uuid"
 )
 
 // ---------- Identity keys
@@ -52,47 +49,32 @@ var emailRegexCompiled = regexp.MustCompile(EMAIL_REGEX)
 // ---------
 
 type subscriberHelper struct {
-	distinctId string
-	apiKey     string
+	setDict    map[string]interface{}
+	appendDict map[string]interface{}
+	removeDict map[string]interface{}
 	//
-	setDict  map[string]interface{}
-	setCount int
-	//
-	appendDict  map[string]interface{}
-	appendCount int
-	//
-	removeDict  map[string]interface{}
-	removeCount int
-	//
-	unsetList  []string
-	unsetCount int
+	unsetList []string
 	//
 	_errors []string
 	_info   []string
 }
 
-func newSubscriberHelper(distinctId, apiKey string) *subscriberHelper {
+func newSubscriberHelper() *subscriberHelper {
 	return &subscriberHelper{
-		distinctId:  distinctId,
-		apiKey:      apiKey,
-		setDict:     map[string]interface{}{},
-		setCount:    0,
-		appendDict:  map[string]interface{}{},
-		appendCount: 0,
-		removeDict:  map[string]interface{}{},
-		removeCount: 0,
-		unsetList:   []string{},
-		unsetCount:  0,
-		_errors:     []string{},
-		_info:       []string{},
+		setDict:    map[string]interface{}{},
+		appendDict: map[string]interface{}{},
+		removeDict: map[string]interface{}{},
+		unsetList:  []string{},
+		_errors:    []string{},
+		_info:      []string{},
 	}
 }
 
 func (s *subscriberHelper) reset() {
-	s.setDict, s.setCount = map[string]interface{}{}, 0
-	s.appendDict, s.appendCount = map[string]interface{}{}, 0
-	s.removeDict, s.removeCount = map[string]interface{}{}, 0
-	s.unsetList, s.unsetCount = []string{}, 0
+	s.setDict = map[string]interface{}{}
+	s.appendDict = map[string]interface{}{}
+	s.removeDict = map[string]interface{}{}
+	s.unsetList = []string{}
 	s._errors, s._info = []string{}, []string{}
 }
 
@@ -101,11 +83,6 @@ type getIdentityEventResp struct {
 	info   []string
 	//
 	event map[string]interface{}
-	//
-	set    int
-	append int
-	remove int
-	unset  int
 }
 
 func (s *subscriberHelper) getIdentityEvent() *getIdentityEventResp {
@@ -114,42 +91,26 @@ func (s *subscriberHelper) getIdentityEvent() *getIdentityEventResp {
 		errors: s._errors,
 		info:   s._info,
 		event:  evt,
-		set:    s.setCount,
-		append: s.appendCount,
-		remove: s.removeCount,
-		unset:  s.unsetCount,
 	}
 	s.reset()
 	return retVal
 }
 
 func (s *subscriberHelper) _formEvent() map[string]interface{} {
-	if len(s.setDict) > 0 || len(s.appendDict) > 0 || len(s.removeDict) > 0 || len(s.unsetList) > 0 {
-		event := map[string]interface{}{
-			"$insert_id":  uuid.New().String(),
-			"$time":       time.Now().UnixMilli(),
-			"env":         s.apiKey,
-			"distinct_id": s.distinctId,
-		}
-		if len(s.setDict) > 0 {
-			event["$set"] = s.setDict
-			s.setCount += 1
-		}
-		if len(s.appendDict) > 0 {
-			event["$append"] = s.appendDict
-			s.appendCount += 1
-		}
-		if len(s.removeDict) > 0 {
-			event["$remove"] = s.removeDict
-			s.removeCount += 1
-		}
-		if len(s.unsetList) > 0 {
-			event["$unset"] = s.unsetList
-			s.unsetCount += 1
-		}
-		return event
+	event := map[string]interface{}{}
+	if len(s.setDict) > 0 {
+		event["$set"] = s.setDict
 	}
-	return nil
+	if len(s.appendDict) > 0 {
+		event["$append"] = s.appendDict
+	}
+	if len(s.removeDict) > 0 {
+		event["$remove"] = s.removeDict
+	}
+	if len(s.unsetList) > 0 {
+		event["$unset"] = s.unsetList
+	}
+	return event
 }
 
 func (s *subscriberHelper) _validateKeyBasic(key, caller string) (string, bool) {
@@ -255,9 +216,6 @@ func (s *subscriberHelper) addIdentity(key string, val interface{}, kvMap map[st
 				}
 			}
 			s.addAndroidpush(val.(string), pushvendor, newCaller)
-			if pv, found := s.appendDict[KEY_PUSHVENDOR]; found {
-				kvMap[KEY_PUSHVENDOR] = pv
-			}
 		}
 
 	case IDENT_KEY_IOSPUSH:
@@ -270,9 +228,6 @@ func (s *subscriberHelper) addIdentity(key string, val interface{}, kvMap map[st
 				}
 			}
 			s.addIospush(val.(string), pushvendor, newCaller)
-			if pv, found := s.appendDict[KEY_PUSHVENDOR]; found {
-				kvMap[KEY_PUSHVENDOR] = pv
-			}
 		}
 	case IDENT_KEY_WEBPUSH:
 		val, isValid := s._checkIdentValDict(val, newCaller)
@@ -284,15 +239,12 @@ func (s *subscriberHelper) addIdentity(key string, val interface{}, kvMap map[st
 				}
 			}
 			s.addWebpush(val.(map[string]interface{}), pushvendor, newCaller)
-			if pv, found := s.appendDict[KEY_PUSHVENDOR]; found {
-				kvMap[KEY_PUSHVENDOR] = pv
-			}
 		}
 
 	case IDENT_KEY_SLACK:
-		val, isValid := s._checkIdentValStrMap(val, newCaller)
+		val, isValid := s._checkIdentValDict(val, newCaller)
 		if isValid {
-			s.addSlack(val.(map[string]string), newCaller)
+			s.addSlack(val.(map[string]interface{}), newCaller)
 		}
 	}
 }
@@ -328,9 +280,6 @@ func (s *subscriberHelper) removeIdentity(key string, val interface{}, kvMap map
 				}
 			}
 			s.removeAndroidpush(val.(string), pushvendor, newCaller)
-			if pv, found := s.removeDict[KEY_PUSHVENDOR]; found {
-				kvMap[KEY_PUSHVENDOR] = pv
-			}
 		}
 
 	case IDENT_KEY_IOSPUSH:
@@ -343,9 +292,6 @@ func (s *subscriberHelper) removeIdentity(key string, val interface{}, kvMap map
 				}
 			}
 			s.removeIospush(val.(string), pushvendor, newCaller)
-			if pv, found := s.removeDict[KEY_PUSHVENDOR]; found {
-				kvMap[KEY_PUSHVENDOR] = pv
-			}
 		}
 	case IDENT_KEY_WEBPUSH:
 		val, isValid := s._checkIdentValDict(val, newCaller)
@@ -357,15 +303,12 @@ func (s *subscriberHelper) removeIdentity(key string, val interface{}, kvMap map
 				}
 			}
 			s.removeWebpush(val.(map[string]interface{}), pushvendor, newCaller)
-			if pv, found := s.removeDict[KEY_PUSHVENDOR]; found {
-				kvMap[KEY_PUSHVENDOR] = pv
-			}
 		}
 
 	case IDENT_KEY_SLACK:
-		val, isValid := s._checkIdentValStrMap(val, newCaller)
+		val, isValid := s._checkIdentValDict(val, newCaller)
 		if isValid {
-			s.removeSlack(val.(map[string]string), newCaller)
+			s.removeSlack(val.(map[string]interface{}), newCaller)
 		}
 	}
 }
@@ -540,6 +483,8 @@ func (s *subscriberHelper) _checkAndroidpushValue(value string, provider string,
 	if provider == "" {
 		provider = "fcm"
 	}
+	// convert to lowercase to make it case-insensitive
+	provider = strings.ToLower(provider)
 	if !Contains([]string{"fcm", "xiaomi", "oppo"}, provider) {
 		s._errors = append(s._errors, fmt.Sprintf("[%s] unsupported androidpush provider %s", caller, provider))
 		return value, provider, false
@@ -577,6 +522,8 @@ func (s *subscriberHelper) _checkIospushValue(value string, provider string, cal
 	if provider == "" {
 		provider = "apns"
 	}
+	// convert to lowercase to make it case-insensitive
+	provider = strings.ToLower(provider)
 	if !Contains([]string{"apns"}, provider) {
 		s._errors = append(s._errors, fmt.Sprintf("[%s] unsupported iospush provider %s", caller, provider))
 		return value, provider, false
@@ -614,6 +561,8 @@ func (s *subscriberHelper) _checkWebpushDict(value map[string]interface{}, provi
 	if provider == "" {
 		provider = "vapid"
 	}
+	// convert to lowercase to make it case-insensitive
+	provider = strings.ToLower(provider)
 	if !Contains([]string{"vapid"}, provider) {
 		s._errors = append(s._errors, fmt.Sprintf("[%s] unsupported webpush provider %s", caller, provider))
 		return value, provider, false
@@ -652,33 +601,17 @@ func (s *subscriberHelper) _validateSlackUserid(userid string, caller string) (s
 	return useridUpper, true
 }
 
-func (s *subscriberHelper) _checkSlackDict(value map[string]string, caller string) (map[string]string, bool) {
-	msg := "value must be a valid dict/map with one of these keys: [email, user_id]"
+func (s *subscriberHelper) _checkSlackDict(value map[string]interface{}, caller string) (map[string]interface{}, bool) {
+	msg := "value must be a valid dict/map with proper keys"
 	if len(value) == 0 {
 		s._errors = append(s._errors, fmt.Sprintf("[%s] %s", caller, msg))
 		return value, false
 	} else {
-		var isValid bool
-		if userid, found := value["user_id"]; found && len(strings.TrimSpace(userid)) > 0 {
-			userid = strings.TrimSpace(userid)
-			userid, isValid = s._validateSlackUserid(userid, caller)
-			if isValid {
-				return map[string]string{"user_id": userid}, true
-			}
-		} else if email, found2 := value["email"]; found2 && len(strings.TrimSpace(email)) > 0 {
-			email = strings.TrimSpace(email)
-			email, isValid = s._validateEmail(email, caller)
-			if isValid {
-				return map[string]string{"email": email}, true
-			}
-		} else {
-			s._errors = append(s._errors, fmt.Sprintf("[%s] %s", caller, msg))
-		}
-		return value, false
+		return value, true
 	}
 }
 
-func (s *subscriberHelper) addSlack(value map[string]string, caller string) {
+func (s *subscriberHelper) addSlack(value map[string]interface{}, caller string) {
 	value, isValid := s._checkSlackDict(value, caller)
 	if !isValid {
 		return
@@ -686,7 +619,7 @@ func (s *subscriberHelper) addSlack(value map[string]string, caller string) {
 	s.appendDict[IDENT_KEY_SLACK] = value
 }
 
-func (s *subscriberHelper) removeSlack(value map[string]string, caller string) {
+func (s *subscriberHelper) removeSlack(value map[string]interface{}, caller string) {
 	value, isValid := s._checkSlackDict(value, caller)
 	if !isValid {
 		return

@@ -25,7 +25,7 @@ type BulkSubscribers interface {
 	Save() (*BulkResponse, error)
 }
 
-var _ BulkEvents = &bulkEvents{}
+var _ BulkSubscribers = &bulkSubscribers{}
 
 type bulkSubscribers struct {
 	client *Client
@@ -56,20 +56,18 @@ func (b *bulkSubscribers) _validateSubscriberEvents() error {
 			b.response.Warnings = append(b.response.Warnings, warningsList...)
 		}
 		//
-		eventsList := sub.getEvents()
-		for _, ev := range eventsList {
-			evJson, bodySize, err := sub.validateEventSize(ev)
-			if err != nil {
-				return err
-			}
-			b._pendingRecords = append(
-				b._pendingRecords,
-				pendingIdentityEventRecord{
-					record:     evJson,
-					recordSize: bodySize,
-				},
-			)
+		ev := sub.getEvent()
+		evJson, bodySize, err := sub.validateEventSize(ev)
+		if err != nil {
+			return err
 		}
+		b._pendingRecords = append(
+			b._pendingRecords,
+			pendingIdentityEventRecord{
+				record:     evJson,
+				recordSize: bodySize,
+			},
+		)
 	}
 	return nil
 }

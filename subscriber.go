@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/exp/maps"
 )
 
 type subscribersService struct {
@@ -51,11 +50,8 @@ type Subscriber interface {
 	AddWebpush(value map[string]interface{}, provider string)
 	RemoveWebpush(value map[string]interface{}, provider string)
 	//
-	AddSlackEmail(value string)
-	RemoveSlackEmail(value string)
-	//
-	AddSlackUserid(value string)
-	RemoveSlackUserid(value string)
+	AddSlack(value map[string]interface{})
+	RemoveSlack(value map[string]interface{})
 }
 
 var _ Subscriber = &subscriber{}
@@ -66,14 +62,10 @@ type subscriber struct {
 	_url        string
 	_superProps map[string]interface{}
 	//
-	_errors     []string
-	_warnings   []string
-	appendCount int
-	removeCount int
-	setCount    int
-	unsetCount  int
+	_errors        []string
+	_warnings      []string
+	userOperations []map[string]interface{}
 	//
-	_events []map[string]interface{}
 	_helper *subscriberHelper
 }
 
@@ -85,7 +77,7 @@ func newSubscriber(client *Client, distinctId string) Subscriber {
 	// events url
 	s._url = fmt.Sprintf("%sevent/", client.baseUrl)
 	s._superProps = map[string]interface{}{"$ss_sdk_version": client.userAgent}
-	s._helper = newSubscriberHelper(distinctId, client.ApiKey)
+	s._helper = newSubscriberHelper()
 	return s
 }
 
@@ -102,30 +94,16 @@ func (s *subscriber) validateEventSize(event map[string]interface{}) (map[string
 	return event, apparentSize, nil
 }
 
-func (s *subscriber) getEvents() []map[string]interface{} {
-	// TOOD: Don't mutate the original array. Make a copy of _events
-	allEvents := s._events[:]
-	for _, e := range allEvents {
-		e["properties"] = s._superProps
+func (s *subscriber) getEvent() map[string]interface{} {
+	return map[string]interface{}{
+		"$schema":          "2",
+		"$insert_id":       uuid.New().String(),
+		"$time":            time.Now().UnixMilli(),
+		"env":              s.client.ApiKey,
+		"distinct_id":      s.distinctId,
+		"$user_operations": s.userOperations,
+		"properties":       s._superProps,
 	}
-	//  # Add $identify event by default, if new properties get added
-	if len(allEvents) == 0 || s.setCount > 0 || s.appendCount > 0 {
-		// Don't add $anon_id to properties,
-		identifyEventProps := map[string]interface{}{"$identified_id": s.distinctId}
-		maps.Copy(identifyEventProps, s._superProps)
-
-		userIdentifyEvent := map[string]interface{}{
-			"$insert_id": uuid.New().String(),
-			"$time":      time.Now().UnixMilli(),
-			"env":        s.client.ApiKey,
-			"event":      "$identify",
-			"properties": identifyEventProps,
-		}
-		// # Add $identify event at the 0th index, so that $identify runs before $append/$remove/$reset
-		allEvents = append([]map[string]interface{}{userIdentifyEvent}, allEvents...)
-
-	}
-	return allEvents
 }
 
 func (s *subscriber) validateBody(isPartOfBulk bool) ([]string, error) {
@@ -159,14 +137,12 @@ func (s *subscriber) Save() (*Response, error) {
 		return nil, err
 	}
 	//
-	events := s.getEvents()
-	for _, ev := range events {
-		if _, _, err := s.validateEventSize(ev); err != nil {
-			return nil, err
-		}
+	event := s.getEvent()
+	if _, _, err := s.validateEventSize(event); err != nil {
+		return nil, err
 	}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("POST", s._url, events)
+	request, err := s.client.prepareHttpRequest("POST", s._url, event)
 	if err != nil {
 		return nil, err
 	}
@@ -203,11 +179,7 @@ func (s *subscriber) _collectEvent(discardIfError bool) {
 		s._warnings = append(s._warnings, resp.info...)
 	}
 	if len(resp.event) > 0 {
-		s._events = append(s._events, resp.event)
-		s.setCount += resp.set
-		s.appendCount += resp.append
-		s.removeCount += resp.remove
-		s.unsetCount += resp.unset
+		s.userOperations = append(s.userOperations, resp.event)
 	}
 }
 
@@ -354,26 +326,14 @@ func (s *subscriber) RemoveWebpush(value map[string]interface{}, provider string
 
 // ------------------------ Slack
 
-func (s *subscriber) AddSlackEmail(value string) {
-	caller := "add_slack_email"
-	s._helper.addSlack(map[string]string{"email": value}, caller)
+func (s *subscriber) AddSlack(value map[string]interface{}) {
+	caller := "add_slack"
+	s._helper.addSlack(value, caller)
 	s._collectEvent(true)
 }
 
-func (s *subscriber) RemoveSlackEmail(value string) {
-	caller := "remove_slack_email"
-	s._helper.removeSlack(map[string]string{"email": value}, caller)
-	s._collectEvent(true)
-}
-
-func (s *subscriber) AddSlackUserid(value string) {
-	caller := "add_slack_userid"
-	s._helper.addSlack(map[string]string{"user_id": value}, caller)
-	s._collectEvent(true)
-}
-
-func (s *subscriber) RemoveSlackUserid(value string) {
-	caller := "remove_slack_userid"
-	s._helper.removeSlack(map[string]string{"user_id": value}, caller)
+func (s *subscriber) RemoveSlack(value map[string]interface{}) {
+	caller := "remove_slack"
+	s._helper.removeSlack(value, caller)
 	s._collectEvent(true)
 }

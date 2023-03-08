@@ -2,10 +2,9 @@ package suprsend
 
 const (
 	//
-	VERSION = "0.2.0"
+	VERSION = "0.3.0"
 	//
-	DEFAULT_URL     = "https://hub.suprsend.com/"
-	DEFAULT_UAT_URL = "https://collector-staging.suprsend.workers.dev/"
+	DEFAULT_URL = "https://hub.suprsend.com/"
 
 	// an Event should not have apparent body size of more than 100KB
 	SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES          = 100 * 1024
@@ -32,8 +31,8 @@ const (
 	ATTACHMENT_UPLOAD_ENABLED = false
 
 	// single Identity event limit
-	IDENTITY_SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES          = 2 * 1024
-	IDENTITY_SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES_READABLE = "2KB"
+	IDENTITY_SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES          = 10 * 1024
+	IDENTITY_SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES_READABLE = "10KB"
 
 	MAX_IDENTITY_EVENTS_IN_BULK_API = 400
 

@@ -74,6 +74,31 @@ func validateTrackEventSchema(body map[string]interface{}) (map[string]interface
 	return body, nil
 }
 
+func validateListBroadcastBodySchema(body map[string]interface{}) (map[string]interface{}, error) {
+	// In case props is not provided, set it to empty dict
+	if d, found := body["data"]; !found || d == nil {
+		body["data"] = map[string]interface{}{}
+	}
+	schema, err := GetSchema("list_broadcast")
+	if err != nil {
+		return body, err
+	}
+	// validate body
+	loadedBody := gojsonschema.NewGoLoader(body)
+	result, err := schema.Validate(loadedBody)
+	if err != nil {
+		return body, err
+	}
+	if !result.Valid() {
+		errList := []string{}
+		for _, err := range result.Errors() {
+			errList = append(errList, fmt.Sprintf(" - %v", err))
+		}
+		return body, fmt.Errorf("SuprsendValidationError: \n%v", strings.Join(errList, "\n"))
+	}
+	return body, nil
+}
+
 func getAttachmentCountInWorkflowBody(body map[string]interface{}) int {
 	numAttachments := 0
 	if d, dfound := body["data"]; dfound {
@@ -216,6 +241,14 @@ func getApparentEventSize(event map[string]interface{}, isPartOfBulk bool) (int,
 
 func getApparentIdentityEventSize(event map[string]interface{}) (int, error) {
 	bodyBytes, err := json.Marshal(event)
+	if err != nil {
+		return 0, err
+	}
+	return len(bodyBytes), nil
+}
+
+func getApparentListBroadcastBodySize(body map[string]interface{}) (int, error) {
+	bodyBytes, err := json.Marshal(body)
 	if err != nil {
 		return 0, err
 	}

@@ -49,9 +49,11 @@ var emailRegexCompiled = regexp.MustCompile(EMAIL_REGEX)
 // ---------
 
 type subscriberHelper struct {
-	setDict    map[string]interface{}
-	appendDict map[string]interface{}
-	removeDict map[string]interface{}
+	setDict       map[string]interface{}
+	setOnceDict   map[string]interface{}
+	incrementDict map[string]interface{}
+	appendDict    map[string]interface{}
+	removeDict    map[string]interface{}
 	//
 	unsetList []string
 	//
@@ -72,6 +74,8 @@ func newSubscriberHelper() *subscriberHelper {
 
 func (s *subscriberHelper) reset() {
 	s.setDict = map[string]interface{}{}
+	s.setOnceDict = map[string]interface{}{}
+	s.incrementDict = map[string]interface{}{}
 	s.appendDict = map[string]interface{}{}
 	s.removeDict = map[string]interface{}{}
 	s.unsetList = []string{}
@@ -100,6 +104,12 @@ func (s *subscriberHelper) _formEvent() map[string]interface{} {
 	event := map[string]interface{}{}
 	if len(s.setDict) > 0 {
 		event["$set"] = s.setDict
+	}
+	if len(s.setOnceDict) > 0 {
+		event["$set_once"] = s.setOnceDict
+	}
+	if len(s.incrementDict) > 0 {
+		event["$add"] = s.incrementDict
 	}
 	if len(s.appendDict) > 0 {
 		event["$append"] = s.appendDict
@@ -150,6 +160,51 @@ func (s *subscriberHelper) appendKV(key string, val interface{}, kvMap map[strin
 		isKeyValid := s._validateKeyPrefix(key, caller)
 		if isKeyValid {
 			s.appendDict[key] = val
+		}
+	}
+}
+
+func (s *subscriberHelper) setKV(key string, val interface{}, kvMap map[string]interface{}, caller string) {
+	key, isKeyValid := s._validateKeyBasic(key, caller)
+	if !isKeyValid {
+		return
+	}
+	if s._isIdentityKey(key) {
+		s.addIdentity(key, val, kvMap, caller)
+	} else {
+		isKeyValid := s._validateKeyPrefix(key, caller)
+		if isKeyValid {
+			s.setDict[key] = val
+		}
+	}
+}
+
+func (s *subscriberHelper) setOnceKV(key string, val interface{}, kvMap map[string]interface{}, caller string) {
+	key, isKeyValid := s._validateKeyBasic(key, caller)
+	if !isKeyValid {
+		return
+	}
+	if s._isIdentityKey(key) {
+		s.addIdentity(key, val, kvMap, caller)
+	} else {
+		isKeyValid := s._validateKeyPrefix(key, caller)
+		if isKeyValid {
+			s.setOnceDict[key] = val
+		}
+	}
+}
+
+func (s *subscriberHelper) incrementKV(key string, val interface{}, kvMap map[string]interface{}, caller string) {
+	key, isKeyValid := s._validateKeyBasic(key, caller)
+	if !isKeyValid {
+		return
+	}
+	if s._isIdentityKey(key) {
+		s.addIdentity(key, val, kvMap, caller)
+	} else {
+		isKeyValid := s._validateKeyPrefix(key, caller)
+		if isKeyValid {
+			s.incrementDict[key] = val
 		}
 	}
 }

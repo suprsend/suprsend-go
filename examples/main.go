@@ -202,6 +202,19 @@ func updateUserProfileExample() {
 	// # for webpush tokens:       $webpush
 	// # for slack:                $slack
 
+	// set a user property using a map
+	user.Set(map[string]interface{}{"prop1": "val1", "prop2": "val2"})
+	// set a user property using a key, value pair
+	user.SetKV("prop", "value")
+	// set a user property once using map
+	user.SetOnce(map[string]interface{}{"prop3": "val3"})
+	// set a user property once using a key value pair
+	user.SetOnceKV("prop4", "val4")
+	// increment an already existing user property using key value pair
+	user.IncrementKV("increment_prop", 2)
+	// increment an already existing property using map
+	user.Increment(map[string]interface{}{"increment_prop1": 5})
+
 	// Save user
 	_, err = user.Save()
 	if err != nil {

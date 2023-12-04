@@ -403,3 +403,17 @@ func (s *subscriber) RemoveSlack(value map[string]interface{}) {
 	s._helper.removeSlack(value, caller)
 	s._collectEvent(true)
 }
+
+// ------------------------ MS Teams
+
+func (s *subscriber) AddMSTeams(value map[string]interface{}) {
+	caller := "add_ms_teams"
+	s._helper.addMSTeams(value, caller)
+	s._collectEvent(true)
+}
+
+func (s *subscriber) RemoveMSTeams(value map[string]interface{}) {
+	caller := "remove_ms_teams"
+	s._helper.removeMSTeams(value, caller)
+	s._collectEvent(true)
+}

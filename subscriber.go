@@ -26,6 +26,12 @@ type Subscriber interface {
 	//
 	AppendKV(string, interface{})
 	Append(map[string]interface{})
+	SetKV(string, interface{})
+	Set(map[string]interface{})
+	SetOnceKV(string, interface{})
+	SetOnce(map[string]interface{})
+	IncrementKV(string, interface{})
+	Increment(map[string]interface{})
 	RemoveKV(string, interface{})
 	Remove(map[string]interface{})
 	Unset([]string)
@@ -205,8 +211,68 @@ func (s *subscriber) Append(kvMap map[string]interface{}) {
 
 /*
 Usage:
- 1. remove(k, v)
- 2. remove({k1: v1, k2, v2})
+ 1. SetKV(k, v)
+ 2. Set({k1: v1, k2, v2})
+*/
+func (s *subscriber) SetKV(k string, v interface{}) {
+	caller := "setKV"
+	s._helper.setKV(k, v, map[string]interface{}{}, caller)
+	s._collectEvent(true)
+}
+
+func (s *subscriber) Set(kvMap map[string]interface{}) {
+	caller := "set"
+	for k, v := range kvMap {
+		s._helper.setKV(k, v, kvMap, caller)
+
+	}
+	s._collectEvent(false)
+}
+
+/*
+Usage:
+ 1. SetOnceKV(k, v)
+ 2. SetOnce({k1: v1, k2, v2})
+*/
+func (s *subscriber) SetOnceKV(k string, v interface{}) {
+	caller := "set_onceKV"
+	s._helper.setOnceKV(k, v, map[string]interface{}{}, caller)
+	s._collectEvent(true)
+}
+
+func (s *subscriber) SetOnce(kvMap map[string]interface{}) {
+	caller := "set_once"
+	for k, v := range kvMap {
+		s._helper.setOnceKV(k, v, kvMap, caller)
+
+	}
+	s._collectEvent(false)
+}
+
+/*
+Usage:
+ 1. IncrementKV(k, v)
+ 2. Increment({k1: v1, k2, v2})
+*/
+func (s *subscriber) IncrementKV(k string, v interface{}) {
+	caller := "incrementKV"
+	s._helper.incrementKV(k, v, map[string]interface{}{}, caller)
+	s._collectEvent(true)
+}
+
+func (s *subscriber) Increment(kvMap map[string]interface{}) {
+	caller := "increment"
+	for k, v := range kvMap {
+		s._helper.incrementKV(k, v, kvMap, caller)
+
+	}
+	s._collectEvent(false)
+}
+
+/*
+Usage:
+ 1. RemoveKV(k, v)
+ 2. Remove({k1: v1, k2, v2})
 */
 func (s *subscriber) RemoveKV(k string, v interface{}) {
 	caller := "removeKV"

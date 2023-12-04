@@ -202,6 +202,19 @@ func updateUserProfileExample() {
 	// # for webpush tokens:       $webpush
 	// # for slack:                $slack
 
+	// set a user property using a map
+	user.Set(map[string]interface{}{"prop1": "val1", "prop2": "val2"})
+	// set a user property using a key, value pair
+	user.SetKV("prop", "value")
+	// set a user property once using map
+	user.SetOnce(map[string]interface{}{"prop3": "val3"})
+	// set a user property once using a key value pair
+	user.SetOnceKV("prop4", "val4")
+	// increment an already existing user property using key value pair
+	user.IncrementKV("increment_prop", 2)
+	// increment an already existing property using map
+	user.Increment(map[string]interface{}{"increment_prop1": 5})
+
 	// Save user
 	_, err = user.Save()
 	if err != nil {
@@ -385,7 +398,7 @@ func subscriberListExample() {
 	log.Println(allSubscriberList)
 
 	// ================= Create subscriber list
-	subcriberListCreated, err := suprClient.SubscriberLists.Create(ctx, &suprsend.SubscriberListCreateInput{
+	subscriberListCreated, err := suprClient.SubscriberLists.Create(ctx, &suprsend.SubscriberListCreateInput{
 		ListId:          "users-with-prepaid-vouchers-1", // max length 64 characters
 		ListName:        "Users With Prepaid Vouchers above $250",
 		ListDescription: "Users With Prepaid Vouchers above $250",
@@ -393,7 +406,7 @@ func subscriberListExample() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(subcriberListCreated)
+	log.Println(subscriberListCreated)
 
 	// ================= Fetch existing subscriber-list
 	existingSubsList, err := suprClient.SubscriberLists.Get(ctx, "users-with-prepaid-vouchers-1")

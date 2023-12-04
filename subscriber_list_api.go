@@ -16,8 +16,15 @@ type SubscriberListsService interface {
 	GetAll(context.Context, *SubscriberListAllOptions) (*SubscriberListAll, error)
 	Create(context.Context, *SubscriberListCreateInput) (*SubscriberList, error)
 	Get(context.Context, string) (*SubscriberList, error)
+	GetVersion(context.Context, string, string) (*SubscriberList, error)
 	Add(context.Context, string, []string) (*Response, error)
 	Remove(context.Context, string, []string) (*Response, error)
+	AddToVersion(context.Context, string, string, []string) (*Response, error)
+	RemoveFromVersion(context.Context, string, string, []string) (*Response, error)
+	StartSync(context.Context, string) (*Response, error)
+	FinishSync(context.Context, string, string) (*Response, error)
+	Delete(context.Context, string) (*Response, error)
+	DeleteVersion(context.Context, string, string) (*Response, error)
 	Broadcast(context.Context, *SubscriberListBroadcast) (*Response, error)
 }
 

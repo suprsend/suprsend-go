@@ -58,6 +58,9 @@ type Subscriber interface {
 	//
 	AddSlack(value map[string]interface{})
 	RemoveSlack(value map[string]interface{})
+	//
+	AddMSTeams(value map[string]interface{})
+	RemoveMSTeams(value map[string]interface{})
 }
 
 var _ Subscriber = &subscriber{}

@@ -201,15 +201,15 @@ func updateUserProfileExample() {
 	user.RemoveSlack(map[string]interface{}{
 		"incoming_webhook": map[string]interface{}{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
 	})
-	// DM on Team's channel using conversation id
+	// remove teams via DM on Team's channel using conversation id
 	user.RemoveMSTeams(map[string]interface{}{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "conversation_id": "XXXXXXXXXXXX",
 	})
-	// add teams via DM user using team user id
+	// remove teams via DM user using team user id
 	user.RemoveMSTeams(map[string]interface{}{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "user_id": "XXXXXXXXXXXX",
 	})
-	// add teams using incoming webhook
+	// remove teams using incoming webhook
 	user.RemoveMSTeams(map[string]interface{}{
 		"incoming_webhook": map[string]interface{}{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
 	})

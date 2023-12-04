@@ -398,7 +398,7 @@ func subscriberListExample() {
 	log.Println(allSubscriberList)
 
 	// ================= Create subscriber list
-	subcriberListCreated, err := suprClient.SubscriberLists.Create(ctx, &suprsend.SubscriberListCreateInput{
+	subscriberListCreated, err := suprClient.SubscriberLists.Create(ctx, &suprsend.SubscriberListCreateInput{
 		ListId:          "users-with-prepaid-vouchers-1", // max length 64 characters
 		ListName:        "Users With Prepaid Vouchers above $250",
 		ListDescription: "Users With Prepaid Vouchers above $250",
@@ -406,7 +406,7 @@ func subscriberListExample() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(subcriberListCreated)
+	log.Println(subscriberListCreated)
 
 	// ================= Fetch existing subscriber-list
 	existingSubsList, err := suprClient.SubscriberLists.Get(ctx, "users-with-prepaid-vouchers-1")

@@ -63,12 +63,14 @@ type subscriberHelper struct {
 
 func newSubscriberHelper() *subscriberHelper {
 	return &subscriberHelper{
-		setDict:    map[string]interface{}{},
-		appendDict: map[string]interface{}{},
-		removeDict: map[string]interface{}{},
-		unsetList:  []string{},
-		_errors:    []string{},
-		_info:      []string{},
+		setDict:       map[string]interface{}{},
+		setOnceDict:   map[string]interface{}{},
+		incrementDict: map[string]interface{}{},
+		appendDict:    map[string]interface{}{},
+		removeDict:    map[string]interface{}{},
+		unsetList:     []string{},
+		_errors:       []string{},
+		_info:         []string{},
 	}
 }
 
@@ -168,9 +170,6 @@ func (s *subscriberHelper) setKV(key string, val interface{}, kvMap map[string]i
 	key, isKeyValid := s._validateKeyBasic(key, caller)
 	if !isKeyValid {
 		return
-	}
-	if s._isIdentityKey(key) {
-		s.addIdentity(key, val, kvMap, caller)
 	} else {
 		isKeyValid := s._validateKeyPrefix(key, caller)
 		if isKeyValid {
@@ -183,9 +182,6 @@ func (s *subscriberHelper) setOnceKV(key string, val interface{}, kvMap map[stri
 	key, isKeyValid := s._validateKeyBasic(key, caller)
 	if !isKeyValid {
 		return
-	}
-	if s._isIdentityKey(key) {
-		s.addIdentity(key, val, kvMap, caller)
 	} else {
 		isKeyValid := s._validateKeyPrefix(key, caller)
 		if isKeyValid {
@@ -198,9 +194,6 @@ func (s *subscriberHelper) incrementKV(key string, val interface{}, kvMap map[st
 	key, isKeyValid := s._validateKeyBasic(key, caller)
 	if !isKeyValid {
 		return
-	}
-	if s._isIdentityKey(key) {
-		s.addIdentity(key, val, kvMap, caller)
 	} else {
 		isKeyValid := s._validateKeyPrefix(key, caller)
 		if isKeyValid {

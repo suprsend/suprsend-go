@@ -15,8 +15,39 @@ type SubscriberList struct {
 	ListType        string `json:"list_type,omitempty"`
 	//
 	SubscribersCount int    `json:"subscribers_count,omitempty"`
-	Source           string `json:"source,omitempty"`
-	UpdatedAt        string `json:"updated_at,omitempty"`
+	Source           string `json:"source,omitempty,omitempty"`
+	IsReadonly       bool   `json:"is_readonly,omitempty"`
+	Status           string `json:"status,omitempty"`
+	//
+	TrackUserEntry bool `json:"track_user_entry,omitempty"`
+	TrackUserExit  bool `json:"track_user_exit,omitempty"`
+	//
+	RequestedForDelete bool   `json:"requested_for_delete"`
+	CreatedAt          string `json:"created_at,omitempty"`
+	UpdatedAt          string `json:"updated_at,omitempty"`
+	//
+	Drafts []SubscriberListVersion `json:"drafts,omitempty"`
+}
+
+type SubscriberListVersion struct {
+	ListId          string `json:"list_id,omitempty"`
+	ListName        string `json:"list_name,omitempty"`
+	ListDescription string `json:"list_description,omitempty"`
+	ListType        string `json:"list_type,omitempty"`
+	//
+	SubscribersCount int    `json:"subscribers_count,omitempty"`
+	Source           string `json:"source,omitempty,omitempty"`
+	IsReadonly       bool   `json:"is_readonly,omitempty"`
+	Status           string `json:"status,omitempty"`
+	//
+	TrackUserEntry bool `json:"track_user_entry,omitempty"`
+	TrackUserExit  bool `json:"track_user_exit,omitempty"`
+	//
+	RequestedForDelete bool   `json:"requested_for_delete,omitempty"`
+	CreatedAt          string `json:"created_at,omitempty"`
+	UpdatedAt          string `json:"updated_at,omitempty"`
+	//
+	VersionId string `json:"version_id,omitempty"`
 }
 
 // GetAll response
@@ -43,9 +74,14 @@ func (b *SubscriberListAllOptions) cleanParams() {
 
 // Create subscriberlist request input
 type SubscriberListCreateInput struct {
-	ListId          string `json:"list_id,omitempty"`
-	ListName        string `json:"list_name,omitempty"`
-	ListDescription string `json:"list_description,omitempty"`
+	ListId          string  `json:"list_id,omitempty"`
+	ListName        string  `json:"list_name,omitempty"`
+	ListDescription string  `json:"list_description,omitempty"`
+	ListType        *string `json:"list_type"`
+	Query           string  `json:"query"`
+	Source          string  `json:"source"`
+	TrackUserEntry  bool    `json:"track_user_entry"`
+	TrackUserExit   bool    `json:"track_user_exit"`
 }
 
 // Broadcast request params on SubscriberList

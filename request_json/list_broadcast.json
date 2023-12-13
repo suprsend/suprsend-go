@@ -7,18 +7,12 @@
     "type": "object",
     "properties": {
         "$idempotency_key": {
-            "type": [
-                "string",
-                "null"
-            ],
-            "maxLength": 64,
+            "type": ["string", "null"],
+            "maxLength": 255,
             "description": "unique id provided by client for request"
         },
         "brand_id": {
-            "type": [
-                "string",
-                "null"
-            ],
+            "type": ["string", "null"],
             "maxLength": 64,
             "description": "brand id for workflow to be run in context of a brand"
         },
@@ -41,18 +35,7 @@
             "type": "array",
             "items": {
                 "type": "string",
-                "enum": [
-                    "androidpush",
-                    "iospush",
-                    "webpush",
-                    "email",
-                    "sms",
-                    "whatsapp",
-                    "slack",
-                    "inbox",
-                    "messenger",
-                    "ms_teams"
-                ]
+                "enum": ["androidpush", "iospush", "webpush", "email", "sms", "whatsapp", "slack", "inbox", "messenger", "ms_teams"]
             },
             "minItems": 0,
             "description": "channels on which notification to be broadcast. e.g ['androidpush', 'iospush']"
@@ -66,10 +49,7 @@
             "description": "slug of Notification category"
         },
         "delay": {
-            "type": [
-                "string",
-                "integer"
-            ],
+            "type": ["string", "integer"],
             "minimum": 0,
             "description": "If string: format [XX]d[XX]h[XX]m[XX]s e.g 1d2h30m10s(for 1day 2hours 30minutes 10sec). If integer: value in number of seconds"
         },
@@ -82,14 +62,7 @@
             "description": "variables to be used in workflow. e.g replacing templates variables."
         }
     },
-    "required": [
-        "$insert_id",
-        "$time",
-        "list_id",
-        "template",
-        "notification_category",
-        "data"
-    ],
+    "required": ["$insert_id", "$time", "list_id", "template", "notification_category", "data"],
     "definitions": {
         "non_empty_string": {
             "type": "string",

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 
 	suprsend "github.com/suprsend/suprsend-go"
@@ -525,16 +524,23 @@ func subscriberListVersioningExample() {
 	}
 	log.Println("start sync resp: ", newListVersion)
 
-	var resp struct {
-		VersionId string `json:"version_id"`
+	versionId := newListVersion.VersionId
+
+	// =============================== fetch active and draft lists after start sync
+	subsList, err := suprClient.SubscriberLists.Get(ctx, "users-with-prepaid-vouchers-1")
+	if err != nil {
+		log.Fatalln(err)
 	}
+	log.Println("fetch list resp: ", subsList)
 
-	_ = json.Unmarshal([]byte(newListVersion.Message), &resp)
-
-	versionId := resp.VersionId
+	subsListVersion, err := suprClient.SubscriberLists.GetVersion(ctx, "users-with-prepaid-vouchers-1", versionId)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("fetch list resp: ", subsListVersion)
 
 	// ================= Add users to a draft list (with versionId)
-	addDistinctIds := []string{"distinct_id_1", "distinct_id_2"}
+	addDistinctIds := []string{"id-399999", "id-399998"}
 	addResponse, err := suprClient.SubscriberLists.AddToVersion(ctx, "users-with-prepaid-vouchers-1", versionId, addDistinctIds)
 	if err != nil {
 		log.Fatalln(err)
@@ -563,13 +569,9 @@ func subscriberListVersioningExample() {
 		log.Fatalln(err)
 	}
 	log.Println(tempListVersion)
-	var tempResp struct {
-		VersionId string `json:"version_id"`
-	}
-	_ = json.Unmarshal([]byte(tempListVersion.Message), &tempResp)
 
 	// delete versioned list
-	deleteVersionResp, err := suprClient.SubscriberLists.DeleteVersion(ctx, "users-with-prepaid-vouchers-1", tempResp.VersionId)
+	deleteVersionResp, err := suprClient.SubscriberLists.DeleteVersion(ctx, "users-with-prepaid-vouchers-1", tempListVersion.VersionId)
 	if err != nil {
 		log.Fatalln(err)
 	}

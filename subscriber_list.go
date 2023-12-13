@@ -74,14 +74,14 @@ func (b *SubscriberListAllOptions) cleanParams() {
 
 // Create subscriberlist request input
 type SubscriberListCreateInput struct {
-	ListId          string  `json:"list_id,omitempty"`
-	ListName        string  `json:"list_name,omitempty"`
-	ListDescription string  `json:"list_description,omitempty"`
-	ListType        *string `json:"list_type"`
-	Query           string  `json:"query"`
-	Source          string  `json:"source"`
-	TrackUserEntry  bool    `json:"track_user_entry"`
-	TrackUserExit   bool    `json:"track_user_exit"`
+	ListId          string `json:"list_id,omitempty"`
+	ListName        string `json:"list_name,omitempty"`
+	ListDescription string `json:"list_description,omitempty"`
+	ListType        string `json:"list_type,omitempty"`
+	Query           string `json:"query,omitempty"`
+	Source          string `json:"source,omitempty"`
+	TrackUserEntry  bool   `json:"track_user_entry,omitempty"`
+	TrackUserExit   bool   `json:"track_user_exit,omitempty"`
 }
 
 // Broadcast request params on SubscriberList

@@ -10,6 +10,7 @@ import (
 type Workflow struct {
 	Body           map[string]interface{}
 	IdempotencyKey string
+	TenantId       string
 	BrandId        string
 }
 
@@ -35,6 +36,10 @@ func (w *Workflow) getFinalJson(client *Client, isPartOfBulk bool) (map[string]i
 	// Add idempotency_key if present
 	if w.IdempotencyKey != "" {
 		w.Body["$idempotency_key"] = w.IdempotencyKey
+	}
+	// Add tenant_id if present
+	if w.TenantId != "" {
+		w.Body["tenant_id"] = w.TenantId
 	}
 	// Add brand_id if present
 	if w.BrandId != "" {

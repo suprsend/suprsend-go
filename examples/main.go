@@ -16,7 +16,9 @@ func main() {
 	bulkEventsExample()
 	bulkUserProfileUpdateExample()
 	//
+	tenantExample()
 	brandExample()
+	//
 	subscriberListExample()
 	subscriberListVersioningExample()
 }
@@ -77,6 +79,7 @@ func triggerWorkflowExample() {
 	wf := &suprsend.Workflow{
 		Body:           wfBody,
 		IdempotencyKey: "",
+		TenantId:       "",
 		BrandId:        "",
 	}
 	// Add attachment by calling .AddAttachment
@@ -402,6 +405,49 @@ func brandExample() {
 		},
 	}
 	res, err := suprClient.Brands.Upsert(context.Background(), "__brand_id__", brandPayload)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(res)
+}
+
+func tenantExample() {
+	// Instantiate Client
+	suprClient, err := getSuprsendClient()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	// ================= Fetch existing tenant by ID
+	tenant1, err := suprClient.Tenants.Get(context.Background(), "__tenant_id__")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(tenant1)
+
+	// ================= Fetch all tenants
+	tenantsList, err := suprClient.Tenants.List(context.Background(), &suprsend.TenantListOptions{Limit: 10})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(tenantsList)
+
+	// ================= Update/Insert a tenant
+	tenantPayload := &suprsend.Tenant{
+		TenantName:     suprsend.String("Tenant Name"),
+		Logo:           suprsend.String("Tenant logo url"),
+		PrimaryColor:   suprsend.String("#FFFFFF"),
+		SecondaryColor: suprsend.String("#000000"),
+		TertiaryColor:  nil,
+		SocialLinks: &suprsend.TenantSocialLinks{
+			Facebook: suprsend.String("https://facebook.com/tenant"),
+		},
+		Properties: map[string]interface{}{
+			"k1": "tenant settings 1",
+			"k2": "tenant settings 2",
+		},
+	}
+	res, err := suprClient.Tenants.Upsert(context.Background(), "__tenant_id__", tenantPayload)
 	if err != nil {
 		log.Fatalln(err)
 	}

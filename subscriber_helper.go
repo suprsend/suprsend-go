@@ -36,7 +36,7 @@ var OTHER_RESERVED_KEYS = []string{
 }
 
 var SUPER_PROPERTY_KEYS = []string{
-	"$app_version_string", "$app_build_number", "$brand", "$carrier", "$manufacturer", "$model", "$os",
+	"$app_version_string", "$app_build_number", "$tenant", "$brand", "$carrier", "$manufacturer", "$model", "$os",
 	"$ss_sdk_version", "$insert_id", "$time",
 }
 

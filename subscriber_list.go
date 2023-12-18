@@ -88,6 +88,7 @@ type SubscriberListCreateInput struct {
 type SubscriberListBroadcast struct {
 	Body           map[string]interface{}
 	IdempotencyKey string
+	TenantId       string
 	BrandId        string
 }
 
@@ -114,6 +115,9 @@ func (s *SubscriberListBroadcast) getFinalJson(client *Client) (map[string]inter
 	s.Body["$time"] = time.Now().UnixMilli()
 	if s.IdempotencyKey != "" {
 		s.Body["$idempotency_key"] = s.IdempotencyKey
+	}
+	if s.TenantId != "" {
+		s.Body["tenant_id"] = s.TenantId
 	}
 	if s.BrandId != "" {
 		s.Body["brand_id"] = s.BrandId

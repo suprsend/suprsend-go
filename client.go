@@ -17,6 +17,7 @@ type Client struct {
 	ApiSecret string
 	//
 	Users           *subscribersService
+	Tenants         *tenantsService
 	Brands          *brandsService
 	SubscriberLists *subscriberListsService
 	BulkWorkflows   *bulkWorkflowsService
@@ -69,6 +70,7 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 	}
 	//
 	c.Users = &subscribersService{client: c}
+	c.Tenants = newTenantsService(c)
 	c.Brands = newBrandService(c)
 	c.SubscriberLists = newSubscriberListsService(c)
 	c.BulkUsers = &bulkSubscribersService{client: c}

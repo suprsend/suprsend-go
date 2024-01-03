@@ -11,7 +11,9 @@ type Workflow struct {
 	Body           map[string]interface{}
 	IdempotencyKey string
 	TenantId       string
-	BrandId        string
+	// Brand has been renamed to Tenant. Brand is kept for backward-compatibilty.
+	// Use TenantId instead of BrandId
+	BrandId string
 }
 
 func (w *Workflow) AddAttachment(filePath string, ao *AttachmentOption) error {

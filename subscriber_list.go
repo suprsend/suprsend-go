@@ -15,7 +15,7 @@ type SubscriberList struct {
 	ListType        string `json:"list_type,omitempty"`
 	//
 	SubscribersCount int    `json:"subscribers_count,omitempty"`
-	Source           string `json:"source,omitempty,omitempty"`
+	Source           string `json:"source,omitempty"`
 	IsReadonly       bool   `json:"is_readonly,omitempty"`
 	Status           string `json:"status,omitempty"`
 	//
@@ -25,29 +25,10 @@ type SubscriberList struct {
 	RequestedForDelete bool   `json:"requested_for_delete"`
 	CreatedAt          string `json:"created_at,omitempty"`
 	UpdatedAt          string `json:"updated_at,omitempty"`
-	//
-	Drafts []SubscriberListVersion `json:"drafts,omitempty"`
-}
-
-type SubscriberListVersion struct {
-	ListId          string `json:"list_id,omitempty"`
-	ListName        string `json:"list_name,omitempty"`
-	ListDescription string `json:"list_description,omitempty"`
-	ListType        string `json:"list_type,omitempty"`
-	//
-	SubscribersCount int    `json:"subscribers_count,omitempty"`
-	Source           string `json:"source,omitempty,omitempty"`
-	IsReadonly       bool   `json:"is_readonly,omitempty"`
-	Status           string `json:"status,omitempty"`
-	//
-	TrackUserEntry bool `json:"track_user_entry,omitempty"`
-	TrackUserExit  bool `json:"track_user_exit,omitempty"`
-	//
-	RequestedForDelete bool   `json:"requested_for_delete,omitempty"`
-	CreatedAt          string `json:"created_at,omitempty"`
-	UpdatedAt          string `json:"updated_at,omitempty"`
-	//
+	// version_id will be present its a draft version
 	VersionId string `json:"version_id,omitempty"`
+	// drafts will be present if there are any drafts started from this list
+	Drafts []*SubscriberList `json:"drafts,omitempty"`
 }
 
 // GetAll response
@@ -77,11 +58,15 @@ type SubscriberListCreateInput struct {
 	ListId          string `json:"list_id,omitempty"`
 	ListName        string `json:"list_name,omitempty"`
 	ListDescription string `json:"list_description,omitempty"`
-	ListType        string `json:"list_type,omitempty"`
-	Query           string `json:"query,omitempty"`
-	Source          string `json:"source,omitempty"`
-	TrackUserEntry  bool   `json:"track_user_entry,omitempty"`
-	TrackUserExit   bool   `json:"track_user_exit,omitempty"`
+	//
+	TrackUserEntry bool `json:"track_user_entry,omitempty"`
+	TrackUserExit  bool `json:"track_user_exit,omitempty"`
+	// list_type enums: query_based, static_list
+	ListType string `json:"list_type,omitempty"`
+	// Query: applicable when list_type='query_based'
+	Query string `json:"query,omitempty"`
+	//
+	Source string `json:"source,omitempty"`
 }
 
 // Broadcast request params on SubscriberList
@@ -89,7 +74,9 @@ type SubscriberListBroadcast struct {
 	Body           map[string]interface{}
 	IdempotencyKey string
 	TenantId       string
-	BrandId        string
+	// Brand has been renamed to Tenant. BrandId is kept for backward-compatibilty.
+	// Use TenantId instead of BrandId
+	BrandId string
 }
 
 func (s *SubscriberListBroadcast) AddAttachment(filePath string, ao *AttachmentOption) error {

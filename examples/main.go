@@ -17,7 +17,6 @@ func main() {
 	bulkUserProfileUpdateExample()
 	//
 	tenantExample()
-	brandExample()
 	//
 	subscriberListExample()
 	subscriberListVersioningExample()
@@ -80,7 +79,6 @@ func triggerWorkflowExample() {
 		Body:           wfBody,
 		IdempotencyKey: "",
 		TenantId:       "",
-		BrandId:        "",
 	}
 	// Add attachment by calling .AddAttachment
 	err = wf.AddAttachment("https://attachment-url", &suprsend.AttachmentOption{})
@@ -109,7 +107,7 @@ func sendEventExample() {
 			"k1": "v1",
 		},
 		// IdempotencyKey: "",
-		// BrandId: "",
+		// TenantId: "",
 	}
 	// Add attachment (If needed) by calling .AddAttachment
 	err = ev.AddAttachment("~/Downloads/attachment.pdf", &suprsend.AttachmentOption{FileName: "My Attachment.pdf"})
@@ -272,7 +270,7 @@ func bulkWorkflowsExample() {
 			},
 		},
 		IdempotencyKey: "",
-		BrandId:        "",
+		TenantId:       "",
 	}
 
 	// Workflow: 2
@@ -289,7 +287,7 @@ func bulkWorkflowsExample() {
 			},
 		},
 		IdempotencyKey: "123456",
-		BrandId:        "default",
+		TenantId:       "default",
 	}
 	// ...... Add as many Workflow records as required.
 
@@ -366,49 +364,6 @@ func bulkUserProfileUpdateExample() {
 		log.Fatalln(err)
 	}
 	log.Println(bulkResponse)
-}
-
-func brandExample() {
-	// Instantiate Client
-	suprClient, err := getSuprsendClient()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	// ================= Fetch existing brand by ID
-	brand1, err := suprClient.Brands.Get(context.Background(), "__brand_id__")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(brand1)
-
-	// ================= Fetch all brands
-	brandsList, err := suprClient.Brands.List(context.Background(), &suprsend.BrandListOptions{Limit: 10})
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(brandsList)
-
-	// ================= Update/Insert a brand
-	brandPayload := &suprsend.Brand{
-		BrandName:      suprsend.String("Brand Name"),
-		Logo:           suprsend.String("Brand logo url"),
-		PrimaryColor:   suprsend.String("#FFFFFF"),
-		SecondaryColor: suprsend.String("#000000"),
-		TertiaryColor:  nil,
-		SocialLinks: &suprsend.BrandSocialLinks{
-			Facebook: suprsend.String("https://facebook.com/brand"),
-		},
-		Properties: map[string]interface{}{
-			"k1": "brand settings 1",
-			"k2": "brand settings 2",
-		},
-	}
-	res, err := suprClient.Brands.Upsert(context.Background(), "__brand_id__", brandPayload)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(res)
 }
 
 func tenantExample() {
@@ -527,7 +482,7 @@ func subscriberListExample() {
 			},
 		},
 		IdempotencyKey: "",
-		BrandId:        "",
+		TenantId:       "",
 	}
 	res, err := suprClient.SubscriberLists.Broadcast(ctx, broadcastParams)
 	if err != nil {
@@ -564,13 +519,13 @@ func subscriberListVersioningExample() {
 	log.Println("fetch list resp: ", existingSubsList)
 
 	// start sync
-	newListVersion, err := suprClient.SubscriberLists.StartSync(ctx, "users-with-prepaid-vouchers-1")
+	newVersion, err := suprClient.SubscriberLists.StartSync(ctx, "users-with-prepaid-vouchers-1")
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("start sync resp: ", newListVersion)
+	log.Println("start sync resp: ", newVersion)
 
-	versionId := newListVersion.VersionId
+	versionId := newVersion.VersionId
 
 	// =============================== fetch active and draft lists after start sync
 	subsList, err := suprClient.SubscriberLists.Get(ctx, "users-with-prepaid-vouchers-1")
@@ -583,7 +538,7 @@ func subscriberListVersioningExample() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("fetch list resp: ", subsListVersion)
+	log.Println("fetch list version resp: ", subsListVersion)
 
 	// ================= Add users to a draft list (with versionId)
 	addDistinctIds := []string{"id-399999", "id-399998"}

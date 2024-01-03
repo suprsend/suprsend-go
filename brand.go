@@ -1,9 +1,14 @@
 package suprsend
 
 type Brand struct {
-	BrandId        *string                `json:"brand_id,omitempty"`
-	BrandName      *string                `json:"brand_name,omitempty"`
-	Logo           *string                `json:"logo,omitempty"`
+	BrandId   *string `json:"brand_id,omitempty"`
+	BrandName *string `json:"brand_name,omitempty"`
+	Logo      *string `json:"logo,omitempty"`
+	//
+	BlockedChannels        []string `json:"blocked_channels,omitempty"`
+	EmbeddedPreferenceUrl  *string  `json:"embedded_preference_url,omitempty"`
+	HostedPreferenceDomain *string  `json:"hosted_preference_domain,omitempty"`
+	//
 	PrimaryColor   *string                `json:"primary_color,omitempty"`
 	SecondaryColor *string                `json:"secondary_color,omitempty"`
 	TertiaryColor  *string                `json:"tertiary_color,omitempty"`

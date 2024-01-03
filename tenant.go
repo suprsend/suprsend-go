@@ -1,9 +1,14 @@
 package suprsend
 
 type Tenant struct {
-	TenantId       *string                `json:"tenant_id,omitempty"`
-	TenantName     *string                `json:"tenant_name,omitempty"`
-	Logo           *string                `json:"logo,omitempty"`
+	TenantId   *string `json:"tenant_id,omitempty"`
+	TenantName *string `json:"tenant_name,omitempty"`
+	Logo       *string `json:"logo,omitempty"`
+	//
+	BlockedChannels        []string `json:"blocked_channels,omitempty"`
+	EmbeddedPreferenceUrl  *string  `json:"embedded_preference_url,omitempty"`
+	HostedPreferenceDomain *string  `json:"hosted_preference_domain,omitempty"`
+	//
 	PrimaryColor   *string                `json:"primary_color,omitempty"`
 	SecondaryColor *string                `json:"secondary_color,omitempty"`
 	TertiaryColor  *string                `json:"tertiary_color,omitempty"`

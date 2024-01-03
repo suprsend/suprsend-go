@@ -24,7 +24,9 @@ type Event struct {
 	Properties     map[string]interface{}
 	IdempotencyKey string
 	TenantId       string
-	BrandId        string
+	// Brand has been renamed to Tenant. Brand is kept for backward-compatibilty.
+	// Use Tenant instead of Brand
+	BrandId string
 }
 
 func (e *Event) validateDistinctId() error {

@@ -20,11 +20,11 @@ type SubscriberListsService interface {
 	Remove(context.Context, string, []string) (*Response, error)
 	Delete(context.Context, string) (*Response, error)
 	Broadcast(context.Context, *SubscriberListBroadcast) (*Response, error)
-	StartSync(context.Context, string) (*SubscriberListVersion, error)
-	GetVersion(context.Context, string, string) (*SubscriberListVersion, error)
+	StartSync(context.Context, string) (*SubscriberList, error)
+	GetVersion(context.Context, string, string) (*SubscriberList, error)
 	AddToVersion(context.Context, string, string, []string) (*Response, error)
 	RemoveFromVersion(context.Context, string, string, []string) (*Response, error)
-	FinishSync(context.Context, string, string) (*SubscriberListVersion, error)
+	FinishSync(context.Context, string, string) (*SubscriberList, error)
 	DeleteVersion(context.Context, string, string) (*Response, error)
 }
 
@@ -275,7 +275,7 @@ func (s *subscriberListsService) Broadcast(ctx context.Context, broadcastIns *Su
 	return suprResponse, nil
 }
 
-func (s *subscriberListsService) StartSync(ctx context.Context, listId string) (*SubscriberListVersion, error) {
+func (s *subscriberListsService) StartSync(ctx context.Context, listId string) (*SubscriberList, error) {
 	listId, err := s.validateListId(listId)
 	if err != nil {
 		return nil, err
@@ -300,7 +300,7 @@ func (s *subscriberListsService) StartSync(ctx context.Context, listId string) (
 	if httpResponse.StatusCode >= 400 {
 		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
 	}
-	var slVersion SubscriberListVersion
+	var slVersion SubscriberList
 	err = json.Unmarshal(responseBody, &slVersion)
 	if err != nil {
 		return nil, err
@@ -322,8 +322,11 @@ func (b *subscriberListsService) listAPIUrlWithVersion(listId, versionId string)
 	return fmt.Sprintf("%s%s/version/%s/", b._subscriberListUrl, listId, versionId)
 }
 
-func (s *subscriberListsService) GetVersion(ctx context.Context, listId, versionId string) (*SubscriberListVersion, error) {
+func (s *subscriberListsService) GetVersion(ctx context.Context, listId, versionId string) (*SubscriberList, error) {
 	listId, err := s.validateListId(listId)
+	if err != nil {
+		return nil, err
+	}
 	versionId, err = s.validateVersionId(versionId)
 	if err != nil {
 		return nil, err
@@ -347,7 +350,7 @@ func (s *subscriberListsService) GetVersion(ctx context.Context, listId, version
 	if httpResponse.StatusCode >= 400 {
 		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
 	}
-	var slVersion SubscriberListVersion
+	var slVersion SubscriberList
 	err = json.Unmarshal(responseBody, &slVersion)
 	if err != nil {
 		return nil, err
@@ -419,7 +422,7 @@ func (s *subscriberListsService) RemoveFromVersion(ctx context.Context, listId s
 	return suprResponse, nil
 }
 
-func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, versionId string) (*SubscriberListVersion, error) {
+func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, versionId string) (*SubscriberList, error) {
 	listId, err := s.validateListId(listId)
 	if err != nil {
 		return nil, err
@@ -448,7 +451,7 @@ func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, 
 	if httpResponse.StatusCode >= 400 {
 		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
 	}
-	var slVersion SubscriberListVersion
+	var slVersion SubscriberList
 	err = json.Unmarshal(responseBody, &slVersion)
 	if err != nil {
 		return nil, err
@@ -458,6 +461,9 @@ func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, 
 
 func (s *subscriberListsService) DeleteVersion(ctx context.Context, listId string, versionId string) (*Response, error) {
 	listId, err := s.validateListId(listId)
+	if err != nil {
+		return nil, err
+	}
 	versionId, err = s.validateVersionId(versionId)
 	if err != nil {
 		return nil, err

@@ -7,19 +7,24 @@ import (
 )
 
 // ---------- Identity keys
-const IDENT_KEY_EMAIL = "$email"
-const IDENT_KEY_SMS = "$sms"
-const IDENT_KEY_ANDROIDPUSH = "$androidpush"
-const IDENT_KEY_IOSPUSH = "$iospush"
-const IDENT_KEY_WHATSAPP = "$whatsapp"
-const IDENT_KEY_WEBPUSH = "$webpush"
-const IDENT_KEY_SLACK = "$slack"
+const (
+	IDENT_KEY_EMAIL       = "$email"
+	IDENT_KEY_SMS         = "$sms"
+	IDENT_KEY_ANDROIDPUSH = "$androidpush"
+	IDENT_KEY_IOSPUSH     = "$iospush"
+	IDENT_KEY_WHATSAPP    = "$whatsapp"
+	IDENT_KEY_WEBPUSH     = "$webpush"
+	IDENT_KEY_SLACK       = "$slack"
+	IDENT_KEY_MS_TEAMS    = "$ms_teams"
+)
 
 var IDENT_KEYS_ALL = []string{IDENT_KEY_EMAIL, IDENT_KEY_SMS, IDENT_KEY_ANDROIDPUSH, IDENT_KEY_IOSPUSH,
-	IDENT_KEY_WHATSAPP, IDENT_KEY_WEBPUSH, IDENT_KEY_SLACK}
+	IDENT_KEY_WHATSAPP, IDENT_KEY_WEBPUSH, IDENT_KEY_SLACK, IDENT_KEY_MS_TEAMS}
 
-const KEY_PUSHVENDOR = "$pushvendor"
-const KEY_PREFERRED_LANGUAGE = "$preferred_language"
+const (
+	KEY_PUSHVENDOR         = "$pushvendor"
+	KEY_PREFERRED_LANGUAGE = "$preferred_language"
+)
 
 var OTHER_RESERVED_KEYS = []string{
 	"$messenger", "$inbox",
@@ -294,6 +299,12 @@ func (s *subscriberHelper) addIdentity(key string, val interface{}, kvMap map[st
 		if isValid {
 			s.addSlack(val.(map[string]interface{}), newCaller)
 		}
+
+	case IDENT_KEY_MS_TEAMS:
+		val, isValid := s._checkIdentValDict(val, newCaller)
+		if isValid {
+			s.addMSTeams(val.(map[string]interface{}), newCaller)
+		}
 	}
 }
 
@@ -358,6 +369,12 @@ func (s *subscriberHelper) removeIdentity(key string, val interface{}, kvMap map
 		if isValid {
 			s.removeSlack(val.(map[string]interface{}), newCaller)
 		}
+
+	case IDENT_KEY_MS_TEAMS:
+		val, isValid := s._checkIdentValDict(val, newCaller)
+		if isValid {
+			s.removeMSTeams(val.(map[string]interface{}), newCaller)
+		}
 	}
 }
 
@@ -392,34 +409,7 @@ func (s *subscriberHelper) _checkIdentValDict(value interface{}, caller string) 
 	}
 }
 
-func (s *subscriberHelper) _checkIdentValStrMap(value interface{}, caller string) (interface{}, bool) {
-	msg := "value must be a valid dict/map"
-	valMap := map[string]string{}
-	isCastable := false
-	//
-	if vcast1, ok := value.(map[string]string); ok {
-		isCastable = true
-		valMap = vcast1
-	} else if vcast2, ok2 := value.(map[string]interface{}); ok2 {
-		isCastable = true
-		for mk, mv := range vcast2 {
-			if mvStr, ok3 := mv.(string); ok3 {
-				valMap[mk] = mvStr
-			} else {
-				isCastable = false
-				break
-			}
-		}
-	}
-	if !isCastable || len(valMap) == 0 {
-		s._errors = append(s._errors, fmt.Sprintf("[%s] %s", caller, msg))
-		return value, false
-	} else {
-		return valMap, true
-	}
-}
-
-// ------------------------
+// ------------------------ Email
 
 func (s *subscriberHelper) _validateEmail(email string, caller string) (string, bool) {
 	iEmail, isValid := s._checkIdentValString(email, caller)
@@ -638,17 +628,6 @@ func (s *subscriberHelper) removeWebpush(value map[string]interface{}, provider 
 
 // ------------------------ Slack
 
-func (s *subscriberHelper) _validateSlackUserid(userid string, caller string) (string, bool) {
-	useridUpper := strings.ToUpper(userid)
-	// ----
-	if !(strings.HasPrefix(useridUpper, "U") || strings.HasPrefix(useridUpper, "W")) {
-		s._errors = append(s._errors, fmt.Sprintf("[%s] invalid value %s. Slack user/member_id starts with a U or W", caller, userid))
-		return userid, false
-	}
-	// -------
-	return useridUpper, true
-}
-
 func (s *subscriberHelper) _checkSlackDict(value map[string]interface{}, caller string) (map[string]interface{}, bool) {
 	msg := "value must be a valid dict/map with proper keys"
 	if len(value) == 0 {
@@ -673,4 +652,32 @@ func (s *subscriberHelper) removeSlack(value map[string]interface{}, caller stri
 		return
 	}
 	s.removeDict[IDENT_KEY_SLACK] = value
+}
+
+// ------------------------ MS Teams
+
+func (s *subscriberHelper) _checkMSTeamsDict(value map[string]interface{}, caller string) (map[string]interface{}, bool) {
+	msg := "value must be a valid dict/map with proper keys"
+	if len(value) == 0 {
+		s._errors = append(s._errors, fmt.Sprintf("[%s] %s", caller, msg))
+		return value, false
+	} else {
+		return value, true
+	}
+}
+
+func (s *subscriberHelper) addMSTeams(value map[string]interface{}, caller string) {
+	value, isValid := s._checkMSTeamsDict(value, caller)
+	if !isValid {
+		return
+	}
+	s.appendDict[IDENT_KEY_MS_TEAMS] = value
+}
+
+func (s *subscriberHelper) removeMSTeams(value map[string]interface{}, caller string) {
+	value, isValid := s._checkMSTeamsDict(value, caller)
+	if !isValid {
+		return
+	}
+	s.removeDict[IDENT_KEY_MS_TEAMS] = value
 }

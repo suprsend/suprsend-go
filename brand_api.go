@@ -9,6 +9,8 @@ import (
 	"strconv"
 )
 
+// Brand has been renamed to Tenant. Brand is kept for backward-compatibilty.
+// Use Tenant instead of Brand
 type BrandsService interface {
 	Get(context.Context, string) (*Brand, error)
 	Upsert(context.Context, string, *Brand) (*Brand, error)

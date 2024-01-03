@@ -58,6 +58,9 @@ type Subscriber interface {
 	//
 	AddSlack(value map[string]interface{})
 	RemoveSlack(value map[string]interface{})
+	//
+	AddMSTeams(value map[string]interface{})
+	RemoveMSTeams(value map[string]interface{})
 }
 
 var _ Subscriber = &subscriber{}
@@ -401,5 +404,19 @@ func (s *subscriber) AddSlack(value map[string]interface{}) {
 func (s *subscriber) RemoveSlack(value map[string]interface{}) {
 	caller := "remove_slack"
 	s._helper.removeSlack(value, caller)
+	s._collectEvent(true)
+}
+
+// ------------------------ MS Teams
+
+func (s *subscriber) AddMSTeams(value map[string]interface{}) {
+	caller := "add_ms_teams"
+	s._helper.addMSTeams(value, caller)
+	s._collectEvent(true)
+}
+
+func (s *subscriber) RemoveMSTeams(value map[string]interface{}) {
+	caller := "remove_ms_teams"
+	s._helper.removeMSTeams(value, caller)
 	s._collectEvent(true)
 }

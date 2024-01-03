@@ -8,8 +8,13 @@
     "properties": {
         "$idempotency_key": {
             "type": ["string", "null"],
-            "maxLength": 64,
+            "maxLength": 255,
             "description": "unique id provided by client for request"
+        },
+        "tenant_id": {
+            "type": ["string", "null"],
+            "maxLength": 64,
+            "description": "tenant id for workflow to be run in context of a tenant"
         },
         "brand_id": {
             "type": ["string", "null"],
@@ -44,7 +49,7 @@
         },
         "users": {
             "type": "array",
-            "items": { "$ref": "#/definitions/user_setting"},
+            "items": {"$ref": "#/definitions/user_setting"},
             "minItems": 1,
             "maxItems": 100,
             "description": "user object to run workflow for. At least 1 user is required"
@@ -61,7 +66,8 @@
             "minLength": 2
         },
         "mobile_number_pattern": {
-            "type": "string", "minLength": 8,
+            "type": "string",
+            "minLength": 8,
             "pattern": "^\\+[0-9\\s]+",
             "message": {
                 "required": "Either a mobile-number or an array of mobile-numbers. e.g [\"+41446681800\"]",
@@ -123,6 +129,40 @@
             },
             "additionalProperties": false
         },
+        "ms_teams_setting": {
+            "type": "object",
+            "properties": {
+                "tenant_id": {
+                    "type": "string",
+                    "description": "ms teams tenant id"
+                },
+                "service_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "pattern": "^https://smba.trafficmanager.net/",
+                    "description": "service webhook url. e.g https://smba.trafficmanager.net/XXXXXXXXXX"
+                },
+                "conversation_id": {
+                    "type": "string",
+                    "description": "ms team conversation id"
+                },
+                "user_id": {
+                    "type": "string",
+                    "description": "ms team user id"
+                },
+                "incoming_webhook": {
+                    "type": "object",
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "format": "uri",
+                            "description": "incoming webhook url. e.g https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"
+                        }
+                    }
+                }
+            },
+            "additionalProperties": false
+        },
         "androidpush_settings": {
             "type": "object",
             "properties": {
@@ -164,7 +204,7 @@
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "enum": ["androidpush", "iospush", "webpush", "email", "sms", "whatsapp", "slack", "inbox", "messenger"]
+                        "enum": ["androidpush", "iospush", "webpush", "email", "sms", "whatsapp", "slack", "inbox", "messenger", "ms_teams"]
                     },
                     "minItems": 0,
                     "description": "user preferred channels. notification will be tried only on specified channels e.g ['email', 'sms']"
@@ -269,6 +309,18 @@
                         }
                     ]
                 },
+                "$ms_teams": {
+                    "oneOf": [
+                        { "$ref": "#/definitions/ms_teams_setting" },
+                        {
+                            "type": "array",
+                            "uniqueItems": false,
+                            "maxItems": 10,
+                            "minItems": 1,
+                            "items": { "$ref": "#/definitions/ms_teams_setting" }
+                        }
+                    ]
+                },
                 "$inbox": {
                     "oneOf": [
                         { "$ref": "#/definitions/non_empty_string" },
@@ -319,7 +371,7 @@
                     "type": "array",
                     "items": {
                         "type": "string",
-                        "enum": ["androidpush", "iospush", "webpush", "email", "sms", "whatsapp", "slack", "inbox", "messenger"]
+                        "enum": ["androidpush", "iospush", "webpush", "email", "sms", "whatsapp", "slack", "inbox", "messenger", "ms_teams"]
                     },
                     "minItems": 0,
                     "description": "e.g ['email', 'sms']. Used if smart=true, notification on these channels must be sent, irrespective of success metric outcome"

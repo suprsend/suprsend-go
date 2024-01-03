@@ -16,6 +16,24 @@ type SubscriberList struct {
 	//
 	SubscribersCount int    `json:"subscribers_count,omitempty"`
 	Source           string `json:"source,omitempty"`
+	IsReadonly       bool   `json:"is_readonly,omitempty"`
+	Status           string `json:"status,omitempty"`
+	//
+	TrackUserEntry bool `json:"track_user_entry,omitempty"`
+	TrackUserExit  bool `json:"track_user_exit,omitempty"`
+	//
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
+	// version_id will be present its a draft version
+	VersionId string `json:"version_id,omitempty"`
+	// drafts will be present if there are any drafts started from this list
+	Drafts []*SubscriberListVersion `json:"drafts,omitempty"`
+}
+
+type SubscriberListVersion struct {
+	VersionId        string `json:"version_id,omitempty"`
+	SubscribersCount int    `json:"subscribers_count,omitempty"`
+	CreatedAt        string `json:"created_at,omitempty"`
 	UpdatedAt        string `json:"updated_at,omitempty"`
 }
 
@@ -46,13 +64,23 @@ type SubscriberListCreateInput struct {
 	ListId          string `json:"list_id,omitempty"`
 	ListName        string `json:"list_name,omitempty"`
 	ListDescription string `json:"list_description,omitempty"`
+	//
+	TrackUserEntry *bool `json:"track_user_entry,omitempty"`
+	TrackUserExit  *bool `json:"track_user_exit,omitempty"`
+	// list_type enums: query_based, static_list
+	ListType *string `json:"list_type,omitempty"`
+	// Query: applicable when list_type='query_based'
+	Query *string `json:"query,omitempty"`
 }
 
 // Broadcast request params on SubscriberList
 type SubscriberListBroadcast struct {
 	Body           map[string]interface{}
 	IdempotencyKey string
-	BrandId        string
+	TenantId       string
+	// Brand has been renamed to Tenant. BrandId is kept for backward-compatibilty.
+	// Use TenantId instead of BrandId
+	BrandId string
 }
 
 func (s *SubscriberListBroadcast) AddAttachment(filePath string, ao *AttachmentOption) error {
@@ -78,6 +106,9 @@ func (s *SubscriberListBroadcast) getFinalJson(client *Client) (map[string]inter
 	s.Body["$time"] = time.Now().UnixMilli()
 	if s.IdempotencyKey != "" {
 		s.Body["$idempotency_key"] = s.IdempotencyKey
+	}
+	if s.TenantId != "" {
+		s.Body["tenant_id"] = s.TenantId
 	}
 	if s.BrandId != "" {
 		s.Body["brand_id"] = s.BrandId

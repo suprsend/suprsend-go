@@ -16,8 +16,10 @@ func main() {
 	bulkEventsExample()
 	bulkUserProfileUpdateExample()
 	//
-	brandExample()
+	tenantExample()
+	//
 	subscriberListExample()
+	subscriberListVersioningExample()
 }
 
 func getSuprsendClient() (*suprsend.Client, error) {
@@ -76,7 +78,7 @@ func triggerWorkflowExample() {
 	wf := &suprsend.Workflow{
 		Body:           wfBody,
 		IdempotencyKey: "",
-		BrandId:        "",
+		TenantId:       "",
 	}
 	// Add attachment by calling .AddAttachment
 	err = wf.AddAttachment("https://attachment-url", &suprsend.AttachmentOption{})
@@ -105,7 +107,7 @@ func sendEventExample() {
 			"k1": "v1",
 		},
 		// IdempotencyKey: "",
-		// BrandId: "",
+		// TenantId: "",
 	}
 	// Add attachment (If needed) by calling .AddAttachment
 	err = ev.AddAttachment("~/Downloads/attachment.pdf", &suprsend.AttachmentOption{FileName: "My Attachment.pdf"})
@@ -157,6 +159,18 @@ func updateUserProfileExample() {
 	user.AddSlack(map[string]interface{}{
 		"incoming_webhook": map[string]interface{}{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
 	})
+	// DM on Team's channel using conversation id
+	user.AddMSTeams(map[string]interface{}{
+		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "conversation_id": "XXXXXXXXXXXX",
+	})
+	// add teams via DM user using team user id
+	user.AddMSTeams(map[string]interface{}{
+		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "user_id": "XXXXXXXXXXXX",
+	})
+	// add teams using incoming webhook
+	user.AddMSTeams(map[string]interface{}{
+		"incoming_webhook": map[string]interface{}{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
+	})
 	//
 	// remove email channel
 	user.RemoveEmail("user@example.com")
@@ -187,6 +201,18 @@ func updateUserProfileExample() {
 	user.RemoveSlack(map[string]interface{}{
 		"incoming_webhook": map[string]interface{}{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
 	})
+	// remove teams via DM on Team's channel using conversation id
+	user.RemoveMSTeams(map[string]interface{}{
+		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "conversation_id": "XXXXXXXXXXXX",
+	})
+	// remove teams via DM user using team user id
+	user.RemoveMSTeams(map[string]interface{}{
+		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "user_id": "XXXXXXXXXXXX",
+	})
+	// remove teams using incoming webhook
+	user.RemoveMSTeams(map[string]interface{}{
+		"incoming_webhook": map[string]interface{}{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
+	})
 
 	// Set user preferred language. languageCode must be in [ISO 639-1 2-letter] format
 	user.SetPreferredLanguage("en")
@@ -201,6 +227,7 @@ func updateUserProfileExample() {
 	// # for iospush tokens:       $iospush
 	// # for webpush tokens:       $webpush
 	// # for slack:                $slack
+	// # for ms teams:             $ms_teams
 
 	// set a user property using a map
 	user.Set(map[string]interface{}{"prop1": "val1", "prop2": "val2"})
@@ -243,7 +270,7 @@ func bulkWorkflowsExample() {
 			},
 		},
 		IdempotencyKey: "",
-		BrandId:        "",
+		TenantId:       "",
 	}
 
 	// Workflow: 2
@@ -260,7 +287,7 @@ func bulkWorkflowsExample() {
 			},
 		},
 		IdempotencyKey: "123456",
-		BrandId:        "default",
+		TenantId:       "default",
 	}
 	// ...... Add as many Workflow records as required.
 
@@ -339,43 +366,43 @@ func bulkUserProfileUpdateExample() {
 	log.Println(bulkResponse)
 }
 
-func brandExample() {
+func tenantExample() {
 	// Instantiate Client
 	suprClient, err := getSuprsendClient()
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	// ================= Fetch existing brand by ID
-	brand1, err := suprClient.Brands.Get(context.Background(), "__brand_id__")
+	// ================= Fetch existing tenant by ID
+	tenant1, err := suprClient.Tenants.Get(context.Background(), "__tenant_id__")
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(brand1)
+	log.Println(tenant1)
 
-	// ================= Fetch all brands
-	brandsList, err := suprClient.Brands.List(context.Background(), &suprsend.BrandListOptions{Limit: 10})
+	// ================= Fetch all tenants
+	tenantsList, err := suprClient.Tenants.List(context.Background(), &suprsend.TenantListOptions{Limit: 10})
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(brandsList)
+	log.Println(tenantsList)
 
-	// ================= Update/Insert a brand
-	brandPayload := &suprsend.Brand{
-		BrandName:      suprsend.String("Brand Name"),
-		Logo:           suprsend.String("Brand logo url"),
+	// ================= Update/Insert a tenant
+	tenantPayload := &suprsend.Tenant{
+		TenantName:     suprsend.String("Tenant Name"),
+		Logo:           suprsend.String("Tenant logo url"),
 		PrimaryColor:   suprsend.String("#FFFFFF"),
 		SecondaryColor: suprsend.String("#000000"),
 		TertiaryColor:  nil,
-		SocialLinks: &suprsend.BrandSocialLinks{
-			Facebook: suprsend.String("https://facebook.com/brand"),
+		SocialLinks: &suprsend.TenantSocialLinks{
+			Facebook: suprsend.String("https://facebook.com/tenant"),
 		},
 		Properties: map[string]interface{}{
-			"k1": "brand settings 1",
-			"k2": "brand settings 2",
+			"k1": "tenant settings 1",
+			"k2": "tenant settings 2",
 		},
 	}
-	res, err := suprClient.Brands.Upsert(context.Background(), "__brand_id__", brandPayload)
+	res, err := suprClient.Tenants.Upsert(context.Background(), "__tenant_id__", tenantPayload)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -455,11 +482,106 @@ func subscriberListExample() {
 			},
 		},
 		IdempotencyKey: "",
-		BrandId:        "",
+		TenantId:       "",
 	}
 	res, err := suprClient.SubscriberLists.Broadcast(ctx, broadcastParams)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println(res)
+
+	// delete active list
+	deleteListResp, err := suprClient.SubscriberLists.Delete(ctx, "users-with-prepaid-vouchers-1")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("delete list resp: ", deleteListResp)
+}
+
+func subscriberListVersioningExample() {
+	// Instantiate Client
+	suprClient, err := getSuprsendClient()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	ctx := context.Background()
+
+	// ================= Create subscriber list
+	subscriberListCreated, err := suprClient.SubscriberLists.Create(ctx, &suprsend.SubscriberListCreateInput{
+		ListId:          "users-with-prepaid-vouchers-1", // max length 64 characters
+		ListName:        "Users With Prepaid Vouchers above $250",
+		ListDescription: "Users With Prepaid Vouchers above $250",
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("list create resp: ", subscriberListCreated)
+
+	// ================= Fetch existing subscriber-list
+	existingSubsList, err := suprClient.SubscriberLists.Get(ctx, "users-with-prepaid-vouchers-1")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("fetch list resp: ", existingSubsList)
+
+	// start sync
+	newVersion, err := suprClient.SubscriberLists.StartSync(ctx, "users-with-prepaid-vouchers-1")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("start sync resp: ", newVersion)
+
+	versionId := newVersion.VersionId
+
+	// =============================== fetch active and draft lists after start sync
+	subsList, err := suprClient.SubscriberLists.Get(ctx, "users-with-prepaid-vouchers-1")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("fetch list resp: ", subsList)
+
+	subsListVersion, err := suprClient.SubscriberLists.GetVersion(ctx, "users-with-prepaid-vouchers-1", versionId)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("fetch list version resp: ", subsListVersion)
+
+	// ================= Add users to a draft list (with versionId)
+	addDistinctIds := []string{"id-399999", "id-399998"}
+	addResponse, err := suprClient.SubscriberLists.AddToVersion(ctx, "users-with-prepaid-vouchers-1", versionId, addDistinctIds)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("add to version resp:", addResponse)
+
+	// ================= remove users from a list
+	removeDistinctIds := []string{"distinct_id_1", "distinct_id_2"}
+	removeResponse, err := suprClient.SubscriberLists.RemoveFromVersion(ctx, "users-with-prepaid-vouchers-1", versionId, removeDistinctIds)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("remove from version resp: ", removeResponse)
+
+	// finish sync
+	finishSyncResp, err := suprClient.SubscriberLists.FinishSync(ctx, "users-with-prepaid-vouchers-1", versionId)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("finish sync resp: ", finishSyncResp)
+
+	// ******************************************* delete version **************************************//
+	// create a new version to be deleted later
+	tempListVersion, err := suprClient.SubscriberLists.StartSync(ctx, "users-with-prepaid-vouchers-1")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(tempListVersion)
+
+	// delete versioned list
+	deleteVersionResp, err := suprClient.SubscriberLists.DeleteVersion(ctx, "users-with-prepaid-vouchers-1", tempListVersion.VersionId)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("delete version resp: ", deleteVersionResp)
 }

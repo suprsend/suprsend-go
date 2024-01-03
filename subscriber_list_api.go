@@ -18,7 +18,14 @@ type SubscriberListsService interface {
 	Get(context.Context, string) (*SubscriberList, error)
 	Add(context.Context, string, []string) (*Response, error)
 	Remove(context.Context, string, []string) (*Response, error)
+	Delete(context.Context, string) (*Response, error)
 	Broadcast(context.Context, *SubscriberListBroadcast) (*Response, error)
+	StartSync(context.Context, string) (*SubscriberList, error)
+	GetVersion(context.Context, string, string) (*SubscriberList, error)
+	AddToVersion(context.Context, string, string, []string) (*Response, error)
+	RemoveFromVersion(context.Context, string, string, []string) (*Response, error)
+	FinishSync(context.Context, string, string) (*SubscriberList, error)
+	DeleteVersion(context.Context, string, string) (*Response, error)
 }
 
 type subscriberListsService struct {
@@ -218,6 +225,31 @@ func (s *subscriberListsService) Remove(ctx context.Context, listId string, dist
 	return suprResponse, nil
 }
 
+func (s *subscriberListsService) Delete(ctx context.Context, listId string) (*Response, error) {
+	listId, err := s.validateListId(listId)
+	if err != nil {
+		return nil, err
+	}
+	urlStr := fmt.Sprintf("%sdelete/", s.listDetailAPIUrl(listId))
+	payload := map[string]interface{}{}
+	// prepare http.Request object
+	request, err := s.client.prepareHttpRequest("PATCH", urlStr, payload)
+	if err != nil {
+		return nil, err
+	}
+	//
+	httpResponse, err := s.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	suprResponse, err := s.formatAPIResponse(httpResponse)
+	if err != nil {
+		return nil, err
+	}
+	return suprResponse, nil
+}
+
 func (s *subscriberListsService) Broadcast(ctx context.Context, broadcastIns *SubscriberListBroadcast) (*Response, error) {
 	if broadcastIns == nil {
 		return nil, errors.New("missing payload")
@@ -231,6 +263,219 @@ func (s *subscriberListsService) Broadcast(ctx context.Context, broadcastIns *Su
 	if err != nil {
 		return nil, err
 	}
+	httpResponse, err := s.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	suprResponse, err := s.formatAPIResponse(httpResponse)
+	if err != nil {
+		return nil, err
+	}
+	return suprResponse, nil
+}
+
+func (s *subscriberListsService) StartSync(ctx context.Context, listId string) (*SubscriberList, error) {
+	listId, err := s.validateListId(listId)
+	if err != nil {
+		return nil, err
+	}
+	urlStr := fmt.Sprintf("%sstart_sync/", s.listDetailAPIUrl(listId))
+	payload := map[string]interface{}{}
+	// prepare http.Request object
+	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
+	if err != nil {
+		return nil, err
+	}
+	//
+	httpResponse, err := s.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	responseBody, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return nil, err
+	}
+	if httpResponse.StatusCode >= 400 {
+		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
+	}
+	var slVersion SubscriberList
+	err = json.Unmarshal(responseBody, &slVersion)
+	if err != nil {
+		return nil, err
+	}
+	return &slVersion, nil
+}
+
+func (s *subscriberListsService) validateVersionId(versionId string) (string, error) {
+	versionId = strings.TrimSpace(versionId)
+	if versionId == "" {
+		return versionId, errors.New("missing version_id")
+	}
+	return versionId, nil
+}
+
+func (b *subscriberListsService) listAPIUrlWithVersion(listId, versionId string) string {
+	listId = url.QueryEscape(listId)
+	versionId = url.QueryEscape(versionId)
+	return fmt.Sprintf("%s%s/version/%s/", b._subscriberListUrl, listId, versionId)
+}
+
+func (s *subscriberListsService) GetVersion(ctx context.Context, listId, versionId string) (*SubscriberList, error) {
+	listId, err := s.validateListId(listId)
+	if err != nil {
+		return nil, err
+	}
+	versionId, err = s.validateVersionId(versionId)
+	if err != nil {
+		return nil, err
+	}
+	urlStr := s.listAPIUrlWithVersion(listId, versionId)
+	// prepare http.Request object
+	request, err := s.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	//
+	httpResponse, err := s.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	responseBody, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return nil, err
+	}
+	if httpResponse.StatusCode >= 400 {
+		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
+	}
+	var slVersion SubscriberList
+	err = json.Unmarshal(responseBody, &slVersion)
+	if err != nil {
+		return nil, err
+	}
+	return &slVersion, nil
+}
+
+func (s *subscriberListsService) AddToVersion(ctx context.Context, listId string, versionId string, distinctIds []string) (*Response, error) {
+	listId, err := s.validateListId(listId)
+	if err != nil {
+		return nil, err
+	}
+	versionId, err = s.validateVersionId(versionId)
+	if err != nil {
+		return nil, err
+	}
+	if len(distinctIds) == 0 {
+		return s.nonErrDefaultResponse, nil
+	}
+	urlStr := fmt.Sprintf("%ssubscriber/add/", s.listAPIUrlWithVersion(listId, versionId))
+	payload := map[string]interface{}{"distinct_ids": distinctIds}
+	// prepare http.Request object
+	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
+	if err != nil {
+		return nil, err
+	}
+	//
+	httpResponse, err := s.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	suprResponse, err := s.formatAPIResponse(httpResponse)
+	if err != nil {
+		return nil, err
+	}
+	return suprResponse, nil
+}
+
+func (s *subscriberListsService) RemoveFromVersion(ctx context.Context, listId string, versionId string, distinctIds []string) (*Response, error) {
+	listId, err := s.validateListId(listId)
+	if err != nil {
+		return nil, err
+	}
+	versionId, err = s.validateVersionId(versionId)
+	if err != nil {
+		return nil, err
+	}
+	if len(distinctIds) == 0 {
+		return s.nonErrDefaultResponse, nil
+	}
+	urlStr := fmt.Sprintf("%ssubscriber/remove/", s.listAPIUrlWithVersion(listId, versionId))
+	payload := map[string]interface{}{"distinct_ids": distinctIds}
+	// prepare http.Request object
+	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
+	if err != nil {
+		return nil, err
+	}
+	//
+	httpResponse, err := s.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	suprResponse, err := s.formatAPIResponse(httpResponse)
+	if err != nil {
+		return nil, err
+	}
+	return suprResponse, nil
+}
+
+func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, versionId string) (*SubscriberList, error) {
+	listId, err := s.validateListId(listId)
+	if err != nil {
+		return nil, err
+	}
+	versionId, err = s.validateVersionId(versionId)
+	if err != nil {
+		return nil, err
+	}
+	urlStr := fmt.Sprintf("%sfinish_sync/", s.listAPIUrlWithVersion(listId, versionId))
+	payload := map[string]interface{}{}
+	// prepare http.Request object
+	request, err := s.client.prepareHttpRequest("PATCH", urlStr, payload)
+	if err != nil {
+		return nil, err
+	}
+	//
+	httpResponse, err := s.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	responseBody, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return nil, err
+	}
+	if httpResponse.StatusCode >= 400 {
+		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
+	}
+	var slVersion SubscriberList
+	err = json.Unmarshal(responseBody, &slVersion)
+	if err != nil {
+		return nil, err
+	}
+	return &slVersion, nil
+}
+
+func (s *subscriberListsService) DeleteVersion(ctx context.Context, listId string, versionId string) (*Response, error) {
+	listId, err := s.validateListId(listId)
+	if err != nil {
+		return nil, err
+	}
+	versionId, err = s.validateVersionId(versionId)
+	if err != nil {
+		return nil, err
+	}
+	urlStr := fmt.Sprintf("%sdelete/", s.listAPIUrlWithVersion(listId, versionId))
+	payload := map[string]interface{}{}
+	// prepare http.Request object
+	request, err := s.client.prepareHttpRequest("PATCH", urlStr, payload)
+	if err != nil {
+		return nil, err
+	}
+	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err

@@ -23,7 +23,10 @@ type Event struct {
 	EventName      string
 	Properties     map[string]interface{}
 	IdempotencyKey string
-	BrandId        string
+	TenantId       string
+	// Brand has been renamed to Tenant. Brand is kept for backward-compatibilty.
+	// Use Tenant instead of Brand
+	BrandId string
 }
 
 func (e *Event) validateDistinctId() error {
@@ -107,6 +110,10 @@ func (e *Event) getFinalJson(client *Client, isPartOfBulk bool) (map[string]inte
 	// Add idempotency_key if present
 	if e.IdempotencyKey != "" {
 		eventMap["$idempotency_key"] = e.IdempotencyKey
+	}
+	// Add tenant_id if present
+	if e.TenantId != "" {
+		eventMap["tenant_id"] = e.TenantId
 	}
 	// Add brand_id if present
 	if e.BrandId != "" {

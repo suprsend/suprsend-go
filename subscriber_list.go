@@ -22,13 +22,19 @@ type SubscriberList struct {
 	TrackUserEntry bool `json:"track_user_entry,omitempty"`
 	TrackUserExit  bool `json:"track_user_exit,omitempty"`
 	//
-	RequestedForDelete bool   `json:"requested_for_delete"`
-	CreatedAt          string `json:"created_at,omitempty"`
-	UpdatedAt          string `json:"updated_at,omitempty"`
+	CreatedAt string `json:"created_at,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
 	// version_id will be present its a draft version
 	VersionId string `json:"version_id,omitempty"`
 	// drafts will be present if there are any drafts started from this list
-	Drafts []*SubscriberList `json:"drafts,omitempty"`
+	Drafts []*SubscriberListVersion `json:"drafts,omitempty"`
+}
+
+type SubscriberListVersion struct {
+	VersionId        string `json:"version_id,omitempty"`
+	SubscribersCount int    `json:"subscribers_count,omitempty"`
+	CreatedAt        string `json:"created_at,omitempty"`
+	UpdatedAt        string `json:"updated_at,omitempty"`
 }
 
 // GetAll response
@@ -59,14 +65,12 @@ type SubscriberListCreateInput struct {
 	ListName        string `json:"list_name,omitempty"`
 	ListDescription string `json:"list_description,omitempty"`
 	//
-	TrackUserEntry bool `json:"track_user_entry,omitempty"`
-	TrackUserExit  bool `json:"track_user_exit,omitempty"`
+	TrackUserEntry *bool `json:"track_user_entry,omitempty"`
+	TrackUserExit  *bool `json:"track_user_exit,omitempty"`
 	// list_type enums: query_based, static_list
-	ListType string `json:"list_type,omitempty"`
+	ListType *string `json:"list_type,omitempty"`
 	// Query: applicable when list_type='query_based'
-	Query string `json:"query,omitempty"`
-	//
-	Source string `json:"source,omitempty"`
+	Query *string `json:"query,omitempty"`
 }
 
 // Broadcast request params on SubscriberList

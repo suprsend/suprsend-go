@@ -489,6 +489,13 @@ func subscriberListExample() {
 		log.Fatalln(err)
 	}
 	log.Println(res)
+
+	// delete active list
+	deleteListResp, err := suprClient.SubscriberLists.Delete(ctx, "users-with-prepaid-vouchers-1")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("delete list resp: ", deleteListResp)
 }
 
 func subscriberListVersioningExample() {
@@ -577,11 +584,4 @@ func subscriberListVersioningExample() {
 		log.Fatalln(err)
 	}
 	log.Println("delete version resp: ", deleteVersionResp)
-
-	// delete active list
-	deleteListResp, err := suprClient.SubscriberLists.Delete(ctx, "users-with-prepaid-vouchers-1")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println("delete list resp: ", deleteListResp)
 }

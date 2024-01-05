@@ -35,6 +35,8 @@ type bulkWorkflows struct {
 	chunks          []*bulkWorkflowsChunk
 	//
 	response *BulkResponse
+	// invalid_record json: {"record": event-json, "error": error_str, "code": 500}
+	_invalidRecords []map[string]interface{}
 }
 
 type pendingWorkflowRecord struct {
@@ -42,24 +44,22 @@ type pendingWorkflowRecord struct {
 	recordSize int
 }
 
-func (b *bulkWorkflows) _validateWorkflows() error {
-	if len(b._workflows) == 0 {
-		return fmt.Errorf("workflow list is empty in bulk request")
-	}
+func (b *bulkWorkflows) _validateWorkflows() {
 	for _, wf := range b._workflows {
 		wfJson, bodySize, err := wf.getFinalJson(b.client, true)
 		if err != nil {
-			return err
+			invRec := invalidRecordJson(wf.asJson(), err)
+			b._invalidRecords = append(b._invalidRecords, invRec)
+		} else {
+			b._pendingRecords = append(
+				b._pendingRecords,
+				pendingWorkflowRecord{
+					record:     wfJson,
+					recordSize: bodySize,
+				},
+			)
 		}
-		b._pendingRecords = append(
-			b._pendingRecords,
-			pendingWorkflowRecord{
-				record:     wfJson,
-				recordSize: bodySize,
-			},
-		)
 	}
-	return nil
 }
 
 func (b *bulkWorkflows) _chunkify(startIdx int) {
@@ -88,19 +88,26 @@ func (b *bulkWorkflows) Append(workflows ...*Workflow) {
 }
 
 func (b *bulkWorkflows) Trigger() (*BulkResponse, error) {
-	err := b._validateWorkflows()
-	if err != nil {
-		return nil, err
+	b._validateWorkflows()
+	if len(b._invalidRecords) > 0 {
+		chResponse := invalidRecordsChunkResponse(b._invalidRecords)
+		b.response.mergeChunkResponse(chResponse)
 	}
-	b._chunkify(0)
-	for cIdx, ch := range b.chunks {
-		if b.client.debug {
-			log.Printf("DEBUG: triggering api call for chunk: %d\n", cIdx)
+	if len(b._pendingRecords) > 0 {
+		b._chunkify(0)
+		for cIdx, ch := range b.chunks {
+			if b.client.debug {
+				log.Printf("DEBUG: triggering api call for chunk: %d\n", cIdx)
+			}
+			// do api call
+			ch.trigger()
+			// merge response
+			b.response.mergeChunkResponse(ch.response)
 		}
-		// do api call
-		ch.trigger()
-		// merge response
-		b.response.mergeChunkResponse(ch.response)
+	} else {
+		if len(b._invalidRecords) == 0 {
+			b.response.mergeChunkResponse(emptyChunkSuccessResponse())
+		}
 	}
 	return b.response, nil
 }
@@ -168,11 +175,12 @@ func (b *bulkWorkflowsChunk) tryToAddIntoChunk(body map[string]interface{}, body
 	return true
 }
 
-func (b *bulkWorkflowsChunk) trigger() error {
+func (b *bulkWorkflowsChunk) trigger() {
 	// prepare http.Request object
 	request, err := b.client.prepareHttpRequest("POST", b._url, b._chunk)
 	if err != nil {
-		return err
+		suprResponse := b.formatAPIResponse(nil, err)
+		b.response = suprResponse
 	}
 	//
 	httpResponse, err := b.client.httpClient.Do(request)
@@ -185,7 +193,6 @@ func (b *bulkWorkflowsChunk) trigger() error {
 		suprResponse := b.formatAPIResponse(httpResponse, nil)
 		b.response = suprResponse
 	}
-	return nil
 }
 
 func (b *bulkWorkflowsChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {

@@ -254,3 +254,11 @@ func getApparentListBroadcastBodySize(body map[string]interface{}) (int, error) 
 	}
 	return len(bodyBytes), nil
 }
+
+func invalidRecordJson(failedRecord map[string]interface{}, err error) map[string]interface{} {
+	return map[string]interface{}{
+		"record": failedRecord,
+		"error":  err.Error(),
+		"code":   500,
+	}
+}

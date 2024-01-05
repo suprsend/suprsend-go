@@ -76,6 +76,8 @@ type subscriber struct {
 	userOperations []map[string]interface{}
 	//
 	_helper *subscriberHelper
+	//
+	_warningsList []string
 }
 
 func newSubscriber(client *Client, distinctId string) Subscriber {
@@ -88,6 +90,26 @@ func newSubscriber(client *Client, distinctId string) Subscriber {
 	s._superProps = map[string]interface{}{"$ss_sdk_version": client.userAgent}
 	s._helper = newSubscriberHelper()
 	return s
+}
+
+func (s *subscriber) getEvent() map[string]interface{} {
+	return map[string]interface{}{
+		"$schema":          "2",
+		"$insert_id":       uuid.New().String(),
+		"$time":            time.Now().UnixMilli(),
+		"env":              s.client.ApiKey,
+		"distinct_id":      s.distinctId,
+		"$user_operations": s.userOperations,
+		"properties":       s._superProps,
+	}
+}
+
+func (s *subscriber) asJson() map[string]interface{} {
+	return map[string]interface{}{
+		"distinct_id":      s.distinctId,
+		"$user_operations": s.userOperations,
+		"warnings":         s._warningsList,
+	}
 }
 
 func (s *subscriber) validateEventSize(event map[string]interface{}) (map[string]interface{}, int, error) {
@@ -103,32 +125,20 @@ func (s *subscriber) validateEventSize(event map[string]interface{}) (map[string
 	return event, apparentSize, nil
 }
 
-func (s *subscriber) getEvent() map[string]interface{} {
-	return map[string]interface{}{
-		"$schema":          "2",
-		"$insert_id":       uuid.New().String(),
-		"$time":            time.Now().UnixMilli(),
-		"env":              s.client.ApiKey,
-		"distinct_id":      s.distinctId,
-		"$user_operations": s.userOperations,
-		"properties":       s._superProps,
-	}
-}
-
 func (s *subscriber) validateBody(isPartOfBulk bool) ([]string, error) {
 	if s.distinctId == "" {
-		s._errors = append([]string{"missing distinct_id"}, s._errors...)
+		s._errors = append(s._errors, "missing distinct_id")
 	}
-	warningsList := []string{}
+	s._warningsList = []string{}
 	if len(s._warnings) > 0 {
 		msg := fmt.Sprintf("[distinct_id: %s] %s", s.distinctId, strings.Join(s._warnings, "\n"))
-		warningsList = append(warningsList, msg)
+		s._warningsList = append(s._warningsList, msg)
 		// print on console as well
 		log.Println("WARNING:", msg)
 	}
 	if len(s._errors) > 0 {
 		msg := fmt.Sprintf("[distinct_id: %s] %s", s.distinctId, strings.Join(s._errors, "\n"))
-		warningsList = append(warningsList, msg)
+		s._warningsList = append(s._warningsList, msg)
 		errMsg := "ERROR: " + msg
 		if isPartOfBulk {
 			// print on console in case of bulk-api
@@ -138,7 +148,7 @@ func (s *subscriber) validateBody(isPartOfBulk bool) ([]string, error) {
 			return nil, errors.New(errMsg)
 		}
 	}
-	return warningsList, nil
+	return s._warningsList, nil
 }
 
 func (s *subscriber) Save() (*Response, error) {

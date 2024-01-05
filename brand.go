@@ -5,7 +5,7 @@ type Brand struct {
 	BrandName *string `json:"brand_name,omitempty"`
 	Logo      *string `json:"logo,omitempty"`
 	//
-	BlockedChannels        []string `json:"blocked_channels,omitempty"`
+	BlockedChannels        []string `json:"blocked_channels"`
 	EmbeddedPreferenceUrl  *string  `json:"embedded_preference_url,omitempty"`
 	HostedPreferenceDomain *string  `json:"hosted_preference_domain,omitempty"`
 	//

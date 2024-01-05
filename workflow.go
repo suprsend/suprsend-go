@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/jinzhu/copier"
 )
 
 type Workflow struct {
@@ -23,6 +25,9 @@ func (w *Workflow) AddAttachment(filePath string, ao *AttachmentOption) error {
 	attachment, err := GetAttachmentJson(filePath, ao)
 	if err != nil {
 		return err
+	}
+	if attachment == nil {
+		return nil
 	}
 	data := w.Body["data"].(map[string]interface{})
 	if a, found := data["$attachments"]; !found || a == nil {
@@ -43,7 +48,6 @@ func (w *Workflow) getFinalJson(client *Client, isPartOfBulk bool) (map[string]i
 	if w.TenantId != "" {
 		w.Body["tenant_id"] = w.TenantId
 	}
-	// Add brand_id if present
 	if w.BrandId != "" {
 		w.Body["brand_id"] = w.BrandId
 	}
@@ -63,6 +67,24 @@ func (w *Workflow) getFinalJson(client *Client, isPartOfBulk bool) (map[string]i
 		return nil, 0, errors.New(errStr)
 	}
 	return w.Body, apparentSize, nil
+}
+
+func (w *Workflow) asJson() map[string]interface{} {
+	body := map[string]interface{}{}
+	copier.CopyWithOption(&body, w.Body, copier.Option{DeepCopy: true})
+
+	// Add idempotency_key if present
+	if w.IdempotencyKey != "" {
+		body["$idempotency_key"] = w.IdempotencyKey
+	}
+	// Add tenant_id if present
+	if w.TenantId != "" {
+		body["tenant_id"] = w.TenantId
+	}
+	if w.BrandId != "" {
+		body["brand_id"] = w.BrandId
+	}
+	return body
 }
 
 type workflowTrigger struct {

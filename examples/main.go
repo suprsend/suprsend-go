@@ -376,14 +376,14 @@ func tenantExample() {
 	// ================= Fetch existing tenant by ID
 	tenant1, err := suprClient.Tenants.Get(context.Background(), "__tenant_id__")
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	log.Println(tenant1)
 
 	// ================= Fetch all tenants
 	tenantsList, err := suprClient.Tenants.List(context.Background(), &suprsend.TenantListOptions{Limit: 10})
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	log.Println(tenantsList)
 
@@ -407,6 +407,11 @@ func tenantExample() {
 		log.Fatalln(err)
 	}
 	log.Println(res)
+	// -- Delete tenant
+	err = suprClient.Tenants.Delete(context.Background(), "__tenant_id__")
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func subscriberListExample() {
@@ -459,7 +464,7 @@ func subscriberListExample() {
 	log.Println(removeResponse)
 
 	// ================= broadcast to a list
-	broadcastParams := &suprsend.SubscriberListBroadcast{
+	broadcastIns := &suprsend.SubscriberListBroadcast{
 		Body: map[string]interface{}{
 			"list_id":               "users-with-prepaid-vouchers-1",
 			"template":              "template slug",
@@ -484,7 +489,12 @@ func subscriberListExample() {
 		IdempotencyKey: "",
 		TenantId:       "",
 	}
-	res, err := suprClient.SubscriberLists.Broadcast(ctx, broadcastParams)
+	// If need to add attachment
+	// err = broadcastIns.AddAttachment("https://attachment-url", &suprsend.AttachmentOption{IgnoreIfError: true})
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	res, err := suprClient.SubscriberLists.Broadcast(ctx, broadcastIns)
 	if err != nil {
 		log.Fatalln(err)
 	}

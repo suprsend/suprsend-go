@@ -82,7 +82,7 @@ func main() {
 	wf := &suprsend.Workflow{
 		Body:           wfBody,
 		IdempotencyKey: "",
-		BrandId:        "",
+		TenantId:        "",
 	}
     // Call TriggerWorkflow to send request to Suprsend
 	_, err = suprClient.TriggerWorkflow(wf)

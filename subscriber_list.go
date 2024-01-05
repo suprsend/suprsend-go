@@ -91,6 +91,9 @@ func (s *SubscriberListBroadcast) AddAttachment(filePath string, ao *AttachmentO
 	if err != nil {
 		return err
 	}
+	if attachment == nil {
+		return nil
+	}
 	data := s.Body["data"].(map[string]interface{})
 	if a, found := data["$attachments"]; !found || a == nil {
 		data["$attachments"] = []map[string]interface{}{}

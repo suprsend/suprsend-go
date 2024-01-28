@@ -352,8 +352,8 @@ func bulkUserProfileUpdateExample() {
 
 	// prepare user 2
 	user2 := suprClient.Users.GetInstance("sanjeev1")
-	user1.AddEmail("user2@example.com")
-	user1.AddWhatsapp("+2909090900")
+	user2.AddEmail("user2@example.com")
+	user2.AddWhatsapp("+2909090900")
 
 	// Append all users to bulk instance
 	bulkIns.Append(user1, user2)
@@ -389,8 +389,11 @@ func tenantExample() {
 
 	// ================= Update/Insert a tenant
 	tenantPayload := &suprsend.Tenant{
-		TenantName:     suprsend.String("Tenant Name"),
-		Logo:           suprsend.String("Tenant logo url"),
+		TenantName: suprsend.String("Tenant Name"),
+		Logo:       suprsend.String("Tenant logo url"),
+		// BlockedChannels: []string{},
+		// EmbeddedPreferenceUrl:  suprsend.String("https://company-url.com/preferences"),
+		// HostedPreferenceDomain: suprsend.String("preferences.suprsend.com"),
 		PrimaryColor:   suprsend.String("#FFFFFF"),
 		SecondaryColor: suprsend.String("#000000"),
 		TertiaryColor:  nil,
@@ -522,6 +525,8 @@ func subscriberListVersioningExample() {
 		ListId:          "users-with-prepaid-vouchers-1", // max length 64 characters
 		ListName:        "Users With Prepaid Vouchers above $250",
 		ListDescription: "Users With Prepaid Vouchers above $250",
+		TrackUserEntry:  suprsend.Bool(false),
+		TrackUserExit:   suprsend.Bool(false),
 	})
 	if err != nil {
 		log.Fatalln(err)

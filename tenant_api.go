@@ -13,6 +13,7 @@ type TenantsService interface {
 	Get(context.Context, string) (*Tenant, error)
 	Upsert(context.Context, string, *Tenant) (*Tenant, error)
 	List(context.Context, *TenantListOptions) (*TenantList, error)
+	Delete(context.Context, string) error
 }
 
 type tenantsService struct {
@@ -129,4 +130,28 @@ func (t *tenantsService) Upsert(ctx context.Context, tenantId string, payload *T
 		return nil, err
 	}
 	return &tenant, nil
+}
+
+func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
+	urlStr := t.tenantAPIUrl(tenantId)
+	// prepare http.Request object
+	request, err := t.client.prepareHttpRequest("DELETE", urlStr, nil)
+	if err != nil {
+		return err
+	}
+	//
+	httpResponse, err := t.client.httpClient.Do(request)
+	if err != nil {
+		return err
+	}
+	defer httpResponse.Body.Close()
+	responseBody, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return err
+	}
+	if httpResponse.StatusCode >= 400 {
+		return fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
+	}
+	// successfully deleted
+	return nil
 }

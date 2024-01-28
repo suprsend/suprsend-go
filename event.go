@@ -71,6 +71,9 @@ func (e *Event) AddAttachment(filePath string, ao *AttachmentOption) error {
 	if err != nil {
 		return err
 	}
+	if attachment == nil {
+		return nil
+	}
 	// add the attachment to properties->$attachments
 	if a, found := e.Properties["$attachments"]; !found || a == nil {
 		e.Properties["$attachments"] = []map[string]interface{}{}
@@ -84,7 +87,6 @@ func (e *Event) AddAttachment(filePath string, ao *AttachmentOption) error {
 
 func (e *Event) getFinalJson(client *Client, isPartOfBulk bool) (map[string]interface{}, int, error) {
 	var err error
-	//
 	err = e.validateDistinctId()
 	if err != nil {
 		return nil, 0, err
@@ -115,7 +117,6 @@ func (e *Event) getFinalJson(client *Client, isPartOfBulk bool) (map[string]inte
 	if e.TenantId != "" {
 		eventMap["tenant_id"] = e.TenantId
 	}
-	// Add brand_id if present
 	if e.BrandId != "" {
 		eventMap["brand_id"] = e.BrandId
 	}
@@ -134,6 +135,26 @@ func (e *Event) getFinalJson(client *Client, isPartOfBulk bool) (map[string]inte
 		return nil, 0, errors.New(errStr)
 	}
 	return eventMap, apparentSize, nil
+}
+
+func (e *Event) asJson() map[string]interface{} {
+	eventMap := map[string]interface{}{
+		"event":       e.EventName,
+		"distinct_id": e.DistinctId,
+		"properties":  e.Properties,
+	}
+	// Add idempotency_key if present
+	if e.IdempotencyKey != "" {
+		eventMap["$idempotency_key"] = e.IdempotencyKey
+	}
+	// Add tenant_id if present
+	if e.TenantId != "" {
+		eventMap["tenant_id"] = e.TenantId
+	}
+	if e.BrandId != "" {
+		eventMap["brand_id"] = e.BrandId
+	}
+	return eventMap
 }
 
 type eventsCollector struct {

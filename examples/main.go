@@ -352,8 +352,8 @@ func bulkUserProfileUpdateExample() {
 
 	// prepare user 2
 	user2 := suprClient.Users.GetInstance("sanjeev1")
-	user1.AddEmail("user2@example.com")
-	user1.AddWhatsapp("+2909090900")
+	user2.AddEmail("user2@example.com")
+	user2.AddWhatsapp("+2909090900")
 
 	// Append all users to bulk instance
 	bulkIns.Append(user1, user2)
@@ -376,21 +376,24 @@ func tenantExample() {
 	// ================= Fetch existing tenant by ID
 	tenant1, err := suprClient.Tenants.Get(context.Background(), "__tenant_id__")
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	log.Println(tenant1)
 
 	// ================= Fetch all tenants
 	tenantsList, err := suprClient.Tenants.List(context.Background(), &suprsend.TenantListOptions{Limit: 10})
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	log.Println(tenantsList)
 
 	// ================= Update/Insert a tenant
 	tenantPayload := &suprsend.Tenant{
-		TenantName:     suprsend.String("Tenant Name"),
-		Logo:           suprsend.String("Tenant logo url"),
+		TenantName: suprsend.String("Tenant Name"),
+		Logo:       suprsend.String("Tenant logo url"),
+		// BlockedChannels: []string{},
+		// EmbeddedPreferenceUrl:  suprsend.String("https://company-url.com/preferences"),
+		// HostedPreferenceDomain: suprsend.String("preferences.suprsend.com"),
 		PrimaryColor:   suprsend.String("#FFFFFF"),
 		SecondaryColor: suprsend.String("#000000"),
 		TertiaryColor:  nil,
@@ -407,6 +410,11 @@ func tenantExample() {
 		log.Fatalln(err)
 	}
 	log.Println(res)
+	// -- Delete tenant
+	err = suprClient.Tenants.Delete(context.Background(), "__tenant_id__")
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func subscriberListExample() {
@@ -459,7 +467,7 @@ func subscriberListExample() {
 	log.Println(removeResponse)
 
 	// ================= broadcast to a list
-	broadcastParams := &suprsend.SubscriberListBroadcast{
+	broadcastIns := &suprsend.SubscriberListBroadcast{
 		Body: map[string]interface{}{
 			"list_id":               "users-with-prepaid-vouchers-1",
 			"template":              "template slug",
@@ -484,7 +492,12 @@ func subscriberListExample() {
 		IdempotencyKey: "",
 		TenantId:       "",
 	}
-	res, err := suprClient.SubscriberLists.Broadcast(ctx, broadcastParams)
+	// If need to add attachment
+	// err = broadcastIns.AddAttachment("https://attachment-url", &suprsend.AttachmentOption{IgnoreIfError: true})
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	res, err := suprClient.SubscriberLists.Broadcast(ctx, broadcastIns)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -512,6 +525,8 @@ func subscriberListVersioningExample() {
 		ListId:          "users-with-prepaid-vouchers-1", // max length 64 characters
 		ListName:        "Users With Prepaid Vouchers above $250",
 		ListDescription: "Users With Prepaid Vouchers above $250",
+		TrackUserEntry:  suprsend.Bool(false),
+		TrackUserExit:   suprsend.Bool(false),
 	})
 	if err != nil {
 		log.Fatalln(err)

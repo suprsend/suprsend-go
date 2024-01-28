@@ -18,7 +18,7 @@ func GetRequestSignature(urlStr string, httpVerb string, content interface{},
 	var contentBody []byte
 	var contentMd5 string
 	// possible methods: POST/GET/PUT
-	if httpVerb == "GET" {
+	if httpVerb == "GET" || content == nil {
 		contentBody, contentMd5 = []byte(""), ""
 	} else {
 		cBytes, err := json.Marshal(content)

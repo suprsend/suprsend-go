@@ -59,3 +59,25 @@ type chunkResponse struct {
 	failure       int
 	failedRecords []map[string]interface{}
 }
+
+func emptyChunkSuccessResponse() *chunkResponse {
+	return &chunkResponse{
+		status:        "success",
+		statusCode:    200,
+		total:         0,
+		success:       0,
+		failure:       0,
+		failedRecords: []map[string]interface{}{},
+	}
+}
+
+func invalidRecordsChunkResponse(invalidRecords []map[string]interface{}) *chunkResponse {
+	return &chunkResponse{
+		status:        "fail",
+		statusCode:    500,
+		total:         len(invalidRecords),
+		success:       0,
+		failure:       len(invalidRecords),
+		failedRecords: invalidRecords,
+	}
+}

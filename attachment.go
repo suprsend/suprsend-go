@@ -2,6 +2,7 @@ package suprsend
 
 import (
 	"encoding/base64"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,6 +53,10 @@ func getAttachmentJsonForFile(filePath string, fileName string, ignoreIfError bo
 	// Get absolute path
 	absPath, err := homedir.Expand(filePath)
 	if err != nil {
+		if ignoreIfError {
+			log.Println("WARNING: ignoring error while processing attachment file.", err)
+			return nil, nil
+		}
 		return nil, err
 	}
 	// Finalize file name
@@ -63,6 +68,10 @@ func getAttachmentJsonForFile(filePath string, fileName string, ignoreIfError bo
 	// extract content and mime-type
 	content, err := os.ReadFile(absPath)
 	if err != nil {
+		if ignoreIfError {
+			log.Println("WARNING: ignoring error while processing attachment file.", err)
+			return nil, nil
+		}
 		return nil, err
 	}
 	b64Str := base64.StdEncoding.EncodeToString(content)

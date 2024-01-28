@@ -35,6 +35,8 @@ type bulkEvents struct {
 	chunks          []*bulkEventsChunk
 	//
 	response *BulkResponse
+	// invalid_record json: {"record": event-json, "error": error_str, "code": 500}
+	_invalidRecords []map[string]interface{}
 }
 
 type pendingEventRecord struct {
@@ -42,24 +44,22 @@ type pendingEventRecord struct {
 	recordSize int
 }
 
-func (b *bulkEvents) _validateEvents() error {
-	if len(b._events) == 0 {
-		return fmt.Errorf("events list is empty in bulk request")
-	}
+func (b *bulkEvents) _validateEvents() {
 	for _, ev := range b._events {
 		evJson, bodySize, err := ev.getFinalJson(b.client, true)
 		if err != nil {
-			return err
+			invRec := invalidRecordJson(ev.asJson(), err)
+			b._invalidRecords = append(b._invalidRecords, invRec)
+		} else {
+			b._pendingRecords = append(
+				b._pendingRecords,
+				pendingEventRecord{
+					record:     evJson,
+					recordSize: bodySize,
+				},
+			)
 		}
-		b._pendingRecords = append(
-			b._pendingRecords,
-			pendingEventRecord{
-				record:     evJson,
-				recordSize: bodySize,
-			},
-		)
 	}
-	return nil
 }
 
 func (b *bulkEvents) _chunkify(startIdx int) {
@@ -88,19 +88,26 @@ func (b *bulkEvents) Append(events ...*Event) {
 }
 
 func (b *bulkEvents) Trigger() (*BulkResponse, error) {
-	err := b._validateEvents()
-	if err != nil {
-		return nil, err
+	b._validateEvents()
+	if len(b._invalidRecords) > 0 {
+		chResponse := invalidRecordsChunkResponse(b._invalidRecords)
+		b.response.mergeChunkResponse(chResponse)
 	}
-	b._chunkify(0)
-	for cIdx, ch := range b.chunks {
-		if b.client.debug {
-			log.Printf("DEBUG: triggering api call for chunk: %d", cIdx)
+	if len(b._pendingRecords) > 0 {
+		b._chunkify(0)
+		for cIdx, ch := range b.chunks {
+			if b.client.debug {
+				log.Printf("DEBUG: triggering api call for chunk: %d", cIdx)
+			}
+			// do api call
+			ch.trigger()
+			// merge response
+			b.response.mergeChunkResponse(ch.response)
 		}
-		// do api call
-		ch.trigger()
-		// merge response
-		b.response.mergeChunkResponse(ch.response)
+	} else {
+		if len(b._invalidRecords) == 0 {
+			b.response.mergeChunkResponse(emptyChunkSuccessResponse())
+		}
 	}
 	return b.response, nil
 }
@@ -167,11 +174,12 @@ func (b *bulkEventsChunk) tryToAddIntoChunk(event map[string]interface{}, eventS
 	return true
 }
 
-func (b *bulkEventsChunk) trigger() error {
+func (b *bulkEventsChunk) trigger() {
 	// prepare http.Request object
 	request, err := b.client.prepareHttpRequest("POST", b._url, b._chunk)
 	if err != nil {
-		return err
+		suprResponse := b.formatAPIResponse(nil, err)
+		b.response = suprResponse
 	}
 	//
 	httpResponse, err := b.client.httpClient.Do(request)
@@ -184,7 +192,6 @@ func (b *bulkEventsChunk) trigger() error {
 		suprResponse := b.formatAPIResponse(httpResponse, nil)
 		b.response = suprResponse
 	}
-	return nil
 }
 
 func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {

@@ -216,7 +216,8 @@ func updateUserProfileExample() {
 
 	// Set user preferred language. languageCode must be in [ISO 639-1 2-letter] format
 	user.SetPreferredLanguage("en")
-
+	// set timezone property at subscriber level based on IANA timezone info
+	user.SetTimezone("America/Los_Angeles")
 	// If you need to remove all emails for this user, call user.Unset(["$email"])
 	user.Unset([]string{"$email"})
 	// # what value to pass to unset channels

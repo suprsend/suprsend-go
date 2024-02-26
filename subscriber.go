@@ -37,6 +37,7 @@ type Subscriber interface {
 	Unset([]string)
 	//
 	SetPreferredLanguage(string)
+	SetTimezone(string)
 	//
 	AddEmail(value string)
 	RemoveEmail(value string)
@@ -319,6 +320,13 @@ func (s *subscriber) Unset(keys []string) {
 func (s *subscriber) SetPreferredLanguage(langCode string) {
 	caller := "set_preferred_language"
 	s._helper.setPreferredLanguage(langCode, caller)
+	s._collectEvent(true)
+}
+
+// SetTimezone : set IANA supported timezone as subscriber property
+func (s *subscriber) SetTimezone(timezone string) {
+	caller := "set_timezone"
+	s._helper.setTimezone(timezone, caller)
 	s._collectEvent(true)
 }
 

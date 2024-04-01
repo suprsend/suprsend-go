@@ -24,6 +24,7 @@ var IDENT_KEYS_ALL = []string{IDENT_KEY_EMAIL, IDENT_KEY_SMS, IDENT_KEY_ANDROIDP
 const (
 	KEY_PUSHVENDOR         = "$pushvendor"
 	KEY_PREFERRED_LANGUAGE = "$preferred_language"
+	KEY_TIMEZONE           = "$timezone"
 )
 
 var OTHER_RESERVED_KEYS = []string{
@@ -31,7 +32,8 @@ var OTHER_RESERVED_KEYS = []string{
 	KEY_PUSHVENDOR, "$device_id",
 	"$insert_id", "$time",
 	"$set", "$set_once", "$add", "$append", "$remove", "$unset",
-	"$identify", "$anon_id", "$identified_id", KEY_PREFERRED_LANGUAGE,
+	"$identify", "$anon_id", "$identified_id",
+	KEY_PREFERRED_LANGUAGE, KEY_TIMEZONE,
 	"$notification_delivered", "$notification_dismiss", "$notification_clicked",
 }
 
@@ -237,6 +239,10 @@ func (s *subscriberHelper) setPreferredLanguage(langCode string, caller string) 
 		return
 	}
 	s.setDict[KEY_PREFERRED_LANGUAGE] = langCode
+}
+
+func (s *subscriberHelper) setTimezone(timezone string, caller string) {
+	s.setDict[KEY_TIMEZONE] = timezone
 }
 
 func (s *subscriberHelper) addIdentity(key string, val interface{}, kvMap map[string]interface{}, caller string) {

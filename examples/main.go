@@ -8,11 +8,14 @@ import (
 )
 
 func main() {
-	triggerWorkflowExample()
+	triggerWorkflowAPIExample()
+	bulkWorkflowTriggerAPIExample()
+	//
+	triggerDynamicWorkflowExample()
 	sendEventExample()
 	updateUserProfileExample()
 	//
-	bulkWorkflowsExample()
+	bulkDynamicWorkflowsExample()
 	bulkEventsExample()
 	bulkUserProfileUpdateExample()
 	//
@@ -33,7 +36,164 @@ func getSuprsendClient() (*suprsend.Client, error) {
 	return suprClient, nil
 }
 
-func triggerWorkflowExample() {
+func triggerWorkflowAPIExample() {
+	// Instantiate Client
+	suprClient, err := getSuprsendClient()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	// Create WorkflowRequest body
+	wfReqBody := map[string]interface{}{
+		"workflow": "workflow-slug", // mandatory
+		// "actor":    "actor-distinct-id", // optional
+		// recipients: an array. each element is either string/dict
+		// in case of string, the value must the distinct_id of recipient/user
+		// in case of dict, along with distinct_id, value can contain user profile info like channels etc..
+		// e.g ["distinct_id1", "distinct_id1"]
+		// or [{"distinct_id": "__distinct_id_1__", "$email": ["a@example.com"], "prop1": "v1"}]
+		"recipients": []map[string]interface{}{
+			{
+				"distinct_id": "__distinct_id1__",
+				// if $channels is present, communication will be tried on mentioned channels only (for this request).
+				// "$channels": []string{"email"},
+				"$email": []string{"user@example.com"},
+				"$androidpush": []map[string]interface{}{
+					{"token": "__android_push_token__", "provider": "fcm", "device_id": ""},
+				},
+				"name": "Recipient 1",
+			},
+		},
+		// # data can be any json / serializable python-dictionary
+		"data": map[string]interface{}{
+			"first_name":   "User",
+			"spend_amount": "$10",
+			"nested_key_example": map[string]interface{}{
+				"nested_key1": "some_value_1",
+				"nested_key2": map[string]interface{}{
+					"nested_key3": "some_value_3",
+				},
+			},
+		},
+	}
+
+	wf := &suprsend.WorkflowRequest{
+		Body:           wfReqBody,
+		IdempotencyKey: "",
+		TenantId:       "",
+	}
+	// Add attachment by calling .AddAttachment
+	err = wf.AddAttachment("https://attachment-url", &suprsend.AttachmentOption{})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// Call Workflows.Trigger to send request to Suprsend
+	resp, err := suprClient.Workflows.Trigger(wf)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(resp)
+}
+
+func bulkWorkflowTriggerAPIExample() {
+	// Instantiate Client
+	suprClient, err := getSuprsendClient()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	// WorkflowRequest: 1
+	wf1 := &suprsend.WorkflowRequest{
+		Body: map[string]interface{}{
+			"workflow": "workflow-slug",
+			// "actor":    "actor-distinct-id", // optional
+			// recipients: an array. each element is either string/dict
+			// in case of string, the value must the distinct_id of recipient/user
+			// in case of dict, along with distinct_id, value can contain user profile info like channels etc..
+			// e.g ["distinct_id1", "distinct_id1"]
+			// or [{"distinct_id": "__distinct_id_1__", "$email": ["a@example.com"], "prop1": "v1"}]
+			"recipients": []map[string]interface{}{
+				{
+					"distinct_id": "__distinct_id1__",
+					// if $channels is present, communication will be tried on mentioned channels only (for this request).
+					// "$channels": []string{"email"},
+					"$email": []string{"user@example.com"},
+					"$androidpush": []map[string]interface{}{
+						{"token": "__android_push_token__", "provider": "fcm", "device_id": ""},
+					},
+					"name": "Recipient 1",
+				},
+			},
+			// # data can be any json / serializable python-dictionary
+			"data": map[string]interface{}{
+				"first_name":   "User",
+				"spend_amount": "$10",
+				"nested_key_example": map[string]interface{}{
+					"nested_key1": "some_value_1",
+					"nested_key2": map[string]interface{}{
+						"nested_key3": "some_value_3",
+					},
+				},
+			},
+		},
+		IdempotencyKey: "",
+		TenantId:       "",
+	}
+
+	// WorkflowRequest: 2
+	wf2 := &suprsend.WorkflowRequest{
+		Body: map[string]interface{}{
+			"workflow": "workflow-slug",
+			// "actor":    "actor-distinct-id", // optional
+			// recipients: an array. each element is either string/dict
+			// in case of string, the value must the distinct_id of recipient/user
+			// in case of dict, along with distinct_id, value can contain user profile info like channels etc..
+			// e.g ["distinct_id1", "distinct_id1"]
+			// or [{"distinct_id": "__distinct_id_1__", "$email": ["a@example.com"], "prop1": "v1"}]
+			"recipients": []map[string]interface{}{
+				{
+					"distinct_id": "__distinct_id1__",
+					// if $channels is present, communication will be tried on mentioned channels only (for this request).
+					// "$channels": []string{"email"},
+					"$email": []string{"user@example.com"},
+					"$androidpush": []map[string]interface{}{
+						{"token": "__android_push_token__", "provider": "fcm", "device_id": ""},
+					},
+					"name": "Recipient 1",
+				},
+			},
+			// # data can be any json / serializable python-dictionary
+			"data": map[string]interface{}{
+				"first_name":   "User",
+				"spend_amount": "$10",
+				"nested_key_example": map[string]interface{}{
+					"nested_key1": "some_value_1",
+					"nested_key2": map[string]interface{}{
+						"nested_key3": "some_value_3",
+					},
+				},
+			},
+		},
+		IdempotencyKey: "123456",
+		TenantId:       "default",
+	}
+	// ...... Add as many Workflow records as required.
+
+	// Create workflows bulk instance
+	bulkIns := suprClient.Workflows.BulkInstance()
+	// add all your workflows to bulkInstance
+	bulkIns.Append(wf1, wf2)
+	// Trigger
+	bulkResponse, err := bulkIns.Trigger()
+	if err != nil {
+		log.Println(err)
+		//
+	}
+	log.Println(bulkResponse)
+}
+
+// Deprecated: dynamic workflows will be deprecated in near future
+func triggerDynamicWorkflowExample() {
 	// Instantiate Client
 	suprClient, err := getSuprsendClient()
 	if err != nil {
@@ -115,10 +275,11 @@ func sendEventExample() {
 		log.Println(err)
 	}
 	// Send event to Suprsend by calling .TrackEvent
-	_, err = suprClient.TrackEvent(ev)
+	resp, err := suprClient.TrackEvent(ev)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	log.Println(resp)
 }
 
 func updateUserProfileExample() {
@@ -250,7 +411,8 @@ func updateUserProfileExample() {
 	}
 }
 
-func bulkWorkflowsExample() {
+// Deprecated: dynamic workflows will be deprecated in near future
+func bulkDynamicWorkflowsExample() {
 	// Instantiate Client
 	suprClient, err := getSuprsendClient()
 	if err != nil {

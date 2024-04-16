@@ -59,5 +59,8 @@ func (w *workflowsService) formatAPIResponse(httpRes *http.Response) (*Response,
 }
 
 func (w *workflowsService) BulkInstance() BulkWorkflowsTrigger {
-	return &bulkWorkflowsTrigger{client: w.client}
+	return &bulkWorkflowsTrigger{
+		client:   w.client,
+		response: &BulkResponse{},
+	}
 }

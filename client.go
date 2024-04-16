@@ -20,9 +20,12 @@ type Client struct {
 	Tenants         *tenantsService
 	Brands          *brandsService
 	SubscriberLists *subscriberListsService
-	BulkWorkflows   *bulkWorkflowsService
-	BulkEvents      *bulkEventsService
-	BulkUsers       *bulkSubscribersService
+	Workflows       *workflowsService
+	// todo: Deprecated: this
+	BulkWorkflows *bulkWorkflowsService
+	//
+	BulkEvents *bulkEventsService
+	BulkUsers  *bulkSubscribersService
 	//
 	baseUrl string
 	debug   bool
@@ -72,6 +75,9 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 	c.Users = &subscribersService{client: c}
 	c.Tenants = newTenantsService(c)
 	c.Brands = newBrandService(c)
+	//
+	c.Workflows = newWorkflowService(c)
+	//
 	c.SubscriberLists = newSubscriberListsService(c)
 	c.BulkUsers = &bulkSubscribersService{client: c}
 	c.BulkEvents = &bulkEventsService{client: c}
@@ -123,6 +129,7 @@ func (c *Client) basicValidation() error {
 	return nil
 }
 
+// todo: Deprecated: this
 func (c *Client) TriggerWorkflow(wf *Workflow) (*Response, error) {
 	return c.workflowTrigger.Trigger(wf)
 }

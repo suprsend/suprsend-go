@@ -49,6 +49,31 @@ func validateWorkflowBodySchema(body map[string]interface{}) (map[string]interfa
 	return body, nil
 }
 
+func validateWorkflowTriggerBodySchema(body map[string]interface{}) (map[string]interface{}, error) {
+	// In case data is not provided, set it to empty dict
+	if d, found := body["data"]; !found || d == nil {
+		body["data"] = map[string]interface{}{}
+	}
+	schema, err := GetSchema("workflow_trigger")
+	if err != nil {
+		return body, err
+	}
+	// validate body
+	loadedBody := gojsonschema.NewGoLoader(body)
+	result, err := schema.Validate(loadedBody)
+	if err != nil {
+		return body, err
+	}
+	if !result.Valid() {
+		errList := []string{}
+		for _, err := range result.Errors() {
+			errList = append(errList, fmt.Sprintf(" - %v", err))
+		}
+		return body, fmt.Errorf("SuprsendValidationError: error in workflow body \n%v", strings.Join(errList, "\n"))
+	}
+	return body, nil
+}
+
 func validateTrackEventSchema(body map[string]interface{}) (map[string]interface{}, error) {
 	// In case props is not provided, set it to empty dict
 	if d, found := body["properties"]; !found || d == nil {

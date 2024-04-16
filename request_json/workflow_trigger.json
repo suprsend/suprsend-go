@@ -1,0 +1,338 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://github.com/suprsend/suprsend-go/request_json/workflow_trigger.json",
+  "title": "workflow_trigger",
+  "description": "Json schema for workflow trigger request",
+  "$comment": "Json schema for workflow trigger request",
+  "type": "object",
+  "properties": {
+    "$idempotency_key": {
+      "type": ["string", "null"],
+      "maxLength": 255,
+      "description": "unique id provided by client for request"
+    },
+    "tenant_id": {
+      "type": ["string", "null"],
+      "maxLength": 64,
+      "description": "tenant id for workflow to be run in context of a tenant"
+    },
+    "workflow": {
+      "$ref": "#/definitions/non_empty_string",
+      "description": "workflow slug"
+    },
+    "actor": {
+      "oneOf": [
+        {"$ref": "#/definitions/non_empty_string"},
+        {"$ref": "#/definitions/user_setting"}
+      ],
+      "description": "actor id/object of workflow"
+    },
+    "recipients": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {"$ref": "#/definitions/non_empty_string"},
+          {"$ref": "#/definitions/user_setting"}
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 100,
+      "description": "list of recipient id/object to run workflow for. At least 1 user is required"
+    },
+    "data": {
+      "type": "object",
+      "description": "variables to be used in workflow. e.g replacing templates variables."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "metadata of request"
+    },
+    "cancellation_key": {
+      "type": ["string", "null"],
+      "maxLength": 255,
+      "description": "cancellation key for workflow"
+    }
+  },
+  "required": ["workflow", "recipients", "data"],
+  "additionalProperties": false,
+  "definitions": {
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mobile_number_pattern": {
+      "type": "string", "minLength": 8,
+      "pattern": "^\\+[0-9\\s]+",
+      "message": {
+        "required": "Either a mobile-number or an array of mobile-numbers. e.g [\"+41446681800\"]",
+        "pattern": "number must start with + and must contain country code. e.g. +41446681800"
+      }
+    },
+    "email_pattern": {
+      "type": "string",
+      "format": "email",
+      "pattern": "^\\S+@\\S+\\.\\S+$",
+      "description": "email of an user",
+      "minLength": 6,
+      "maxLength": 127,
+      "message": {
+        "required": "",
+        "pattern": "value in email format required. e.g. user@example.com"
+      }
+    },
+    "slack_setting": {
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "type": "string",
+          "pattern": "^xox",
+          "description": "Bot User OAuth Access Token with prefix xoxb-"
+        },
+        "channel_id": {
+          "type": "string",
+          "pattern": "^[cC][a-zA-Z0-9]+$",
+          "description": "slack channel id. the bot must be part of it",
+          "message": {
+            "required": "",
+            "pattern": "Slack Channel id format: CXXXXXXXXX"
+          }
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[uUwW][a-zA-Z0-9]+$",
+          "description": "slack member id of user",
+          "message": {
+            "required": "",
+            "pattern": "Slack Member id format: [U|W]XXXXXXXXX"
+          }
+        },
+        "email": {
+          "$ref": "#/definitions/email_pattern"
+        },
+        "incoming_webhook": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://hooks.slack.com/",
+              "description": "incoming webhook url. e.g https://hooks.slack.com/TXXXXX/BXXXXX/XXXXXXXXXX"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ms_teams_setting": {
+      "type": "object",
+      "properties": {
+        "tenant_id": {
+          "type": "string",
+          "description": "ms teams tenant id"
+        },
+        "service_url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://smba.trafficmanager.net/",
+          "description": "service webhook url. e.g https://smba.trafficmanager.net/XXXXXXXXXX"
+        },
+        "conversation_id": {
+          "type": "string",
+          "description": "ms team conversation id"
+        },
+        "user_id": {
+          "type": "string",
+          "description": "ms team user id"
+        },
+        "incoming_webhook": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "format": "uri",
+              "description": "incoming webhook url. e.g https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "androidpush_settings": {
+      "type": "object",
+      "properties": {
+        "token":      {"type": "string", "minLength": 1, "description": "androidpush token"},
+        "provider":   {
+          "type": "string", "enum": ["fcm", "xiaomi", "oppo"],
+          "description": "androidpush token provider(fcm/xiaomi)"
+        },
+        "device_id":  {"type": ["string", "null"]}
+      },
+      "required": ["token", "provider"],
+      "additionalProperties": false
+    },
+    "iospush_settings": {
+      "type": "object",
+      "properties": {
+        "token":      {"type": "string", "minLength": 1, "description": "iospush token"},
+        "provider":   {
+          "type": "string", "enum": ["apns"],
+          "description": "iospush token provider(apns)"
+        },
+        "device_id":  {"type": ["string", "null"]}
+      },
+      "required": ["token", "provider"],
+      "additionalProperties": false
+    },
+    "user_setting": {
+      "type": "object",
+      "properties": {
+        "is_transient": {
+          "type": ["boolean", "null"],
+          "description": "indicates whether this is a transient user. Profiles are not created for such users."
+        },
+        "distinct_id": {
+          "type": ["string", "null"],
+          "description": "distinct_id: Id which uniquely identifies a user in your app"
+        },
+        "$preferred_language": {
+          "type": ["string", "null"],
+          "description": "preferred_language: 2-letter language code in ISO 639-1 Alpha-2 code format. e.g en (for English)"
+        },
+        "$timezone": {
+          "type": ["string", "null"],
+          "description": "timezone: in IANA timezone format e.g 'America/Los_Angeles'"
+        },
+        "$channels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["androidpush", "iospush", "webpush", "email", "sms", "whatsapp", "slack", "inbox", "messenger", "ms_teams"]
+          },
+          "minItems": 0,
+          "description": "user preferred channels. notification will be tried only on specified channels e.g ['email', 'sms']"
+        },
+        "$email": {
+          "oneOf": [
+            {"$ref": "#/definitions/email_pattern"},
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": { "$ref": "#/definitions/email_pattern" }
+            }
+          ]
+        },
+        "$sms": {
+          "oneOf": [
+            {"$ref": "#/definitions/mobile_number_pattern"},
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": { "$ref": "#/definitions/mobile_number_pattern" }
+            }
+          ]
+        },
+        "$androidpush": {
+          "oneOf": [
+            {"$ref": "#/definitions/androidpush_settings"},
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": { "$ref": "#/definitions/androidpush_settings" }
+            }
+          ]
+        },
+        "$iospush": {
+          "oneOf": [
+            {"$ref": "#/definitions/iospush_settings"},
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": { "$ref": "#/definitions/iospush_settings" }
+            }
+          ]
+        },
+        "$whatsapp": {
+          "oneOf": [
+            {"$ref": "#/definitions/mobile_number_pattern"},
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": { "$ref": "#/definitions/mobile_number_pattern" }
+            }
+          ]
+        },
+        "$webpush": {
+          "oneOf": [
+            {"type": "object", "minProperties": 1},
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": {"type": "object", "minProperties": 1}
+            }
+          ]
+        },
+        "$slack": {
+          "oneOf": [
+            { "$ref": "#/definitions/slack_setting" },
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": { "$ref": "#/definitions/slack_setting" }
+            }
+          ]
+        },
+        "$ms_teams": {
+          "oneOf": [
+            { "$ref": "#/definitions/ms_teams_setting" },
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": { "$ref": "#/definitions/ms_teams_setting" }
+            }
+          ]
+        },
+        "$inbox": {
+          "oneOf": [
+            { "$ref": "#/definitions/non_empty_string" },
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": { "$ref": "#/definitions/non_empty_string" }
+            }
+          ]
+        },
+        "$messenger": {
+          "oneOf": [
+            {"$ref": "#/definitions/non_empty_string"},
+            {
+              "type": "array",
+              "uniqueItems": false,
+              "maxItems": 10,
+              "minItems": 1,
+              "items": { "$ref": "#/definitions/non_empty_string" }
+            }
+          ]
+        }
+      },
+      "required": []
+    }
+  }
+}

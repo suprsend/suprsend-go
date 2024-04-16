@@ -9,6 +9,7 @@ import (
 	"github.com/jinzhu/copier"
 )
 
+// todo: Deprecated: this
 type Workflow struct {
 	Body           map[string]interface{}
 	IdempotencyKey string

@@ -20,7 +20,7 @@ type bulkWorkflowsTrigger struct {
 	client *Client
 	//
 	_workflows      []WorkflowTriggerRequest
-	_pendingRecords []pendingWorkflowRequestRecord
+	_pendingRecords []pendingWorkflowTriggerRecord
 	chunks          []*bulkWorkflowsRequestChunk
 	//
 	response *BulkResponse
@@ -28,7 +28,7 @@ type bulkWorkflowsTrigger struct {
 	_invalidRecords []map[string]interface{}
 }
 
-type pendingWorkflowRequestRecord struct {
+type pendingWorkflowTriggerRecord struct {
 	record     map[string]interface{}
 	recordSize int
 }
@@ -42,7 +42,7 @@ func (b *bulkWorkflowsTrigger) _validateWorkflows() {
 		} else {
 			b._pendingRecords = append(
 				b._pendingRecords,
-				pendingWorkflowRequestRecord{
+				pendingWorkflowTriggerRecord{
 					record:     wfJson,
 					recordSize: bodySize,
 				},

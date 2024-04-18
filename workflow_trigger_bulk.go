@@ -10,7 +10,7 @@ import (
 )
 
 type BulkWorkflowsTrigger interface {
-	Append(...*WorkflowRequest)
+	Append(...*WorkflowTriggerRequest)
 	Trigger() (*BulkResponse, error)
 }
 
@@ -19,7 +19,7 @@ var _ BulkWorkflowsTrigger = &bulkWorkflowsTrigger{}
 type bulkWorkflowsTrigger struct {
 	client *Client
 	//
-	_workflows      []WorkflowRequest
+	_workflows      []WorkflowTriggerRequest
 	_pendingRecords []pendingWorkflowRequestRecord
 	chunks          []*bulkWorkflowsRequestChunk
 	//
@@ -65,12 +65,12 @@ func (b *bulkWorkflowsTrigger) _chunkify(startIdx int) {
 	}
 }
 
-func (b *bulkWorkflowsTrigger) Append(workflows ...*WorkflowRequest) {
+func (b *bulkWorkflowsTrigger) Append(workflows ...*WorkflowTriggerRequest) {
 	for _, wf := range workflows {
 		if wf == nil {
 			continue
 		}
-		wfCopy := WorkflowRequest{}
+		wfCopy := WorkflowTriggerRequest{}
 		copier.CopyWithOption(&wfCopy, wf, copier.Option{DeepCopy: true})
 		b._workflows = append(b._workflows, wfCopy)
 	}

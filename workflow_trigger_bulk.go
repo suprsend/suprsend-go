@@ -10,7 +10,7 @@ import (
 )
 
 type BulkWorkflowsTrigger interface {
-	Append(...*WorkflowRequest)
+	Append(...*WorkflowTriggerRequest)
 	Trigger() (*BulkResponse, error)
 }
 
@@ -19,8 +19,8 @@ var _ BulkWorkflowsTrigger = &bulkWorkflowsTrigger{}
 type bulkWorkflowsTrigger struct {
 	client *Client
 	//
-	_workflows      []WorkflowRequest
-	_pendingRecords []pendingWorkflowRequestRecord
+	_workflows      []WorkflowTriggerRequest
+	_pendingRecords []pendingWorkflowTriggerRecord
 	chunks          []*bulkWorkflowsRequestChunk
 	//
 	response *BulkResponse
@@ -28,7 +28,7 @@ type bulkWorkflowsTrigger struct {
 	_invalidRecords []map[string]interface{}
 }
 
-type pendingWorkflowRequestRecord struct {
+type pendingWorkflowTriggerRecord struct {
 	record     map[string]interface{}
 	recordSize int
 }
@@ -42,7 +42,7 @@ func (b *bulkWorkflowsTrigger) _validateWorkflows() {
 		} else {
 			b._pendingRecords = append(
 				b._pendingRecords,
-				pendingWorkflowRequestRecord{
+				pendingWorkflowTriggerRecord{
 					record:     wfJson,
 					recordSize: bodySize,
 				},
@@ -65,12 +65,12 @@ func (b *bulkWorkflowsTrigger) _chunkify(startIdx int) {
 	}
 }
 
-func (b *bulkWorkflowsTrigger) Append(workflows ...*WorkflowRequest) {
+func (b *bulkWorkflowsTrigger) Append(workflows ...*WorkflowTriggerRequest) {
 	for _, wf := range workflows {
 		if wf == nil {
 			continue
 		}
-		wfCopy := WorkflowRequest{}
+		wfCopy := WorkflowTriggerRequest{}
 		copier.CopyWithOption(&wfCopy, wf, copier.Option{DeepCopy: true})
 		b._workflows = append(b._workflows, wfCopy)
 	}

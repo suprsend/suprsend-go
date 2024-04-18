@@ -7,8 +7,8 @@ import (
 )
 
 type WorkflowsService interface {
-	Trigger(*WorkflowRequest) (*Response, error)
-	BulkInstance() BulkWorkflowsTrigger
+	Trigger(*WorkflowTriggerRequest) (*Response, error)
+	BulkTriggerInstance() BulkWorkflowsTrigger
 }
 
 type workflowsService struct {
@@ -24,7 +24,7 @@ func newWorkflowService(client *Client) *workflowsService {
 	return ws
 }
 
-func (w *workflowsService) Trigger(workflow *WorkflowRequest) (*Response, error) {
+func (w *workflowsService) Trigger(workflow *WorkflowTriggerRequest) (*Response, error) {
 	wfBody, _, err := workflow.getFinalJson(w.client, false)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (w *workflowsService) formatAPIResponse(httpRes *http.Response) (*Response,
 	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }
 
-func (w *workflowsService) BulkInstance() BulkWorkflowsTrigger {
+func (w *workflowsService) BulkTriggerInstance() BulkWorkflowsTrigger {
 	return &bulkWorkflowsTrigger{
 		client:   w.client,
 		response: &BulkResponse{},

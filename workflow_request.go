@@ -7,14 +7,14 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-type WorkflowRequest struct {
+type WorkflowTriggerRequest struct {
 	Body            map[string]interface{}
 	IdempotencyKey  string
 	TenantId        string
 	CancellationKey string
 }
 
-func (w *WorkflowRequest) AddAttachment(filePath string, ao *AttachmentOption) error {
+func (w *WorkflowTriggerRequest) AddAttachment(filePath string, ao *AttachmentOption) error {
 	if d, found := w.Body["data"]; !found || d == nil {
 		w.Body["data"] = map[string]interface{}{}
 	}
@@ -35,7 +35,7 @@ func (w *WorkflowRequest) AddAttachment(filePath string, ao *AttachmentOption) e
 	return nil
 }
 
-func (w *WorkflowRequest) getFinalJson(client *Client, isPartOfBulk bool) (map[string]interface{}, int, error) {
+func (w *WorkflowTriggerRequest) getFinalJson(client *Client, isPartOfBulk bool) (map[string]interface{}, int, error) {
 	// Add idempotency_key if present
 	if w.IdempotencyKey != "" {
 		w.Body["$idempotency_key"] = w.IdempotencyKey
@@ -65,7 +65,7 @@ func (w *WorkflowRequest) getFinalJson(client *Client, isPartOfBulk bool) (map[s
 	return w.Body, apparentSize, nil
 }
 
-func (w *WorkflowRequest) asJson() map[string]interface{} {
+func (w *WorkflowTriggerRequest) asJson() map[string]interface{} {
 	body := map[string]interface{}{}
 	copier.CopyWithOption(&body, w.Body, copier.Option{DeepCopy: true})
 

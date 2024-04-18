@@ -43,7 +43,7 @@ func triggerWorkflowAPIExample() {
 		log.Println(err)
 		return
 	}
-	// Create WorkflowRequest body
+	// Create WorkflowTriggerRequest body
 	wfReqBody := map[string]interface{}{
 		"workflow": "workflow-slug", // mandatory
 		// "actor":    "actor-distinct-id", // optional
@@ -77,7 +77,7 @@ func triggerWorkflowAPIExample() {
 		},
 	}
 
-	wf := &suprsend.WorkflowRequest{
+	wf := &suprsend.WorkflowTriggerRequest{
 		Body:           wfReqBody,
 		IdempotencyKey: "",
 		TenantId:       "",
@@ -102,8 +102,8 @@ func bulkWorkflowTriggerAPIExample() {
 		log.Println(err)
 		return
 	}
-	// WorkflowRequest: 1
-	wf1 := &suprsend.WorkflowRequest{
+	// WorkflowTriggerRequest: 1
+	wf1 := &suprsend.WorkflowTriggerRequest{
 		Body: map[string]interface{}{
 			"workflow": "workflow-slug",
 			// "actor":    "actor-distinct-id", // optional
@@ -140,8 +140,8 @@ func bulkWorkflowTriggerAPIExample() {
 		TenantId:       "",
 	}
 
-	// WorkflowRequest: 2
-	wf2 := &suprsend.WorkflowRequest{
+	// WorkflowTriggerRequest: 2
+	wf2 := &suprsend.WorkflowTriggerRequest{
 		Body: map[string]interface{}{
 			"workflow": "workflow-slug",
 			// "actor":    "actor-distinct-id", // optional
@@ -180,7 +180,7 @@ func bulkWorkflowTriggerAPIExample() {
 	// ...... Add as many Workflow records as required.
 
 	// Create workflows bulk instance
-	bulkIns := suprClient.Workflows.BulkInstance()
+	bulkIns := suprClient.Workflows.BulkTriggerInstance()
 	// add all your workflows to bulkInstance
 	bulkIns.Append(wf1, wf2)
 	// Trigger

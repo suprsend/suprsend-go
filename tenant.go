@@ -4,6 +4,7 @@ type Tenant struct {
 	TenantId   *string `json:"tenant_id,omitempty"`
 	TenantName *string `json:"tenant_name,omitempty"`
 	Logo       *string `json:"logo,omitempty"`
+	Timezone   *string `json:"timezone,omitempty"`
 	//
 	BlockedChannels        []string `json:"blocked_channels"`
 	EmbeddedPreferenceUrl  *string  `json:"embedded_preference_url,omitempty"`

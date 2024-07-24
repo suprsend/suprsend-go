@@ -554,6 +554,7 @@ func tenantExample() {
 	tenantPayload := &suprsend.Tenant{
 		TenantName: suprsend.String("Tenant Name"),
 		Logo:       suprsend.String("Tenant logo url"),
+		Timezone:   suprsend.String("America/Los_Angeles"),
 		// BlockedChannels: []string{},
 		// EmbeddedPreferenceUrl:  suprsend.String("https://company-url.com/preferences"),
 		// HostedPreferenceDomain: suprsend.String("preferences.suprsend.com"),

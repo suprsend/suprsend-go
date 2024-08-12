@@ -44,16 +44,13 @@ func main() {
 		log.Println(err)
 		return
 	}
-	// Create workflow body
-	wfBody := map[string]interface{}{
-		"name":                  "Workflow Name",
-		"template":              "template slug",
-		"notification_category": "category",
-		// "delay":                 "15m", // Chek duration format in documentation
-		"users": []map[string]interface{}{
+	// Create WorkflowTriggerRequest body
+	wfReqBody := map[string]interface{}{
+		"workflow": "workflow-slug",
+		"recipients": []map[string]interface{}{
 			{
 				"distinct_id": "0f988f74-6982-41c5-8752-facb6911fb08",
-				// if $channels is present, communication will be tried on mentioned channels only.
+				// if $channels is present, communication will be tried on mentioned channels only (for this request).
 				// "$channels": []string{"email"},
 				"$email": []string{"user@example.com"},
 				"$androidpush": []map[string]interface{}{
@@ -61,12 +58,7 @@ func main() {
 				},
 			},
 		},
-		// delivery instruction. how should notifications be sent, and whats the success metric
-		"delivery": map[string]interface{}{
-			"smart":   false,
-			"success": "seen",
-		},
-		// # data can be any json / serializable python-dictionary
+		// data can be any json / serializable map
 		"data": map[string]interface{}{
 			"first_name":   "User",
 			"spend_amount": "$10",
@@ -79,16 +71,17 @@ func main() {
 		},
 	}
 
-	wf := &suprsend.Workflow{
-		Body:           wfBody,
+	wf := &suprsend.WorkflowTriggerRequest{
+		Body:           wfReqBody,
 		IdempotencyKey: "",
 		TenantId:        "",
 	}
     // Call TriggerWorkflow to send request to Suprsend
-	_, err = suprClient.TriggerWorkflow(wf)
+	resp, err = suprClient.Workflows.Trigger(wf)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	log.Println(resp)
 }
 
 

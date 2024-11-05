@@ -23,6 +23,9 @@ func main() {
 	//
 	subscriberListExample()
 	subscriberListVersioningExample()
+	//
+	objectCrudOperationsExample()
+	updateObjectPropertiesExample()
 }
 
 func getSuprsendClient() (*suprsend.Client, error) {
@@ -762,4 +765,212 @@ func subscriberListVersioningExample() {
 		log.Fatalln(err)
 	}
 	log.Println("delete version resp: ", deleteVersionResp)
+}
+
+func objectCrudOperationsExample() {
+	// Instantiate Client
+	suprClient, err := getSuprsendClient()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	objectType := "sdk"
+	objectId := "go"
+	//
+	// ================= Create Object
+	object, _ := suprClient.Objects.Upsert(context.Background(), objectType, objectId, map[string]interface{}{
+		"prop1": "val1",
+	})
+	log.Println(object)
+
+	// ============= get object
+
+	object, _ = suprClient.Objects.Get(context.Background(), objectType, objectId)
+	log.Println(object)
+
+	// =============== list object
+
+	objects, _ := suprClient.Objects.List(context.Background(), objectType, nil)
+	log.Println(objects)
+
+	// ============= edit object
+
+	object, _ = suprClient.Objects.Edit(context.Background(), objectType, objectId, map[string]interface{}{
+		"prop1": "val1",
+		"operations": []map[string]interface{}{
+			{
+				"$set": map[string]any{
+					"k1": "v1",
+					"k2": "v2",
+				},
+			},
+			{
+				"$remove": map[string]any{
+					"k1": "v1",
+				},
+			},
+		},
+	})
+	log.Println(object)
+
+	// -------- delete [create and delete]
+	object, _ = suprClient.Objects.Upsert(context.Background(), "delete_obj", "delete_obj_id", map[string]interface{}{
+		"prop1": "val1",
+	})
+	log.Println(object)
+
+	object, _ = suprClient.Objects.Delete(context.Background(), "delete_obj", "delete_obj_id")
+	log.Println(object)
+
+	// ----- bulk delete
+	object, _ = suprClient.Objects.Upsert(context.Background(), "ot1", "oid1", map[string]interface{}{
+		"prop1": "val1",
+	})
+	log.Println(object)
+
+	object, _ = suprClient.Objects.Upsert(context.Background(), "ot1", "oid2", map[string]interface{}{
+		"prop1": "val1",
+	})
+	log.Println(object)
+
+	object, _ = suprClient.Objects.BulkDelete(context.Background(), "ot1", map[string]any{
+		"object_ids": []string{"oid1", "oid2"},
+	})
+	log.Println(object)
+
+	// ====================== subscriptions
+	object, _ = suprClient.Objects.CreateSubscriptions(context.Background(), objectType, objectId, map[string]any{
+		"recipients": []string{"praveen@suprsend.com"},
+	})
+	log.Println(object)
+
+	object, _ = suprClient.Objects.GetSubscriptions(context.Background(), objectType, objectId, nil)
+	log.Println(object)
+
+	object, _ = suprClient.Objects.DeleteSubscriptions(context.Background(), objectType, objectId, map[string]any{
+		"recipients": []string{"praveen@suprsend.com"},
+	})
+	log.Println(object)
+}
+
+func updateObjectPropertiesExample() {
+	// Instantiate Client
+	suprClient, err := getSuprsendClient()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	objectType := "sdk"
+	objectId := "go"
+	//
+	object, _ := suprClient.Objects.GetInstance(objectType, objectId)
+	// Add email channel
+	object.AddEmail("user@example.com")
+	// add sms channel
+	object.AddSms("+1444455555")
+	// Add whatsapp channel
+	object.AddWhatsapp("+1444455555")
+	// Add androidpush token, token providers: fcm/xiaomi
+	object.AddAndroidpush("__fcm_push_token__", "fcm")
+	// Add iospush token, token providers: apns
+	object.AddIospush("__ios_push_token__", "apns")
+	// Add webpush token (vapid)
+	object.AddWebpush(map[string]interface{}{
+		"keys": map[string]interface{}{
+			"auth":   "",
+			"p256dh": "",
+		},
+		"endpoint": "",
+	}, "vapid")
+
+	// add slack using email
+	object.AddSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
+	// add slack using user_id
+	object.AddSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
+	// add slack using channel_id
+	object.AddSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
+	// add slack using incoming-webhook
+	object.AddSlack(map[string]interface{}{
+		"incoming_webhook": map[string]interface{}{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
+	})
+	// DM on Team's channel using conversation id
+	object.AddMSTeams(map[string]interface{}{
+		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "conversation_id": "XXXXXXXXXXXX",
+	})
+	// add teams via DM user using team user id
+	object.AddMSTeams(map[string]interface{}{
+		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "user_id": "XXXXXXXXXXXX",
+	})
+	// add teams using incoming webhook
+	object.AddMSTeams(map[string]interface{}{
+		"incoming_webhook": map[string]interface{}{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
+	})
+	//
+	// remove email channel
+	object.RemoveEmail("user@example.com")
+	// remove sms channel
+	object.RemoveSms("+1444455555")
+	// remove whatsapp channel
+	object.RemoveWhatsapp("+1444455555")
+	// remove androidpush token
+	object.RemoveAndroidpush("__fcm_push_token__", "fcm")
+	// remove iospush token
+	object.RemoveIospush("__ios_push_token__", "apns")
+
+	// remove webpush token
+	object.RemoveWebpush(map[string]interface{}{
+		"keys": map[string]interface{}{
+			"auth":   "",
+			"p256dh": "",
+		},
+		"endpoint": "",
+	}, "vapid")
+	// remove slack using email
+	object.RemoveSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
+	// remove slack using user_id
+	object.RemoveSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
+	// remove slack using channel_id
+	object.RemoveSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
+	// remove slack using incoming-webhook
+	object.RemoveSlack(map[string]interface{}{
+		"incoming_webhook": map[string]interface{}{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
+	})
+	// remove teams via DM on Team's channel using conversation id
+	object.RemoveMSTeams(map[string]interface{}{
+		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "conversation_id": "XXXXXXXXXXXX",
+	})
+	// remove teams via DM user using team user id
+	object.RemoveMSTeams(map[string]interface{}{
+		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "user_id": "XXXXXXXXXXXX",
+	})
+	// remove teams using incoming webhook
+	object.RemoveMSTeams(map[string]interface{}{
+		"incoming_webhook": map[string]interface{}{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
+	})
+
+	// Set user preferred language. languageCode must be in [ISO 639-1 2-letter] format
+	object.SetPreferredLanguage("en")
+	// set timezone property at subscriber level based on IANA timezone info
+	object.SetTimezone("America/Los_Angeles")
+	// If you need to remove all emails for this user, call user.Unset(["$email"])
+	object.Unset([]string{"$email"})
+	// set a user property using a map
+	object.Set(map[string]interface{}{"prop1": "val1", "prop2": "val2"})
+	// set a user property using a key, value pair
+	object.SetKV("prop", "value")
+	// set a user property once using map
+	object.SetOnce(map[string]interface{}{"prop3": "val3"})
+	// set a user property once using a key value pair
+	object.SetOnceKV("prop4", "val4")
+	// increment an already existing user property using key value pair
+	object.IncrementKV("increment_prop", 2)
+	// increment an already existing property using map
+	object.Increment(map[string]interface{}{"increment_prop1": 5})
+
+	// Save user
+	resp, err := object.Save()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(resp)
 }

@@ -387,7 +387,7 @@ func (s *subscriberHelper) removeIdentity(key string, val interface{}, kvMap map
 // ------------------------
 
 func (s *subscriberHelper) _checkIdentValString(value interface{}, caller string) (interface{}, bool) {
-	msg := "value must a string with proper value"
+	msg := "value must be a string with proper value"
 	if vstring, ok := value.(string); !ok {
 		s._errors = append(s._errors, fmt.Sprintf("[%s] %s", caller, msg))
 		return value, false

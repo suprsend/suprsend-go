@@ -19,6 +19,7 @@ type Client struct {
 	Users           *subscribersService
 	Tenants         *tenantsService
 	Brands          *brandsService
+	Objects         *objectsService
 	SubscriberLists *subscriberListsService
 	Workflows       *workflowsService
 	// todo: Deprecated: this
@@ -75,6 +76,7 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 	c.Users = &subscribersService{client: c}
 	c.Tenants = newTenantsService(c)
 	c.Brands = newBrandService(c)
+	c.Objects = newObjectsService(c)
 	//
 	c.Workflows = newWorkflowService(c)
 	//

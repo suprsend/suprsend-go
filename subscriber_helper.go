@@ -22,14 +22,14 @@ var IDENT_KEYS_ALL = []string{IDENT_KEY_EMAIL, IDENT_KEY_SMS, IDENT_KEY_ANDROIDP
 	IDENT_KEY_WHATSAPP, IDENT_KEY_WEBPUSH, IDENT_KEY_SLACK, IDENT_KEY_MS_TEAMS}
 
 const (
-	KEY_PUSHVENDOR         = "$pushvendor"
+	KEY_ID_PROVIDER        = "$id_provider"
 	KEY_PREFERRED_LANGUAGE = "$preferred_language"
 	KEY_TIMEZONE           = "$timezone"
 )
 
 var OTHER_RESERVED_KEYS = []string{
 	"$messenger", "$inbox",
-	KEY_PUSHVENDOR, "$device_id",
+	KEY_ID_PROVIDER, "$device_id",
 	"$insert_id", "$time",
 	"$set", "$set_once", "$add", "$append", "$remove", "$unset",
 	"$identify", "$anon_id", "$identified_id",
@@ -268,36 +268,36 @@ func (s *subscriberHelper) addIdentity(key string, val interface{}, kvMap map[st
 	case IDENT_KEY_ANDROIDPUSH:
 		val, isValid := s._checkIdentValString(val, newCaller)
 		if isValid {
-			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			idProvider := ""
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
-					pushvendor = pvStr
+					idProvider = pvStr
 				}
 			}
-			s.addAndroidpush(val.(string), pushvendor, newCaller)
+			s.addAndroidpush(val.(string), idProvider, newCaller)
 		}
 
 	case IDENT_KEY_IOSPUSH:
 		val, isValid := s._checkIdentValString(val, newCaller)
 		if isValid {
-			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			idProvider := ""
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
-					pushvendor = pvStr
+					idProvider = pvStr
 				}
 			}
-			s.addIospush(val.(string), pushvendor, newCaller)
+			s.addIospush(val.(string), idProvider, newCaller)
 		}
 	case IDENT_KEY_WEBPUSH:
 		val, isValid := s._checkIdentValDict(val, newCaller)
 		if isValid {
-			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			idProvider := ""
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
-					pushvendor = pvStr
+					idProvider = pvStr
 				}
 			}
-			s.addWebpush(val.(map[string]interface{}), pushvendor, newCaller)
+			s.addWebpush(val.(map[string]interface{}), idProvider, newCaller)
 		}
 
 	case IDENT_KEY_SLACK:
@@ -338,36 +338,36 @@ func (s *subscriberHelper) removeIdentity(key string, val interface{}, kvMap map
 	case IDENT_KEY_ANDROIDPUSH:
 		val, isValid := s._checkIdentValString(val, newCaller)
 		if isValid {
-			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			idProvider := ""
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
-					pushvendor = pvStr
+					idProvider = pvStr
 				}
 			}
-			s.removeAndroidpush(val.(string), pushvendor, newCaller)
+			s.removeAndroidpush(val.(string), idProvider, newCaller)
 		}
 
 	case IDENT_KEY_IOSPUSH:
 		val, isValid := s._checkIdentValString(val, newCaller)
 		if isValid {
-			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			idProvider := ""
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
-					pushvendor = pvStr
+					idProvider = pvStr
 				}
 			}
-			s.removeIospush(val.(string), pushvendor, newCaller)
+			s.removeIospush(val.(string), idProvider, newCaller)
 		}
 	case IDENT_KEY_WEBPUSH:
 		val, isValid := s._checkIdentValDict(val, newCaller)
 		if isValid {
-			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			idProvider := ""
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
-					pushvendor = pvStr
+					idProvider = pvStr
 				}
 			}
-			s.removeWebpush(val.(map[string]interface{}), pushvendor, newCaller)
+			s.removeWebpush(val.(map[string]interface{}), idProvider, newCaller)
 		}
 
 	case IDENT_KEY_SLACK:
@@ -542,7 +542,7 @@ func (s *subscriberHelper) addAndroidpush(value string, provider string, caller 
 		return
 	}
 	s.appendDict[IDENT_KEY_ANDROIDPUSH] = value
-	s.appendDict[KEY_PUSHVENDOR] = provider
+	s.appendDict[KEY_ID_PROVIDER] = provider
 }
 
 func (s *subscriberHelper) removeAndroidpush(value string, provider string, caller string) {
@@ -551,7 +551,7 @@ func (s *subscriberHelper) removeAndroidpush(value string, provider string, call
 		return
 	}
 	s.removeDict[IDENT_KEY_ANDROIDPUSH] = value
-	s.removeDict[KEY_PUSHVENDOR] = provider
+	s.removeDict[KEY_ID_PROVIDER] = provider
 }
 
 // ------------------------ Iospush [providers: apns]
@@ -581,7 +581,7 @@ func (s *subscriberHelper) addIospush(value string, provider string, caller stri
 		return
 	}
 	s.appendDict[IDENT_KEY_IOSPUSH] = value
-	s.appendDict[KEY_PUSHVENDOR] = provider
+	s.appendDict[KEY_ID_PROVIDER] = provider
 }
 
 func (s *subscriberHelper) removeIospush(value string, provider string, caller string) {
@@ -590,7 +590,7 @@ func (s *subscriberHelper) removeIospush(value string, provider string, caller s
 		return
 	}
 	s.removeDict[IDENT_KEY_IOSPUSH] = value
-	s.removeDict[KEY_PUSHVENDOR] = provider
+	s.removeDict[KEY_ID_PROVIDER] = provider
 }
 
 // ------------------------ Webpush [providers: vapid]
@@ -620,7 +620,7 @@ func (s *subscriberHelper) addWebpush(value map[string]interface{}, provider str
 		return
 	}
 	s.appendDict[IDENT_KEY_WEBPUSH] = iValue.(map[string]interface{})
-	s.appendDict[KEY_PUSHVENDOR] = provider
+	s.appendDict[KEY_ID_PROVIDER] = provider
 }
 
 func (s *subscriberHelper) removeWebpush(value map[string]interface{}, provider string, caller string) {
@@ -629,7 +629,7 @@ func (s *subscriberHelper) removeWebpush(value map[string]interface{}, provider 
 		return
 	}
 	s.removeDict[IDENT_KEY_WEBPUSH] = iValue.(map[string]interface{})
-	s.removeDict[KEY_PUSHVENDOR] = provider
+	s.removeDict[KEY_ID_PROVIDER] = provider
 }
 
 // ------------------------ Slack

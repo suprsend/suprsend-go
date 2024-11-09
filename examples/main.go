@@ -67,7 +67,7 @@ func triggerWorkflowAPIExample() {
 				"name": "Recipient 1",
 			},
 		},
-		// # data can be any json / serializable python-dictionary
+		// # data can be any json / serializable map
 		"data": map[string]interface{}{
 			"first_name":   "User",
 			"spend_amount": "$10",
@@ -557,6 +557,7 @@ func tenantExample() {
 	tenantPayload := &suprsend.Tenant{
 		TenantName: suprsend.String("Tenant Name"),
 		Logo:       suprsend.String("Tenant logo url"),
+		Timezone:   suprsend.String("America/Los_Angeles"),
 		// BlockedChannels: []string{},
 		// EmbeddedPreferenceUrl:  suprsend.String("https://company-url.com/preferences"),
 		// HostedPreferenceDomain: suprsend.String("preferences.suprsend.com"),

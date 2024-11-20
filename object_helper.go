@@ -221,7 +221,7 @@ func (o *objectHelper) addIdentity(key string, val interface{}, kvMap map[string
 		val, isValid := o._checkIdentValString(val, newCaller)
 		if isValid {
 			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
 					pushvendor = pvStr
 				}
@@ -233,7 +233,7 @@ func (o *objectHelper) addIdentity(key string, val interface{}, kvMap map[string
 		val, isValid := o._checkIdentValString(val, newCaller)
 		if isValid {
 			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
 					pushvendor = pvStr
 				}
@@ -244,7 +244,7 @@ func (o *objectHelper) addIdentity(key string, val interface{}, kvMap map[string
 		val, isValid := o._checkIdentValDict(val, newCaller)
 		if isValid {
 			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
 					pushvendor = pvStr
 				}
@@ -291,7 +291,7 @@ func (o *objectHelper) removeIdentity(key string, val interface{}, kvMap map[str
 		val, isValid := o._checkIdentValString(val, newCaller)
 		if isValid {
 			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
 					pushvendor = pvStr
 				}
@@ -303,7 +303,7 @@ func (o *objectHelper) removeIdentity(key string, val interface{}, kvMap map[str
 		val, isValid := o._checkIdentValString(val, newCaller)
 		if isValid {
 			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
 					pushvendor = pvStr
 				}
@@ -314,7 +314,7 @@ func (o *objectHelper) removeIdentity(key string, val interface{}, kvMap map[str
 		val, isValid := o._checkIdentValDict(val, newCaller)
 		if isValid {
 			pushvendor := ""
-			if pv, found := kvMap[KEY_PUSHVENDOR]; found {
+			if pv, found := kvMap[KEY_ID_PROVIDER]; found {
 				if pvStr, ok := pv.(string); ok {
 					pushvendor = pvStr
 				}
@@ -429,12 +429,6 @@ func (o *objectHelper) _checkAndroidpushValue(value string, provider string, cal
 		return value, provider, false
 	}
 	value = iValue.(string)
-	// -- validate provider
-	iProvider, isValid := o._checkIdentValString(provider, caller)
-	if !isValid {
-		return value, provider, false
-	}
-	provider = iProvider.(string)
 	// convert to lowercase to make it case-insensitive
 	provider = strings.ToLower(provider)
 	return value, provider, true
@@ -446,7 +440,7 @@ func (o *objectHelper) addAndroidpush(value string, provider string, caller stri
 		return
 	}
 	o.appendDict[IDENT_KEY_ANDROIDPUSH] = value
-	o.appendDict[KEY_PUSHVENDOR] = provider
+	o.appendDict[KEY_ID_PROVIDER] = provider
 }
 
 func (o *objectHelper) removeAndroidpush(value string, provider string, caller string) {
@@ -455,7 +449,7 @@ func (o *objectHelper) removeAndroidpush(value string, provider string, caller s
 		return
 	}
 	o.removeDict[IDENT_KEY_ANDROIDPUSH] = value
-	o.removeDict[KEY_PUSHVENDOR] = provider
+	o.removeDict[KEY_ID_PROVIDER] = provider
 }
 
 // ------------------------ Iospush
@@ -466,13 +460,7 @@ func (o *objectHelper) _checkIospushValue(value string, provider string, caller 
 		return value, provider, false
 	}
 	value = iValue.(string)
-	// -- validate provider
-	iProvider, isValid := o._checkIdentValString(provider, caller)
-	if !isValid {
-		return value, provider, false
-	}
-	provider = iProvider.(string)
-	// convert to lowercase to make it case-insensitive
+	// convert provider to lowercase to make it case-insensitive
 	provider = strings.ToLower(provider)
 	return value, provider, true
 }
@@ -483,7 +471,7 @@ func (o *objectHelper) addIospush(value string, provider string, caller string) 
 		return
 	}
 	o.appendDict[IDENT_KEY_IOSPUSH] = value
-	o.appendDict[KEY_PUSHVENDOR] = provider
+	o.appendDict[KEY_ID_PROVIDER] = provider
 }
 
 func (o *objectHelper) removeIospush(value string, provider string, caller string) {
@@ -492,7 +480,7 @@ func (o *objectHelper) removeIospush(value string, provider string, caller strin
 		return
 	}
 	o.removeDict[IDENT_KEY_IOSPUSH] = value
-	o.removeDict[KEY_PUSHVENDOR] = provider
+	o.removeDict[KEY_ID_PROVIDER] = provider
 }
 
 // ------------------------ Webpush [providers: vapid]
@@ -503,13 +491,7 @@ func (o *objectHelper) _checkWebpushDict(value map[string]interface{}, provider 
 		o._errors = append(o._errors, fmt.Sprintf("[%s] %s", caller, msg))
 		return value, provider, false
 	}
-	// -- validate provider
-	iProvider, isValid := o._checkIdentValString(provider, caller)
-	if !isValid {
-		return value, provider, false
-	}
-	provider = iProvider.(string)
-	// convert to lowercase to make it case-insensitive
+	// convert provider to lowercase to make it case-insensitive
 	provider = strings.ToLower(provider)
 	return value, provider, true
 }
@@ -520,7 +502,7 @@ func (o *objectHelper) addWebpush(value map[string]interface{}, provider string,
 		return
 	}
 	o.appendDict[IDENT_KEY_WEBPUSH] = iValue.(map[string]interface{})
-	o.appendDict[KEY_PUSHVENDOR] = provider
+	o.appendDict[KEY_ID_PROVIDER] = provider
 }
 
 func (o *objectHelper) removeWebpush(value map[string]interface{}, provider string, caller string) {
@@ -529,7 +511,7 @@ func (o *objectHelper) removeWebpush(value map[string]interface{}, provider stri
 		return
 	}
 	o.removeDict[IDENT_KEY_WEBPUSH] = iValue.(map[string]interface{})
-	o.removeDict[KEY_PUSHVENDOR] = provider
+	o.removeDict[KEY_ID_PROVIDER] = provider
 }
 
 // ------------------------ Slack

@@ -3,6 +3,8 @@ package suprsend
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 	"time"
 
@@ -286,4 +288,36 @@ func invalidRecordJson(failedRecord map[string]interface{}, err error) map[strin
 		"error":  err.Error(),
 		"code":   500,
 	}
+}
+
+func ParseGenericApiResponse(err error, httpResponse *http.Response) (map[string]any, error) {
+	responseBody, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return nil, err
+	}
+	if httpResponse.StatusCode >= 400 {
+		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
+	}
+	var resp map[string]any
+	err = json.Unmarshal(responseBody, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func ParseGenericListApiResponse(err error, httpResponse *http.Response) (*CursorPaginationList, error) {
+	responseBody, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return nil, err
+	}
+	if httpResponse.StatusCode >= 400 {
+		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
+	}
+	var resp CursorPaginationList
+	err = json.Unmarshal(responseBody, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }

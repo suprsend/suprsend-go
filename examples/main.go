@@ -775,28 +775,30 @@ func objectCrudOperationsExample() {
 		log.Println(err)
 		return
 	}
-	objectType := "sdk"
-	objectId := "go"
+	obj := &suprsend.ObjectRequest{
+		ObjectType: "sdk",
+		ObjectId:   "supr-go",
+	}
 	//
-	// ================= Create Object
-	object, _ := suprClient.Objects.Upsert(context.Background(), objectType, objectId, map[string]interface{}{
+	// ================= Create object
+	object, _ := suprClient.Objects.Upsert(context.Background(), obj, map[string]interface{}{
 		"prop1": "val1",
 	})
 	log.Println(object)
 
 	// ============= get object
 
-	object, _ = suprClient.Objects.Get(context.Background(), objectType, objectId)
+	object, _ = suprClient.Objects.Get(context.Background(), obj)
 	log.Println(object)
 
 	// =============== list object
 
-	objects, _ := suprClient.Objects.List(context.Background(), objectType, nil)
-	log.Println(objects)
+	objects, _ := suprClient.Objects.List(context.Background(), obj.ObjectType, nil)
+	log.Println(objects.Results)
 
 	// ============= edit object
 
-	object, _ = suprClient.Objects.Edit(context.Background(), objectType, objectId, map[string]interface{}{
+	object, _ = suprClient.Objects.Edit(context.Background(), obj, map[string]interface{}{
 		"prop1": "val1",
 		"operations": []map[string]interface{}{
 			{
@@ -815,40 +817,52 @@ func objectCrudOperationsExample() {
 	log.Println(object)
 
 	// -------- delete [create and delete]
-	object, _ = suprClient.Objects.Upsert(context.Background(), "delete_obj", "delete_obj_id", map[string]interface{}{
+	delObj := &suprsend.ObjectRequest{
+		ObjectType: "sdk",
+		ObjectId:   "delete-supr-go",
+	}
+	object, _ = suprClient.Objects.Upsert(context.Background(), delObj, map[string]interface{}{
 		"prop1": "val1",
 	})
 	log.Println(object)
 
-	object, _ = suprClient.Objects.Delete(context.Background(), "delete_obj", "delete_obj_id")
+	object, _ = suprClient.Objects.Delete(context.Background(), delObj)
 	log.Println(object)
 
-	// ----- bulk delete
-	object, _ = suprClient.Objects.Upsert(context.Background(), "ot1", "oid1", map[string]interface{}{
+	// ----- bulk delete [create multiple then delete]
+	delObj1 := &suprsend.ObjectRequest{
+		ObjectType: "sdk",
+		ObjectId:   "delete-supr-go-1",
+	}
+	object, _ = suprClient.Objects.Upsert(context.Background(), delObj1, map[string]interface{}{
 		"prop1": "val1",
 	})
 	log.Println(object)
 
-	object, _ = suprClient.Objects.Upsert(context.Background(), "ot1", "oid2", map[string]interface{}{
+	delObj2 := &suprsend.ObjectRequest{
+		ObjectType: "sdk",
+		ObjectId:   "delete-supr-go-2",
+	}
+	object, _ = suprClient.Objects.Upsert(context.Background(), delObj2, map[string]interface{}{
 		"prop1": "val1",
 	})
 	log.Println(object)
 
-	object, _ = suprClient.Objects.BulkDelete(context.Background(), "ot1", map[string]any{
-		"object_ids": []string{"oid1", "oid2"},
+	object, _ = suprClient.Objects.BulkDelete(context.Background(), delObj1.ObjectType, map[string]any{
+		"object_ids": []string{delObj1.ObjectId, delObj2.ObjectId},
 	})
 	log.Println(object)
 
 	// ====================== subscriptions
-	object, _ = suprClient.Objects.CreateSubscriptions(context.Background(), objectType, objectId, map[string]any{
+	object, _ = suprClient.Objects.CreateSubscriptions(context.Background(), obj, map[string]any{
 		"recipients": []string{"praveen@suprsend.com"},
 	})
 	log.Println(object)
 
-	object, _ = suprClient.Objects.GetSubscriptions(context.Background(), objectType, objectId, nil)
-	log.Println(object)
+	getResp, _ := suprClient.Objects.GetSubscriptions(context.Background(), obj, nil)
+	log.Println(getResp.Results)
 
-	object, _ = suprClient.Objects.DeleteSubscriptions(context.Background(), objectType, objectId, map[string]any{
+	object, _ = suprClient.Objects.DeleteSubscriptions(context.Background(), obj, map[string]any{
 		"recipients": []string{"praveen@suprsend.com"},
 	})
 	log.Println(object)
@@ -861,10 +875,12 @@ func updateObjectPropertiesExample() {
 		log.Println(err)
 		return
 	}
-	objectType := "sdk"
-	objectId := "go"
+	obj := &suprsend.ObjectRequest{
+		ObjectType: "sdk",
+		ObjectId:   "supr-go",
+	}
 	//
-	object, _ := suprClient.Objects.GetInstance(objectType, objectId)
+	object, _ := suprClient.Objects.GetInstance(obj)
 	// Add email channel
 	object.AddEmail("user@example.com")
 	// add sms channel

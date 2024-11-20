@@ -2,25 +2,29 @@ package suprsend
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
+type ObjectRequest struct {
+	ObjectType string `json:"object_type"`
+	ObjectId   string `json:"object_id"`
+}
+
 type ObjectsService interface {
-	List(context.Context, string, map[string]any) (map[string]any, error)
-	Get(context.Context, string, string) (map[string]any, error)
-	Upsert(context.Context, string, string, map[string]any) (map[string]any, error)
-	Edit(context.Context, string, string, map[string]any) (map[string]any, error)
-	Delete(context.Context, string, string) (map[string]any, error)
+	List(context.Context, string, *CursorPaginationListOptions) (*CursorPaginationList, error)
+	Get(context.Context, *ObjectRequest) (map[string]any, error)
+	Upsert(context.Context, *ObjectRequest, map[string]any) (map[string]any, error)
+	Edit(context.Context, *ObjectRequest, map[string]any) (map[string]any, error)
+	Delete(context.Context, *ObjectRequest) (map[string]any, error)
 	BulkDelete(context.Context, string, map[string]any) (map[string]any, error)
-	GetSubscriptions(context.Context, string, string, map[string]any) (map[string]any, error)
-	CreateSubscriptions(context.Context, string, string, map[string]any) (map[string]any, error)
-	DeleteSubscriptions(context.Context, string, string, map[string]any) (map[string]any, error)
-	GetInstance(string, string) (Object, error)
+	GetSubscriptions(context.Context, *ObjectRequest, *CursorPaginationListOptions) (*CursorPaginationList, error)
+	CreateSubscriptions(context.Context, *ObjectRequest, map[string]any) (map[string]any, error)
+	DeleteSubscriptions(context.Context, *ObjectRequest, map[string]any) (map[string]any, error)
+	GetInstance(*ObjectRequest) (IObject, error)
 }
 
 type objectsService struct {
@@ -38,26 +42,50 @@ func newObjectsService(client *Client) *objectsService {
 	return os
 }
 
-func (o *objectsService) prepareQueryParams(opt map[string]any) string {
-	values := url.Values{}
-	for key, value := range opt {
-		values.Add(key, fmt.Sprintf("%v", value))
+func (o *objectsService) prepareQueryParams(opt *CursorPaginationListOptions) string {
+	if opt == nil {
+		opt = &CursorPaginationListOptions{}
 	}
-	return values.Encode()
+	opt.cleanParams()
+	params := url.Values{}
+	params.Add("limit", strconv.Itoa(opt.Limit))
+	if opt.Before != "" {
+		params.Add("before", opt.Before)
+	}
+	if opt.After != "" {
+		params.Add("after", opt.After)
+	}
+	return params.Encode()
 }
 
 func (o *objectsService) validateObjectEntityId(entityId string) (string, error) {
-	if entityId == "" {
-		return "", fmt.Errorf("missing entityId")
-	}
 	entityId = strings.TrimSpace(entityId)
 	if entityId == "" {
-		return "", fmt.Errorf("missing entityId")
+		return "", fmt.Errorf("missing entity_id")
 	}
 	return entityId, nil
 }
 
-func (o *objectsService) List(ctx context.Context, objectType string, opts map[string]any) (map[string]any, error) {
+func (O *ObjectRequest) validateObjectRequest() error {
+	if O.ObjectType == "" {
+		return fmt.Errorf("missing object_type")
+	}
+	O.ObjectType = strings.TrimSpace(O.ObjectType)
+	if O.ObjectType == "" {
+		return fmt.Errorf("missing object_type")
+	}
+	//
+	if O.ObjectId == "" {
+		return fmt.Errorf("missing object_id")
+	}
+	O.ObjectId = strings.TrimSpace(O.ObjectId)
+	if O.ObjectId == "" {
+		return fmt.Errorf("missing object_id")
+	}
+	return nil
+}
+
+func (o *objectsService) List(ctx context.Context, objectType string, opts *CursorPaginationListOptions) (*CursorPaginationList, error) {
 	objectType, err := o.validateObjectEntityId(objectType)
 	if err != nil {
 		return nil, err
@@ -74,37 +102,23 @@ func (o *objectsService) List(ctx context.Context, objectType string, opts map[s
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericListApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (o *objectsService) objectAPIUrl(objectType, objectId string) (string, error) {
-	objectType, err := o.validateObjectEntityId(objectType)
+func (o *objectsService) objectAPIUrl(obj *ObjectRequest) (string, error) {
+	err := obj.validateObjectRequest()
 	if err != nil {
 		return "", err
 	}
-	objectType = url.QueryEscape(objectType)
-	objectId, err = o.validateObjectEntityId(objectId)
-	if err != nil {
-		return "", err
-	}
-	objectId = url.QueryEscape(objectId)
-	return fmt.Sprintf("%s%s/%s/", o._url, objectType, objectId), nil
+	return fmt.Sprintf("%s%s/%s/", o._url, obj.ObjectType, obj.ObjectId), nil
 }
 
-func (o *objectsService) Get(ctx context.Context, objectType, objectId string) (map[string]any, error) {
-	urlStr, err := o.objectAPIUrl(objectType, objectId)
+func (o *objectsService) Get(ctx context.Context, obj *ObjectRequest) (map[string]any, error) {
+	urlStr, err := o.objectAPIUrl(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -120,23 +134,15 @@ func (o *objectsService) Get(ctx context.Context, objectType, objectId string) (
 	}
 	defer httpResponse.Body.Close()
 	//
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (o *objectsService) Upsert(ctx context.Context, objectType, objectId string, payload map[string]any) (map[string]any, error) {
-	urlStr, err := o.objectAPIUrl(objectType, objectId)
+func (o *objectsService) Upsert(ctx context.Context, obj *ObjectRequest, payload map[string]any) (map[string]any, error) {
+	urlStr, err := o.objectAPIUrl(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -151,23 +157,15 @@ func (o *objectsService) Upsert(ctx context.Context, objectType, objectId string
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (o *objectsService) Edit(ctx context.Context, objectType, objectId string, payload map[string]any) (map[string]any, error) {
-	urlStr, err := o.objectAPIUrl(objectType, objectId)
+func (o *objectsService) Edit(ctx context.Context, obj *ObjectRequest, payload map[string]any) (map[string]any, error) {
+	urlStr, err := o.objectAPIUrl(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -182,23 +180,15 @@ func (o *objectsService) Edit(ctx context.Context, objectType, objectId string, 
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (o *objectsService) Delete(ctx context.Context, objectType, objectId string) (map[string]any, error) {
-	urlStr, err := o.objectAPIUrl(objectType, objectId)
+func (o *objectsService) Delete(ctx context.Context, obj *ObjectRequest) (map[string]any, error) {
+	urlStr, err := o.objectAPIUrl(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -213,15 +203,7 @@ func (o *objectsService) Delete(ctx context.Context, objectType, objectId string
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -253,23 +235,15 @@ func (o *objectsService) BulkDelete(ctx context.Context, objectType string, payl
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (o *objectsService) GetSubscriptions(ctx context.Context, objectType, objectId string, opts map[string]any) (map[string]any, error) {
-	_url, err := o.objectAPIUrl(objectType, objectId)
+func (o *objectsService) GetSubscriptions(ctx context.Context, obj *ObjectRequest, opts *CursorPaginationListOptions) (*CursorPaginationList, error) {
+	_url, err := o.objectAPIUrl(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -285,23 +259,15 @@ func (o *objectsService) GetSubscriptions(ctx context.Context, objectType, objec
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericListApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (o *objectsService) CreateSubscriptions(ctx context.Context, objectType, objectId string, payload map[string]any) (map[string]any, error) {
-	_url, err := o.objectAPIUrl(objectType, objectId)
+func (o *objectsService) CreateSubscriptions(ctx context.Context, obj *ObjectRequest, payload map[string]any) (map[string]any, error) {
+	_url, err := o.objectAPIUrl(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -317,23 +283,15 @@ func (o *objectsService) CreateSubscriptions(ctx context.Context, objectType, ob
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (o *objectsService) DeleteSubscriptions(ctx context.Context, objectType, objectId string, payload map[string]any) (map[string]any, error) {
-	_url, err := o.objectAPIUrl(objectType, objectId)
+func (o *objectsService) DeleteSubscriptions(ctx context.Context, obj *ObjectRequest, payload map[string]any) (map[string]any, error) {
+	_url, err := o.objectAPIUrl(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -349,28 +307,20 @@ func (o *objectsService) DeleteSubscriptions(ctx context.Context, objectType, ob
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (o *objectsService) GetInstance(objectType, objectId string) (Object, error) {
-	objectType = strings.TrimSpace(objectType)
-	objectId = strings.TrimSpace(objectId)
-	return newObject(o.client, objectType, objectId), nil
+func (o *objectsService) GetInstance(obj *ObjectRequest) (IObject, error) {
+	obj.ObjectType = strings.TrimSpace(obj.ObjectType)
+	obj.ObjectId = strings.TrimSpace(obj.ObjectId)
+	return newObject(o.client, obj), nil
 }
 
-type Object interface {
+type IObject interface {
 	Save() (map[string]any, error)
 	//
 	AppendKV(string, interface{})
@@ -413,7 +363,7 @@ type Object interface {
 	RemoveMSTeams(value map[string]interface{})
 }
 
-var _ Object = &object{}
+var _ IObject = &object{}
 
 type object struct {
 	client      *Client
@@ -429,11 +379,11 @@ type object struct {
 	_helper *objectHelper
 }
 
-func newObject(client *Client, objectType, objectId string) *object {
+func newObject(client *Client, obj *ObjectRequest) IObject {
 	o := &object{
 		client:     client,
-		objectType: objectType,
-		objectId:   objectId,
+		objectType: obj.ObjectType,
+		objectId:   obj.ObjectId,
 	}
 	// object url
 	o._url = fmt.Sprintf("%sv1/object/%s/%s/", client.baseUrl, o.objectType, o.objectId)
@@ -444,11 +394,11 @@ func newObject(client *Client, objectType, objectId string) *object {
 
 func (o *object) validateBody() error {
 	if len(o._warnings) > 0 {
-		msg := fmt.Sprintf("[Object %s/%s] %s", o.objectType, o.objectId, strings.Join(o._warnings, "\n"))
+		msg := fmt.Sprintf("[object: %s/%s] %s", o.objectType, o.objectId, strings.Join(o._warnings, "\n"))
 		log.Println("WARNING:", msg)
 	}
 	if len(o._errors) > 0 {
-		msg := fmt.Sprintf("[Object %s/%s] %s", o.objectType, o.objectId, strings.Join(o._errors, "\n"))
+		msg := fmt.Sprintf("[object: %s/%s] %s", o.objectType, o.objectId, strings.Join(o._errors, "\n"))
 		log.Println("ERROR:", msg)
 	}
 	return nil
@@ -473,15 +423,7 @@ func (o *object) Save() (map[string]any, error) {
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
+	resp, err := ParseGenericApiResponse(err, httpResponse)
 	if err != nil {
 		return nil, err
 	}

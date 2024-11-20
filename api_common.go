@@ -26,8 +26,8 @@ type CursorPaginationListOptions struct {
 	After  string
 }
 
-func (t *CursorPaginationListOptions) cleanParams() {
-	if t.Limit <= 0 {
-		t.Limit = 20
+func (c *CursorPaginationListOptions) cleanParams() {
+	if c.Limit <= 0 {
+		c.Limit = 20
 	}
 }

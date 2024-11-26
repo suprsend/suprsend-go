@@ -8,7 +8,7 @@ type Response struct {
 	Message    string `json:"message"`
 }
 
-func (r Response) String() string {
+func (r *Response) String() string {
 	return fmt.Sprintf("Response{Success: %v, StatusCode: %v, Message: %v}",
 		r.Success, r.StatusCode, r.Message)
 }
@@ -22,9 +22,9 @@ type BulkResponse struct {
 	Warnings      []string
 }
 
-func (r BulkResponse) String() string {
+func (b *BulkResponse) String() string {
 	return fmt.Sprintf("BulkResponse{Status: %v, Total: %v, Success: %v, Failure: %v, Warnings: %v}",
-		r.Status, r.Total, r.Success, r.Failure, len(r.Warnings))
+		b.Status, b.Total, b.Success, b.Failure, len(b.Warnings))
 }
 
 func (b *BulkResponse) mergeChunkResponse(chResponse *chunkResponse) {

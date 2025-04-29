@@ -72,7 +72,7 @@ func (b *brandsService) List(ctx context.Context, opts *BrandListOptions) (*Bran
 }
 
 func (b *brandsService) brandAPIUrl(brandId string) string {
-	brandId = url.QueryEscape(brandId)
+	brandId = url.PathEscape(brandId)
 	return fmt.Sprintf("%s%s/", b._url, brandId)
 }
 

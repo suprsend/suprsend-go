@@ -3,8 +3,6 @@ package suprsend
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 	"time"
 
@@ -15,15 +13,6 @@ import (
 func CurrentTimeFormatted() string {
 	t := time.Now().UTC()
 	return t.Format(HEADER_DATE_FMT)
-}
-
-func Contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-	return false
 }
 
 func validateWorkflowBodySchema(body map[string]interface{}) (map[string]interface{}, error) {
@@ -290,34 +279,10 @@ func invalidRecordJson(failedRecord map[string]interface{}, err error) map[strin
 	}
 }
 
-func ParseGenericApiResponse(err error, httpResponse *http.Response) (map[string]any, error) {
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
+func appendQueryParamPart(url string, qp string) string {
+	if qp == "" {
+		return url
+	} else {
+		return fmt.Sprintf("%s?%s", url, qp)
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp map[string]any
-	err = json.Unmarshal(responseBody, &resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func ParseGenericListApiResponse(err error, httpResponse *http.Response) (*CursorPaginationList, error) {
-	responseBody, err := io.ReadAll(httpResponse.Body)
-	if err != nil {
-		return nil, err
-	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var resp CursorPaginationList
-	err = json.Unmarshal(responseBody, &resp)
-	if err != nil {
-		return nil, err
-	}
-	return &resp, nil
 }

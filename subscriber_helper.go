@@ -3,6 +3,7 @@ package suprsend
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -142,7 +143,7 @@ func (s *subscriberHelper) _validateKeyBasic(key, caller string) (string, bool) 
 }
 
 func (s *subscriberHelper) _validateKeyPrefix(key, caller string) bool {
-	if !Contains(ALL_RESERVED_KEYS, key) {
+	if !slices.Contains(ALL_RESERVED_KEYS, key) {
 		keyLower := strings.ToLower(key)
 		if strings.HasPrefix(keyLower, "$") || strings.HasPrefix(keyLower, "ss_") {
 			s._info = append(s._info, fmt.Sprintf("[%s] skipping key: %s. key starting with [$,ss_] are reserved", caller, key))
@@ -153,7 +154,7 @@ func (s *subscriberHelper) _validateKeyPrefix(key, caller string) bool {
 }
 
 func (s *subscriberHelper) _isIdentityKey(key string) bool {
-	return Contains(IDENT_KEYS_ALL, key)
+	return slices.Contains(IDENT_KEYS_ALL, key)
 }
 
 // -------------------------
@@ -233,11 +234,6 @@ func (s *subscriberHelper) unsetKey(key string, caller string) {
 }
 
 func (s *subscriberHelper) setPreferredLanguage(langCode string, caller string) {
-	// Check language code is in the list
-	if !Contains(ALL_LANG_CODES, langCode) {
-		s._info = append(s._info, fmt.Sprintf("[%s] invalid value %s", caller, langCode))
-		return
-	}
 	s.setDict[KEY_PREFERRED_LANGUAGE] = langCode
 }
 
@@ -529,7 +525,7 @@ func (s *subscriberHelper) _checkAndroidpushValue(value string, provider string,
 	}
 	// convert to lowercase to make it case-insensitive
 	provider = strings.ToLower(provider)
-	if !Contains([]string{"fcm", "xiaomi", "oppo"}, provider) {
+	if !slices.Contains([]string{"fcm", "xiaomi", "oppo"}, provider) {
 		s._errors = append(s._errors, fmt.Sprintf("[%s] unsupported androidpush provider %s", caller, provider))
 		return value, provider, false
 	}
@@ -568,7 +564,7 @@ func (s *subscriberHelper) _checkIospushValue(value string, provider string, cal
 	}
 	// convert to lowercase to make it case-insensitive
 	provider = strings.ToLower(provider)
-	if !Contains([]string{"apns"}, provider) {
+	if !slices.Contains([]string{"apns"}, provider) {
 		s._errors = append(s._errors, fmt.Sprintf("[%s] unsupported iospush provider %s", caller, provider))
 		return value, provider, false
 	}
@@ -607,7 +603,7 @@ func (s *subscriberHelper) _checkWebpushDict(value map[string]interface{}, provi
 	}
 	// convert to lowercase to make it case-insensitive
 	provider = strings.ToLower(provider)
-	if !Contains([]string{"vapid"}, provider) {
+	if !slices.Contains([]string{"vapid"}, provider) {
 		s._errors = append(s._errors, fmt.Sprintf("[%s] unsupported webpush provider %s", caller, provider))
 		return value, provider, false
 	}

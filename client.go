@@ -2,7 +2,9 @@ package suprsend
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"runtime"
 	"strings"
@@ -140,7 +142,7 @@ func (c *Client) TrackEvent(event *Event) (*Response, error) {
 	return c.eventCollector.Collect(event)
 }
 
-func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody interface{},
+func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody any,
 ) (*http.Request, error) {
 	// Headers
 	headers := maps.Clone(c.commonHeaders)
@@ -161,4 +163,19 @@ func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody 
 		request.Header.Add(k, v)
 	}
 	return request, nil
+}
+
+func (c *Client) parseApiResponse(httpResponse *http.Response, respPtr any) error {
+	responseBody, err := io.ReadAll(httpResponse.Body)
+	if err != nil {
+		return err
+	}
+	if httpResponse.StatusCode >= 400 {
+		return fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
+	}
+	err = json.Unmarshal(responseBody, respPtr)
+	if err != nil {
+		return err
+	}
+	return nil
 }

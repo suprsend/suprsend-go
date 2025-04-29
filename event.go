@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -44,7 +45,7 @@ func (e *Event) checkProperties() {
 }
 
 func (e *Event) checkEventPrefix() error {
-	if !Contains(RESERVED_EVENT_NAMES, e.EventName) {
+	if !slices.Contains(RESERVED_EVENT_NAMES, e.EventName) {
 		if strings.HasPrefix(e.EventName, "$") || strings.HasPrefix(e.EventName, "ss_") ||
 			strings.HasPrefix(e.EventName, "SS_") {
 			return errors.New("event_names starting with [$,ss_] are reserved by SuprSend")

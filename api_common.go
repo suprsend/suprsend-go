@@ -6,7 +6,7 @@ type ListApiMetaInfo struct {
 	Offset int `json:"offset"`
 }
 
-type CursorPaginationMetaInfo struct {
+type CursorListApiMetaInfo struct {
 	Limit   int    `json:"limit"`
 	Count   int    `json:"count"`
 	Before  string `json:"before"`
@@ -15,19 +15,15 @@ type CursorPaginationMetaInfo struct {
 	HasNext bool   `json:"has_next"`
 }
 
-type CursorPaginationList struct {
-	Meta    *CursorPaginationMetaInfo `json:"meta"`
-	Results []*map[string]any         `json:"results"`
+type CursorListApiResponse struct {
+	Meta    *CursorListApiMetaInfo `json:"meta"`
+	Results []map[string]any       `json:"results"`
 }
 
-type CursorPaginationListOptions struct {
+type CursorListApiOptions struct {
 	Limit  int
 	Before string
 	After  string
-}
-
-func (c *CursorPaginationListOptions) cleanParams() {
-	if c.Limit <= 0 {
-		c.Limit = 20
-	}
+	// other filter params can added to more
+	More map[string]string
 }

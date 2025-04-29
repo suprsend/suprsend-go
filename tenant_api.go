@@ -71,7 +71,7 @@ func (t *tenantsService) List(ctx context.Context, opts *TenantListOptions) (*Te
 }
 
 func (t *tenantsService) tenantAPIUrl(tenantId string) string {
-	tenantId = url.QueryEscape(tenantId)
+	tenantId = url.PathEscape(tenantId)
 	return fmt.Sprintf("%s%s/", t._url, tenantId)
 }
 

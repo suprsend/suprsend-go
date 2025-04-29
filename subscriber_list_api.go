@@ -133,7 +133,7 @@ func (s *subscriberListsService) Create(ctx context.Context, createParams *Subsc
 }
 
 func (b *subscriberListsService) listDetailAPIUrl(listId string) string {
-	listId = url.QueryEscape(listId)
+	listId = url.PathEscape(listId)
 	return fmt.Sprintf("%s%s/", b._subscriberListUrl, listId)
 }
 
@@ -317,8 +317,8 @@ func (s *subscriberListsService) validateVersionId(versionId string) (string, er
 }
 
 func (b *subscriberListsService) listAPIUrlWithVersion(listId, versionId string) string {
-	listId = url.QueryEscape(listId)
-	versionId = url.QueryEscape(versionId)
+	listId = url.PathEscape(listId)
+	versionId = url.PathEscape(versionId)
 	return fmt.Sprintf("%s%s/version/%s/", b._subscriberListUrl, listId, versionId)
 }
 

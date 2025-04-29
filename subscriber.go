@@ -206,7 +206,7 @@ func (s *subscriber) _collectEvent(discardIfError bool) {
 /*
 Usage:
  1. append(k, v)
- 2. append({k1: v1, k2, v2})
+ 2. append({k1: v1, k2: v2})
 */
 func (s *subscriber) AppendKV(k string, v interface{}) {
 	caller := "appendKV"
@@ -218,7 +218,6 @@ func (s *subscriber) Append(kvMap map[string]interface{}) {
 	caller := "append"
 	for k, v := range kvMap {
 		s._helper.appendKV(k, v, kvMap, caller)
-
 	}
 	s._collectEvent(false)
 }
@@ -226,7 +225,7 @@ func (s *subscriber) Append(kvMap map[string]interface{}) {
 /*
 Usage:
  1. SetKV(k, v)
- 2. Set({k1: v1, k2, v2})
+ 2. Set({k1: v1, k2: v2})
 */
 func (s *subscriber) SetKV(k string, v interface{}) {
 	caller := "setKV"
@@ -238,7 +237,6 @@ func (s *subscriber) Set(kvMap map[string]interface{}) {
 	caller := "set"
 	for k, v := range kvMap {
 		s._helper.setKV(k, v, kvMap, caller)
-
 	}
 	s._collectEvent(false)
 }
@@ -246,7 +244,7 @@ func (s *subscriber) Set(kvMap map[string]interface{}) {
 /*
 Usage:
  1. SetOnceKV(k, v)
- 2. SetOnce({k1: v1, k2, v2})
+ 2. SetOnce({k1: v1, k2: v2})
 */
 func (s *subscriber) SetOnceKV(k string, v interface{}) {
 	caller := "set_onceKV"
@@ -258,7 +256,6 @@ func (s *subscriber) SetOnce(kvMap map[string]interface{}) {
 	caller := "set_once"
 	for k, v := range kvMap {
 		s._helper.setOnceKV(k, v, kvMap, caller)
-
 	}
 	s._collectEvent(false)
 }
@@ -266,7 +263,7 @@ func (s *subscriber) SetOnce(kvMap map[string]interface{}) {
 /*
 Usage:
  1. IncrementKV(k, v)
- 2. Increment({k1: v1, k2, v2})
+ 2. Increment({k1: v1, k2: v2})
 */
 func (s *subscriber) IncrementKV(k string, v interface{}) {
 	caller := "incrementKV"
@@ -278,7 +275,6 @@ func (s *subscriber) Increment(kvMap map[string]interface{}) {
 	caller := "increment"
 	for k, v := range kvMap {
 		s._helper.incrementKV(k, v, kvMap, caller)
-
 	}
 	s._collectEvent(false)
 }
@@ -286,7 +282,7 @@ func (s *subscriber) Increment(kvMap map[string]interface{}) {
 /*
 Usage:
  1. RemoveKV(k, v)
- 2. Remove({k1: v1, k2, v2})
+ 2. Remove({k1: v1, k2: v2})
 */
 func (s *subscriber) RemoveKV(k string, v interface{}) {
 	caller := "removeKV"
@@ -298,15 +294,13 @@ func (s *subscriber) Remove(kvMap map[string]interface{}) {
 	caller := "remove"
 	for k, v := range kvMap {
 		s._helper.removeKV(k, v, kvMap, caller)
-
 	}
 	s._collectEvent(false)
 }
 
 /*
 Usage:
- 1. unset(k)
- 2. unset([k1, k2])
+ 1. unset([k1, k2])
 */
 func (s *subscriber) Unset(keys []string) {
 	caller := "unset"
@@ -369,7 +363,7 @@ func (s *subscriber) RemoveWhatsapp(value string) {
 	s._collectEvent(true)
 }
 
-// ------------------------ Androidpush [providers: fcm / xiaomi / oppo]
+// ------------------------ Androidpush [providers: fcm]
 
 func (s *subscriber) AddAndroidpush(value, provider string) {
 	caller := "add_androidpush"

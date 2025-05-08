@@ -1,7 +1,6 @@
 package suprsend
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,7 +10,7 @@ import (
 
 // todo: Deprecated: this
 type Workflow struct {
-	Body           map[string]interface{}
+	Body           map[string]any
 	IdempotencyKey string
 	TenantId       string
 	// Brand has been renamed to Tenant. Brand is kept for backward-compatibilty.
@@ -21,7 +20,7 @@ type Workflow struct {
 
 func (w *Workflow) AddAttachment(filePath string, ao *AttachmentOption) error {
 	if d, found := w.Body["data"]; !found || d == nil {
-		w.Body["data"] = map[string]interface{}{}
+		w.Body["data"] = map[string]any{}
 	}
 	attachment, err := GetAttachmentJson(filePath, ao)
 	if err != nil {
@@ -30,17 +29,17 @@ func (w *Workflow) AddAttachment(filePath string, ao *AttachmentOption) error {
 	if attachment == nil {
 		return nil
 	}
-	data := w.Body["data"].(map[string]interface{})
+	data := w.Body["data"].(map[string]any)
 	if a, found := data["$attachments"]; !found || a == nil {
-		data["$attachments"] = []map[string]interface{}{}
+		data["$attachments"] = []map[string]any{}
 	}
-	allAttachments := data["$attachments"].([]map[string]interface{})
+	allAttachments := data["$attachments"].([]map[string]any)
 	allAttachments = append(allAttachments, attachment)
 	data["$attachments"] = allAttachments
 	return nil
 }
 
-func (w *Workflow) getFinalJson(client *Client, isPartOfBulk bool) (map[string]interface{}, int, error) {
+func (w *Workflow) getFinalJson(client *Client, isPartOfBulk bool) (map[string]any, int, error) {
 	// Add idempotency_key if present
 	if w.IdempotencyKey != "" {
 		w.Body["$idempotency_key"] = w.IdempotencyKey
@@ -62,16 +61,16 @@ func (w *Workflow) getFinalJson(client *Client, isPartOfBulk bool) (map[string]i
 	if err != nil {
 		return nil, 0, err
 	}
-	if apparentSize > SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES {
+	if apparentSize > BODY_MAX_APPARENT_SIZE_IN_BYTES {
 		errStr := fmt.Sprintf("workflow body too big - %d Bytes, must not cross %s", apparentSize,
-			SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES_READABLE)
-		return nil, 0, errors.New(errStr)
+			BODY_MAX_APPARENT_SIZE_IN_BYTES_READABLE)
+		return nil, 0, &Error{Code: 413, Message: errStr}
 	}
 	return w.Body, apparentSize, nil
 }
 
-func (w *Workflow) asJson() map[string]interface{} {
-	body := map[string]interface{}{}
+func (w *Workflow) asJson() map[string]any {
+	body := map[string]any{}
 	copier.CopyWithOption(&body, w.Body, copier.Option{DeepCopy: true})
 
 	// Add idempotency_key if present
@@ -97,7 +96,7 @@ func newWorkflowTriggerInstance(client *Client) *workflowTrigger {
 	wt := &workflowTrigger{
 		client: client,
 		// workflow trigger url
-		_url: fmt.Sprintf("%s%s/trigger/", client.baseUrl, client.ApiKey),
+		_url: fmt.Sprintf("%s%s/trigger/", client.baseUrl, client.getWsIdentifierValue()),
 	}
 	return wt
 }
@@ -114,7 +113,7 @@ func (w *workflowTrigger) Trigger(workflow *Workflow) (*Response, error) {
 	return suprResp, nil
 }
 
-func (w *workflowTrigger) send(wfBody map[string]interface{}) (*Response, error) {
+func (w *workflowTrigger) send(wfBody map[string]any) (*Response, error) {
 	// prepare http.Request object
 	request, err := w.client.prepareHttpRequest("POST", w._url, wfBody)
 	if err != nil {
@@ -135,10 +134,10 @@ func (w *workflowTrigger) send(wfBody map[string]interface{}) (*Response, error)
 func (w *workflowTrigger) formatAPIResponse(httpRes *http.Response) (*Response, error) {
 	respBody, err := io.ReadAll(httpRes.Body)
 	if err != nil {
-		return nil, err
+		return nil, &Error{Err: err}
 	}
 	if httpRes.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpRes.StatusCode, string(respBody))
+		return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
 	}
 	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }

@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strconv"
-	"strings"
 )
 
 type ObjectIdentifier struct {
@@ -19,7 +17,7 @@ type ObjectsService interface {
 	Upsert(context.Context, ObjectIdentifier, map[string]any) (map[string]any, error)
 	Edit(context.Context, ObjectEditRequest) (map[string]any, error)
 	Delete(context.Context, ObjectIdentifier) error
-	BulkDelete(context.Context, string, map[string]any) error
+	BulkDelete(context.Context, string, ObjectBulkDeletePayload) error
 	GetSubscriptions(context.Context, ObjectIdentifier, *CursorListApiOptions) (*CursorListApiResponse, error)
 	CreateSubscriptions(context.Context, ObjectIdentifier, map[string]any) (map[string]any, error)
 	DeleteSubscriptions(context.Context, ObjectIdentifier, map[string]any) error
@@ -43,28 +41,8 @@ func newObjectsService(client *Client) *objectsService {
 	return os
 }
 
-func (o *objectsService) prepareQueryParams(opt *CursorListApiOptions) string {
-	if opt == nil {
-		return ""
-	}
-	params := url.Values{}
-	if opt.Limit > 0 {
-		params.Add("limit", strconv.Itoa(opt.Limit))
-	}
-	if opt.Before != "" {
-		params.Add("before", opt.Before)
-	}
-	if opt.After != "" {
-		params.Add("after", opt.After)
-	}
-	for k, v := range opt.More {
-		params.Add(k, v)
-	}
-	return params.Encode()
-}
-
 func (o *objectsService) List(ctx context.Context, objectType string, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/", o._url, url.PathEscape(objectType)), o.prepareQueryParams(opts))
+	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/", o._url, url.PathEscape(objectType)), opts.BuildQuery())
 	// prepare http.Request object
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
@@ -89,8 +67,8 @@ func (o *objectsService) objectDetailAPIUrl(objectType, id string) string {
 	return fmt.Sprintf(
 		"%s%s/%s/",
 		o._url,
-		url.PathEscape(strings.TrimSpace(objectType)),
-		url.PathEscape(strings.TrimSpace(id)),
+		url.PathEscape(objectType),
+		url.PathEscape(id),
 	)
 }
 
@@ -118,6 +96,9 @@ func (o *objectsService) Get(ctx context.Context, obj ObjectIdentifier) (map[str
 
 func (o *objectsService) Upsert(ctx context.Context, obj ObjectIdentifier, payload map[string]any) (map[string]any, error) {
 	urlStr := o.objectDetailAPIUrl(obj.ObjectType, obj.Id)
+	if payload == nil {
+		payload = map[string]any{}
+	}
 	// prepare http.Request object
 	request, err := o.client.prepareHttpRequest("POST", urlStr, payload)
 	if err != nil {
@@ -138,10 +119,11 @@ func (o *objectsService) Upsert(ctx context.Context, obj ObjectIdentifier, paylo
 	return resp, nil
 }
 
+// either (identifier + payload) OR editInstance must be provided
 type ObjectEditRequest struct {
-	// either (identifier + payload) OR editInstance must be provided
 	Identifier *ObjectIdentifier
-	Payload    map[string]any
+	// {"operations": [{"$set": {"prop1": "val1"}, {"$append": {"$email": "abc@test.com"}}]}
+	Payload map[string]any
 	//
 	EditInstance ObjectEdit
 }
@@ -156,6 +138,9 @@ func (o *objectsService) Edit(ctx context.Context, req ObjectEditRequest) (map[s
 		urlStr = o.objectDetailAPIUrl(oe.objectType, oe.objectId)
 	} else {
 		payload = req.Payload
+		if payload == nil {
+			payload = map[string]any{}
+		}
 		urlStr = o.objectDetailAPIUrl(req.Identifier.ObjectType, req.Identifier.Id)
 	}
 	// prepare http.Request object
@@ -163,7 +148,6 @@ func (o *objectsService) Edit(ctx context.Context, req ObjectEditRequest) (map[s
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := o.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -185,38 +169,38 @@ func (o *objectsService) Delete(ctx context.Context, obj ObjectIdentifier) error
 	if err != nil {
 		return err
 	}
-	//
 	httpResponse, err := o.client.httpClient.Do(request)
 	if err != nil {
 		return err
 	}
 	defer httpResponse.Body.Close()
 	//
-	resp := map[string]any{}
-	err = o.client.parseApiResponse(httpResponse, &resp)
+	err = o.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// payload: {"object_ids": ["id1", "id2"]}
-func (o *objectsService) BulkDelete(ctx context.Context, objectType string, payload map[string]any) error {
+// payload:  {"object_ids": ["id1", "id2"]}
+type ObjectBulkDeletePayload struct {
+	ObjectIds []string `json:"object_ids"`
+}
+
+func (o *objectsService) BulkDelete(ctx context.Context, objectType string, payload ObjectBulkDeletePayload) error {
 	urlStr := fmt.Sprintf("%s%s/", o._bulkUrl, url.PathEscape(objectType))
 	// prepare http.Request object
 	request, err := o.client.prepareHttpRequest("DELETE", urlStr, payload)
 	if err != nil {
 		return err
 	}
-	//
 	httpResponse, err := o.client.httpClient.Do(request)
 	if err != nil {
 		return err
 	}
 	defer httpResponse.Body.Close()
 	//
-	resp := map[string]any{}
-	err = o.client.parseApiResponse(httpResponse, &resp)
+	err = o.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
 		return err
 	}
@@ -224,7 +208,7 @@ func (o *objectsService) BulkDelete(ctx context.Context, objectType string, payl
 }
 
 func (o *objectsService) GetSubscriptions(ctx context.Context, obj ObjectIdentifier, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%ssubscription/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), o.prepareQueryParams(opts))
+	urlStr := appendQueryParamPart(fmt.Sprintf("%ssubscription/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
 	// prepare http.Request object
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
@@ -254,6 +238,9 @@ func (o *objectsService) GetSubscriptions(ctx context.Context, obj ObjectIdentif
 //	}
 func (o *objectsService) CreateSubscriptions(ctx context.Context, obj ObjectIdentifier, payload map[string]any) (map[string]any, error) {
 	urlStr := fmt.Sprintf("%ssubscription/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id))
+	if payload == nil {
+		payload = map[string]any{}
+	}
 	// prepare http.Request object
 	request, err := o.client.prepareHttpRequest("POST", urlStr, payload)
 	if err != nil {
@@ -281,20 +268,21 @@ func (o *objectsService) CreateSubscriptions(ctx context.Context, obj ObjectIden
 //	}
 func (o *objectsService) DeleteSubscriptions(ctx context.Context, obj ObjectIdentifier, payload map[string]any) error {
 	urlStr := fmt.Sprintf("%ssubscription/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id))
+	if payload == nil {
+		payload = map[string]any{}
+	}
 	// prepare http.Request object
 	request, err := o.client.prepareHttpRequest("DELETE", urlStr, payload)
 	if err != nil {
 		return err
 	}
-	//
 	httpResponse, err := o.client.httpClient.Do(request)
 	if err != nil {
 		return err
 	}
 	defer httpResponse.Body.Close()
 	//
-	resp := map[string]any{}
-	err = o.client.parseApiResponse(httpResponse, &resp)
+	err = o.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
 		return err
 	}
@@ -302,7 +290,7 @@ func (o *objectsService) DeleteSubscriptions(ctx context.Context, obj ObjectIden
 }
 
 func (o *objectsService) GetObjectsSubscribedTo(ctx context.Context, obj ObjectIdentifier, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%ssubscribed_to/object/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), o.prepareQueryParams(opts))
+	urlStr := appendQueryParamPart(fmt.Sprintf("%ssubscribed_to/object/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
 	// prepare http.Request object
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {

@@ -9,61 +9,65 @@ import (
 	"github.com/jinzhu/copier"
 )
 
-type bulkEventsService struct {
-	client *Client
+type BulkUsersEdit interface {
+	Append(users ...UserEdit)
+	Save() (*BulkResponse, error)
 }
 
-func (b *bulkEventsService) NewInstance() BulkEvents {
-	return &bulkEvents{
-		client:   b.client,
-		response: &BulkResponse{},
-	}
-}
+var _ BulkUsersEdit = &bulkUsersEdit{}
 
-type BulkEvents interface {
-	Append(...*Event)
-	Trigger() (*BulkResponse, error)
-}
-
-var _ BulkEvents = &bulkEvents{}
-
-type bulkEvents struct {
+type bulkUsersEdit struct {
 	client *Client
 	//
-	_events         []Event
-	_pendingRecords []pendingEventRecord
-	chunks          []*bulkEventsChunk
+	_users          []userEdit
+	_pendingRecords []pendingIdentityEventRecord2
+	chunks          []*bulkUsersEditChunk
 	//
 	response *BulkResponse
 	// invalid_record json: {"record": event-json, "error": error_str, "code": 500}
 	_invalidRecords []map[string]any
 }
 
-type pendingEventRecord struct {
+func newBulkUsersEdit(client *Client) BulkUsersEdit {
+	u := &bulkUsersEdit{
+		client:   client,
+		response: &BulkResponse{},
+	}
+	return u
+}
+
+type pendingIdentityEventRecord2 struct {
 	record     map[string]any
 	recordSize int
 }
 
-func (b *bulkEvents) _validateEvents() {
-	for _, ev := range b._events {
-		evJson, bodySize, err := ev.getFinalJson(b.client, true)
+func (b *bulkUsersEdit) _validateUsers() {
+	for _, u := range b._users {
+		// -- check if there is any error/warning, if so add it to warnings list of BulkResponse
+		warningsList := u.validateBody()
+		if len(warningsList) > 0 {
+			b.response.Warnings = append(b.response.Warnings, warningsList...)
+		}
+		//
+		pl := u.GetAsyncPayload()
+		plJson, plSize, err := u.validatePayloadSize(pl)
 		if err != nil {
-			invRec := invalidRecordJson(ev.asJson(), err)
+			invRec := invalidRecordJson(u.asJsonAsync(), err)
 			b._invalidRecords = append(b._invalidRecords, invRec)
 		} else {
 			b._pendingRecords = append(
 				b._pendingRecords,
-				pendingEventRecord{
-					record:     evJson,
-					recordSize: bodySize,
+				pendingIdentityEventRecord2{
+					record:     plJson,
+					recordSize: plSize,
 				},
 			)
 		}
 	}
 }
 
-func (b *bulkEvents) _chunkify(startIdx int) {
-	currChunk := newBulkEventsChunk(b.client)
+func (b *bulkUsersEdit) _chunkify(startIdx int) {
+	currChunk := newBulkUsersEditChunk(b.client)
 	b.chunks = append(b.chunks, currChunk)
 	for relIdx, rec := range b._pendingRecords[startIdx:] {
 		isAdded := currChunk.tryToAddIntoChunk(rec.record, rec.recordSize)
@@ -76,19 +80,21 @@ func (b *bulkEvents) _chunkify(startIdx int) {
 	}
 }
 
-func (b *bulkEvents) Append(events ...*Event) {
-	for _, ev := range events {
-		if ev == nil {
+func (b *bulkUsersEdit) Append(users ...UserEdit) {
+	for _, u := range users {
+		if u == nil {
 			continue
 		}
-		eventCopy := Event{}
-		copier.CopyWithOption(&eventCopy, ev, copier.Option{DeepCopy: true})
-		b._events = append(b._events, eventCopy)
+		if ue, ok := u.(*userEdit); ok {
+			ueCopy := userEdit{}
+			copier.CopyWithOption(&ueCopy, ue, copier.Option{DeepCopy: true})
+			b._users = append(b._users, ueCopy)
+		}
 	}
 }
 
-func (b *bulkEvents) Trigger() (*BulkResponse, error) {
-	b._validateEvents()
+func (b *bulkUsersEdit) Save() (*BulkResponse, error) {
+	b._validateUsers()
 	if len(b._invalidRecords) > 0 {
 		chResponse := invalidRecordsChunkResponse(b._invalidRecords)
 		b.response.mergeChunkResponse(chResponse)
@@ -114,7 +120,7 @@ func (b *bulkEvents) Trigger() (*BulkResponse, error) {
 
 // ==========================================================
 
-type bulkEventsChunk struct {
+type bulkUsersEditChunk struct {
 	_chunk_apparent_size_in_bytes int
 	_max_records_in_chunk         int
 	//
@@ -127,26 +133,26 @@ type bulkEventsChunk struct {
 	response       *chunkResponse
 }
 
-func newBulkEventsChunk(client *Client) *bulkEventsChunk {
-	bec := &bulkEventsChunk{
+func newBulkUsersEditChunk(client *Client) *bulkUsersEditChunk {
+	bsc := &bulkUsersEditChunk{
 		_chunk_apparent_size_in_bytes: BODY_MAX_APPARENT_SIZE_IN_BYTES,
-		_max_records_in_chunk:         MAX_EVENTS_IN_BULK_API,
+		_max_records_in_chunk:         MAX_IDENTITY_EVENTS_IN_BULK_API,
 		//
 		client: client,
 		_url:   fmt.Sprintf("%sevent/", client.baseUrl),
 		_chunk: []map[string]any{},
 	}
-	return bec
+	return bsc
 }
 
-func (b *bulkEventsChunk) _addEventToChunk(event map[string]any, eventSize int) {
+func (b *bulkUsersEditChunk) _addEventToChunk(event map[string]any, eventSize int) {
 	// First add size, then event to reduce effects of race condition
 	b._runningSize += eventSize
 	b._chunk = append(b._chunk, event)
 	b._runningLength += 1
 }
 
-func (b *bulkEventsChunk) _checkLimitReached() bool {
+func (b *bulkUsersEditChunk) _checkLimitReached() bool {
 	return b._runningLength >= b._max_records_in_chunk || b._runningSize >= b._chunk_apparent_size_in_bytes
 }
 
@@ -154,7 +160,7 @@ func (b *bulkEventsChunk) _checkLimitReached() bool {
 returns whether passed event was able to get added to this chunk or not,
 if true, event gets added to chunk
 */
-func (b *bulkEventsChunk) tryToAddIntoChunk(event map[string]any, eventSize int) bool {
+func (b *bulkUsersEditChunk) tryToAddIntoChunk(event map[string]any, eventSize int) bool {
 	if event == nil {
 		return true
 	}
@@ -165,16 +171,12 @@ func (b *bulkEventsChunk) tryToAddIntoChunk(event map[string]any, eventSize int)
 	if (b._runningSize + eventSize) > b._chunk_apparent_size_in_bytes {
 		return false
 	}
-
-	if !ALLOW_ATTACHMENTS_IN_BULK_API {
-		delete(event["properties"].(map[string]any), "$attachments")
-	}
 	// Add Event to chunk
 	b._addEventToChunk(event, eventSize)
 	return true
 }
 
-func (b *bulkEventsChunk) trigger() {
+func (b *bulkUsersEditChunk) trigger() {
 	// prepare http.Request object
 	request, err := b.client.prepareHttpRequest("POST", b._url, b._chunk)
 	if err != nil {
@@ -194,7 +196,7 @@ func (b *bulkEventsChunk) trigger() {
 	}
 }
 
-func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
+func (b *bulkUsersEditChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
 	//
 	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
 		failedRecords := []map[string]any{}

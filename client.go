@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -14,11 +15,22 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+const (
+	AuthMethod_WsKeySecret  string = "ws_key_secret"
+	AuthMethod_ServiceToken string = "service_token"
+)
+
 type Client struct {
+	// auth_methods: ws_key_secret / service_token
+	AuthMethod string
+	// -- For workspace key/secret clients
 	ApiKey    string
 	ApiSecret string
+	// -- For service token clients
+	ServiceToken string
+	WorkspaceUid string
 	//
-	Users           *subscribersService
+	Users           *usersService
 	Tenants         *tenantsService
 	Brands          *brandsService
 	Objects         *objectsService
@@ -46,17 +58,39 @@ type Client struct {
 
 func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, error) {
 	c := &Client{
+		AuthMethod: AuthMethod_WsKeySecret,
 		ApiKey:     apiKey,
 		ApiSecret:  apiSecret,
-		sdkVersion: VERSION,
-		userAgent:  fmt.Sprintf("suprsend/%s;go/%s", VERSION, runtime.Version()),
 	}
+	err := c.init(opts...)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func NewServiceTokenClient(token string, workspaceUid string, opts ...ClientOption) (*Client, error) {
+	c := &Client{
+		AuthMethod:   AuthMethod_ServiceToken,
+		ServiceToken: token,
+		WorkspaceUid: workspaceUid,
+	}
+	err := c.init(opts...)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+func (c *Client) init(opts ...ClientOption) error {
+	c.sdkVersion = VERSION
+	c.userAgent = fmt.Sprintf("suprsend/%s;go/%s", VERSION, runtime.Version())
 	//
 	var err error
 	for _, opt := range opts {
 		err = opt(c)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 	if c.timeout <= 0 {
@@ -65,7 +99,7 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 	c.setDerivedBaseUrl()
 	err = c.basicValidation()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if c.httpClient == nil {
 		c.httpClient = defaultHTTPClient(c.debug, c.timeout)
@@ -75,7 +109,7 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 		"User-Agent":   c.userAgent,
 	}
 	//
-	c.Users = &subscribersService{client: c}
+	c.Users = newUsersService(c)
 	c.Tenants = newTenantsService(c)
 	c.Brands = newBrandService(c)
 	c.Objects = newObjectsService(c)
@@ -90,7 +124,7 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 	c.workflowTrigger = newWorkflowTriggerInstance(c)
 	c.eventCollector = newEventCollectorInstance(c)
 	//
-	return c, nil
+	return nil
 }
 
 func defaultHTTPClient(debug bool, timeout int) *http.Client {
@@ -121,16 +155,37 @@ func (c *Client) setDerivedBaseUrl() {
 }
 
 func (c *Client) basicValidation() error {
-	if c.ApiKey == "" {
-		return ErrMissingAPIKey
+	if !slices.Contains([]string{AuthMethod_WsKeySecret, AuthMethod_ServiceToken}, c.AuthMethod) {
+		return ErrInvalidAuthMethod
 	}
-	if c.ApiSecret == "" {
-		return ErrMissingAPISecret
+	if c.AuthMethod == AuthMethod_WsKeySecret {
+		if c.ApiKey == "" {
+			return ErrMissingAPIKey
+		}
+		if c.ApiSecret == "" {
+			return ErrMissingAPISecret
+		}
+	} else if c.AuthMethod == AuthMethod_ServiceToken {
+		if c.ServiceToken == "" {
+			return ErrMissingServiceToken
+		}
+		if c.WorkspaceUid == "" {
+			return ErrMissingWorkspaceUid
+		}
 	}
 	if c.baseUrl == "" {
 		return ErrMissingBaseUrl
 	}
 	return nil
+}
+
+func (c *Client) getWsIdentifierValue() string {
+	if c.AuthMethod == AuthMethod_WsKeySecret {
+		return c.ApiKey
+	} else if c.AuthMethod == AuthMethod_ServiceToken {
+		return c.WorkspaceUid
+	}
+	return ""
 }
 
 // todo: Deprecated: this
@@ -146,17 +201,41 @@ func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody 
 ) (*http.Request, error) {
 	// Headers
 	headers := maps.Clone(c.commonHeaders)
-	maps.Copy(headers, map[string]string{"Date": CurrentTimeFormatted()})
 	//
-	contentBody, sig, err := signature.GetRequestSignature(httpUrl, httpMethod, httpBody, headers, c.ApiSecret)
-	if err != nil {
-		return nil, err
-	}
-	headers["Authorization"] = fmt.Sprintf("%s:%s", c.ApiKey, sig)
-	//
-	request, err := http.NewRequest(httpMethod, httpUrl, bytes.NewBuffer(contentBody))
-	if err != nil {
-		return nil, err
+	var request *http.Request
+	if c.AuthMethod == AuthMethod_WsKeySecret {
+		headers["Date"] = CurrentTimeFormatted()
+		contentBody, sig, err := signature.GetRequestSignature(httpUrl, httpMethod, httpBody, headers, c.ApiSecret)
+		if err != nil {
+			return nil, &Error{Err: err}
+		}
+		headers["Authorization"] = fmt.Sprintf("%s:%s", c.ApiKey, sig)
+		//
+		request, err = http.NewRequest(httpMethod, httpUrl, bytes.NewBuffer(contentBody))
+		if err != nil {
+			return nil, &Error{Err: err}
+		}
+	} else if c.AuthMethod == AuthMethod_ServiceToken {
+		var contentBody []byte
+		if httpMethod == "GET" || signature.SafeCheckNil(httpBody) {
+			contentBody = []byte("")
+		} else {
+			cBytes, err := json.Marshal(httpBody)
+			if err != nil {
+				return nil, &Error{Err: fmt.Errorf("failed to marshal content: %w", err)}
+			}
+			contentBody = cBytes
+		}
+		headers["Authorization"] = fmt.Sprintf("ServiceToken %s", c.ServiceToken)
+		headers["X-SS-WSUID"] = c.WorkspaceUid
+		//
+		var err error
+		request, err = http.NewRequest(httpMethod, httpUrl, bytes.NewBuffer(contentBody))
+		if err != nil {
+			return nil, &Error{Err: err}
+		}
+	} else {
+		return nil, ErrInvalidAuthMethod
 	}
 	// Add headers to request
 	for k, v := range headers {
@@ -168,14 +247,25 @@ func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody 
 func (c *Client) parseApiResponse(httpResponse *http.Response, respPtr any) error {
 	responseBody, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
-		return err
+		return &Error{Err: err}
 	}
 	if httpResponse.StatusCode >= 400 {
-		return fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
+		var serr Error
+		err = json.Unmarshal(responseBody, &serr)
+		if err != nil {
+			return &Error{Code: httpResponse.StatusCode, Message: string(responseBody)}
+		}
+		return &serr
 	}
-	err = json.Unmarshal(responseBody, respPtr)
-	if err != nil {
-		return err
+	// In some APIs (e.g http DELETE), we don't need to parse the response body
+	// To skip response body parsing, Caller can just pass nil as the response pointer
+	if respPtr == nil {
+		return nil
+	} else {
+		err = json.Unmarshal(responseBody, respPtr)
+		if err != nil {
+			return &Error{Err: err}
+		}
 	}
 	return nil
 }

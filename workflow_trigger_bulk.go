@@ -25,11 +25,11 @@ type bulkWorkflowsTrigger struct {
 	//
 	response *BulkResponse
 	// invalid_record json: {"record": event-json, "error": error_str, "code": 500}
-	_invalidRecords []map[string]interface{}
+	_invalidRecords []map[string]any
 }
 
 type pendingWorkflowTriggerRecord struct {
-	record     map[string]interface{}
+	record     map[string]any
 	recordSize int
 }
 
@@ -110,7 +110,7 @@ type bulkWorkflowsRequestChunk struct {
 	client *Client
 	_url   string
 	//
-	_chunk         []map[string]interface{}
+	_chunk         []map[string]any
 	_runningSize   int
 	_runningLength int
 	response       *chunkResponse
@@ -123,12 +123,12 @@ func newBulkWorkflowsRequestChunk(client *Client) *bulkWorkflowsRequestChunk {
 		//
 		client: client,
 		_url:   fmt.Sprintf("%strigger/", client.baseUrl),
-		_chunk: []map[string]interface{}{},
+		_chunk: []map[string]any{},
 	}
 	return bwc
 }
 
-func (b *bulkWorkflowsRequestChunk) _addBodyToChunk(body map[string]interface{}, bodySize int) {
+func (b *bulkWorkflowsRequestChunk) _addBodyToChunk(body map[string]any, bodySize int) {
 	// First add size, then event to reduce effects of race condition
 	b._runningSize += bodySize
 	b._chunk = append(b._chunk, body)
@@ -143,7 +143,7 @@ func (b *bulkWorkflowsRequestChunk) _checkLimitReached() bool {
 returns whether passed body was able to get added to this chunk or not,
 if true, body gets added to chunk
 */
-func (b *bulkWorkflowsRequestChunk) tryToAddIntoChunk(body map[string]interface{}, bodySize int) bool {
+func (b *bulkWorkflowsRequestChunk) tryToAddIntoChunk(body map[string]any, bodySize int) bool {
 	if body == nil {
 		return true
 	}
@@ -156,7 +156,7 @@ func (b *bulkWorkflowsRequestChunk) tryToAddIntoChunk(body map[string]interface{
 	}
 
 	if !ALLOW_ATTACHMENTS_IN_BULK_API {
-		delete(body["data"].(map[string]interface{}), "$attachments")
+		delete(body["data"].(map[string]any), "$attachments")
 	}
 	// Add workflow to chunk
 	b._addBodyToChunk(body, bodySize)
@@ -187,11 +187,11 @@ func (b *bulkWorkflowsRequestChunk) trigger() {
 func (b *bulkWorkflowsRequestChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
 	//
 	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
-		failedRecords := []map[string]interface{}{}
+		failedRecords := []map[string]any{}
 		if statusCode >= 400 {
 			for _, c := range b._chunk {
 				failedRecords = append(failedRecords,
-					map[string]interface{}{
+					map[string]any{
 						"record": c,
 						"error":  errMsg,
 						"code":   statusCode,

@@ -36,11 +36,11 @@ type bulkSubscribers struct {
 	//
 	response *BulkResponse
 	// invalid_record json: {"record": event-json, "error": error_str, "code": 500}
-	_invalidRecords []map[string]interface{}
+	_invalidRecords []map[string]any
 }
 
 type pendingIdentityEventRecord struct {
-	record     map[string]interface{}
+	record     map[string]any
 	recordSize int
 }
 
@@ -139,7 +139,7 @@ type bulkSubscribersChunk struct {
 	client *Client
 	_url   string
 	//
-	_chunk         []map[string]interface{}
+	_chunk         []map[string]any
 	_runningSize   int
 	_runningLength int
 	response       *chunkResponse
@@ -152,12 +152,12 @@ func newBulkSubscribersChunk(client *Client) *bulkSubscribersChunk {
 		//
 		client: client,
 		_url:   fmt.Sprintf("%sevent/", client.baseUrl),
-		_chunk: []map[string]interface{}{},
+		_chunk: []map[string]any{},
 	}
 	return bsc
 }
 
-func (b *bulkSubscribersChunk) _addEventToChunk(event map[string]interface{}, eventSize int) {
+func (b *bulkSubscribersChunk) _addEventToChunk(event map[string]any, eventSize int) {
 	// First add size, then event to reduce effects of race condition
 	b._runningSize += eventSize
 	b._chunk = append(b._chunk, event)
@@ -172,7 +172,7 @@ func (b *bulkSubscribersChunk) _checkLimitReached() bool {
 returns whether passed event was able to get added to this chunk or not,
 if true, event gets added to chunk
 */
-func (b *bulkSubscribersChunk) tryToAddIntoChunk(event map[string]interface{}, eventSize int) bool {
+func (b *bulkSubscribersChunk) tryToAddIntoChunk(event map[string]any, eventSize int) bool {
 	if event == nil {
 		return true
 	}
@@ -211,11 +211,11 @@ func (b *bulkSubscribersChunk) trigger() {
 func (b *bulkSubscribersChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
 	//
 	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
-		failedRecords := []map[string]interface{}{}
+		failedRecords := []map[string]any{}
 		if statusCode >= 400 {
 			for _, c := range b._chunk {
 				failedRecords = append(failedRecords,
-					map[string]interface{}{
+					map[string]any{
 						"record": c,
 						"error":  errMsg,
 						"code":   statusCode,

@@ -2,9 +2,7 @@ package suprsend
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/url"
 	"strconv"
 )
@@ -56,19 +54,13 @@ func (b *brandsService) List(ctx context.Context, opts *BrandListOptions) (*Bran
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &BrandList{}
+	err = b.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var brandList BrandList
-	err = json.Unmarshal(responseBody, &brandList)
-	if err != nil {
-		return nil, err
-	}
-	return &brandList, nil
+	return resp, nil
 }
 
 func (b *brandsService) brandAPIUrl(brandId string) string {
@@ -90,19 +82,12 @@ func (b *brandsService) Get(ctx context.Context, brandId string) (*Brand, error)
 	}
 	defer httpResponse.Body.Close()
 	//
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	resp := &Brand{}
+	err = b.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var brand Brand
-	err = json.Unmarshal(responseBody, &brand)
-	if err != nil {
-		return nil, err
-	}
-	return &brand, nil
+	return resp, nil
 }
 
 func (b *brandsService) Upsert(ctx context.Context, brandId string, payload *Brand) (*Brand, error) {
@@ -118,17 +103,11 @@ func (b *brandsService) Upsert(ctx context.Context, brandId string, payload *Bra
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &Brand{}
+	err = b.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var brand Brand
-	err = json.Unmarshal(responseBody, &brand)
-	if err != nil {
-		return nil, err
-	}
-	return &brand, nil
+	return resp, nil
 }

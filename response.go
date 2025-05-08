@@ -15,7 +15,7 @@ func (r *Response) String() string {
 
 type BulkResponse struct {
 	Status        string
-	FailedRecords []map[string]interface{}
+	FailedRecords []map[string]any
 	Total         int
 	Success       int
 	Failure       int
@@ -57,7 +57,7 @@ type chunkResponse struct {
 	total         int
 	success       int
 	failure       int
-	failedRecords []map[string]interface{}
+	failedRecords []map[string]any
 }
 
 func emptyChunkSuccessResponse() *chunkResponse {
@@ -67,11 +67,11 @@ func emptyChunkSuccessResponse() *chunkResponse {
 		total:         0,
 		success:       0,
 		failure:       0,
-		failedRecords: []map[string]interface{}{},
+		failedRecords: []map[string]any{},
 	}
 }
 
-func invalidRecordsChunkResponse(invalidRecords []map[string]interface{}) *chunkResponse {
+func invalidRecordsChunkResponse(invalidRecords []map[string]any) *chunkResponse {
 	return &chunkResponse{
 		status:        "fail",
 		statusCode:    500,

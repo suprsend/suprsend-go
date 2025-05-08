@@ -2,8 +2,6 @@ package suprsend
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,16 +14,16 @@ type SubscriberListsService interface {
 	GetAll(context.Context, *SubscriberListAllOptions) (*SubscriberListAll, error)
 	Create(context.Context, *SubscriberListCreateInput) (*SubscriberList, error)
 	Get(context.Context, string) (*SubscriberList, error)
-	Add(context.Context, string, []string) (*Response, error)
-	Remove(context.Context, string, []string) (*Response, error)
-	Delete(context.Context, string) (*Response, error)
+	Add(context.Context, string, []string) (map[string]any, error)
+	Remove(context.Context, string, []string) (map[string]any, error)
+	Delete(context.Context, string) error
 	Broadcast(context.Context, *SubscriberListBroadcast) (*Response, error)
 	StartSync(context.Context, string) (*SubscriberList, error)
 	GetVersion(context.Context, string, string) (*SubscriberList, error)
-	AddToVersion(context.Context, string, string, []string) (*Response, error)
-	RemoveFromVersion(context.Context, string, string, []string) (*Response, error)
+	AddToVersion(context.Context, string, string, []string) (map[string]any, error)
+	RemoveFromVersion(context.Context, string, string, []string) (map[string]any, error)
 	FinishSync(context.Context, string, string) (*SubscriberList, error)
-	DeleteVersion(context.Context, string, string) (*Response, error)
+	DeleteVersion(context.Context, string, string) error
 }
 
 type subscriberListsService struct {
@@ -42,7 +40,7 @@ func newSubscriberListsService(client *Client) *subscriberListsService {
 	bs := &subscriberListsService{
 		client:             client,
 		_subscriberListUrl: fmt.Sprintf("%sv1/subscriber_list/", client.baseUrl),
-		_broadcastUrl:      fmt.Sprintf("%s%s/broadcast/", client.baseUrl, client.ApiKey),
+		_broadcastUrl:      fmt.Sprintf("%s%s/broadcast/", client.baseUrl, client.getWsIdentifierValue()),
 		//
 		nonErrDefaultResponse: &Response{Success: true, StatusCode: 201, Message: `{"success":true}`},
 	}
@@ -73,25 +71,19 @@ func (s *subscriberListsService) GetAll(ctx context.Context, opts *SubscriberLis
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &SubscriberListAll{}
+	err = s.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var all SubscriberListAll
-	err = json.Unmarshal(responseBody, &all)
-	if err != nil {
-		return nil, err
-	}
-	return &all, nil
+	return resp, nil
 }
 
 func (s *subscriberListsService) validateListId(listId string) (string, error) {
 	listId = strings.TrimSpace(listId)
 	if listId == "" {
-		return listId, errors.New("missing list_id")
+		return listId, &Error{Message: "missing list_id"}
 	}
 	return listId, nil
 }
@@ -99,7 +91,7 @@ func (s *subscriberListsService) validateListId(listId string) (string, error) {
 func (s *subscriberListsService) Create(ctx context.Context, createParams *SubscriberListCreateInput) (*SubscriberList, error) {
 	var err error
 	if createParams == nil {
-		return nil, errors.New("missing payload")
+		return nil, &Error{Message: "missing payload"}
 	}
 	createParams.ListId, err = s.validateListId(createParams.ListId)
 	if err != nil {
@@ -117,19 +109,13 @@ func (s *subscriberListsService) Create(ctx context.Context, createParams *Subsc
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &SubscriberList{}
+	err = s.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var sl SubscriberList
-	err = json.Unmarshal(responseBody, &sl)
-	if err != nil {
-		return nil, err
-	}
-	return &sl, nil
+	return resp, nil
 }
 
 func (b *subscriberListsService) listDetailAPIUrl(listId string) string {
@@ -154,31 +140,22 @@ func (s *subscriberListsService) Get(ctx context.Context, listId string) (*Subsc
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &SubscriberList{}
+	err = s.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var sl SubscriberList
-	err = json.Unmarshal(responseBody, &sl)
-	if err != nil {
-		return nil, err
-	}
-	return &sl, nil
+	return resp, nil
 }
 
-func (s *subscriberListsService) Add(ctx context.Context, listId string, distinctIds []string) (*Response, error) {
+func (s *subscriberListsService) Add(ctx context.Context, listId string, distinctIds []string) (map[string]any, error) {
 	listId, err := s.validateListId(listId)
 	if err != nil {
 		return nil, err
-	}
-	if len(distinctIds) == 0 {
-		return s.nonErrDefaultResponse, nil
 	}
 	urlStr := fmt.Sprintf("%ssubscriber/add/", s.listDetailAPIUrl(listId))
-	payload := map[string]interface{}{"distinct_ids": distinctIds}
+	payload := map[string]any{"distinct_ids": distinctIds}
 	// prepare http.Request object
 	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
 	if err != nil {
@@ -190,23 +167,22 @@ func (s *subscriberListsService) Add(ctx context.Context, listId string, distinc
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	suprResponse, err := s.formatAPIResponse(httpResponse)
+	//
+	resp := map[string]any{}
+	err = s.client.parseApiResponse(httpResponse, &resp)
 	if err != nil {
 		return nil, err
 	}
-	return suprResponse, nil
+	return resp, nil
 }
 
-func (s *subscriberListsService) Remove(ctx context.Context, listId string, distinctIds []string) (*Response, error) {
+func (s *subscriberListsService) Remove(ctx context.Context, listId string, distinctIds []string) (map[string]any, error) {
 	listId, err := s.validateListId(listId)
 	if err != nil {
 		return nil, err
-	}
-	if len(distinctIds) == 0 {
-		return s.nonErrDefaultResponse, nil
 	}
 	urlStr := fmt.Sprintf("%ssubscriber/remove/", s.listDetailAPIUrl(listId))
-	payload := map[string]interface{}{"distinct_ids": distinctIds}
+	payload := map[string]any{"distinct_ids": distinctIds}
 	// prepare http.Request object
 	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
 	if err != nil {
@@ -218,41 +194,44 @@ func (s *subscriberListsService) Remove(ctx context.Context, listId string, dist
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	suprResponse, err := s.formatAPIResponse(httpResponse)
+	//
+	resp := map[string]any{}
+	err = s.client.parseApiResponse(httpResponse, &resp)
 	if err != nil {
 		return nil, err
 	}
-	return suprResponse, nil
+	return resp, nil
 }
 
-func (s *subscriberListsService) Delete(ctx context.Context, listId string) (*Response, error) {
+func (s *subscriberListsService) Delete(ctx context.Context, listId string) error {
 	listId, err := s.validateListId(listId)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	urlStr := fmt.Sprintf("%sdelete/", s.listDetailAPIUrl(listId))
-	payload := map[string]interface{}{}
+	payload := map[string]any{}
 	// prepare http.Request object
 	request, err := s.client.prepareHttpRequest("PATCH", urlStr, payload)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer httpResponse.Body.Close()
-	suprResponse, err := s.formatAPIResponse(httpResponse)
+	//
+	err = s.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return suprResponse, nil
+	return nil
 }
 
 func (s *subscriberListsService) Broadcast(ctx context.Context, broadcastIns *SubscriberListBroadcast) (*Response, error) {
 	if broadcastIns == nil {
-		return nil, errors.New("missing payload")
+		return nil, &Error{Message: "missing payload"}
 	}
 	broadcastBody, _, err := broadcastIns.getFinalJson(s.client)
 	if err != nil {
@@ -281,7 +260,7 @@ func (s *subscriberListsService) StartSync(ctx context.Context, listId string) (
 		return nil, err
 	}
 	urlStr := fmt.Sprintf("%sstart_sync/", s.listDetailAPIUrl(listId))
-	payload := map[string]interface{}{}
+	payload := map[string]any{}
 	// prepare http.Request object
 	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
 	if err != nil {
@@ -293,25 +272,19 @@ func (s *subscriberListsService) StartSync(ctx context.Context, listId string) (
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &SubscriberList{}
+	err = s.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var slVersion SubscriberList
-	err = json.Unmarshal(responseBody, &slVersion)
-	if err != nil {
-		return nil, err
-	}
-	return &slVersion, nil
+	return resp, nil
 }
 
 func (s *subscriberListsService) validateVersionId(versionId string) (string, error) {
 	versionId = strings.TrimSpace(versionId)
 	if versionId == "" {
-		return versionId, errors.New("missing version_id")
+		return versionId, &Error{Message: "missing version_id"}
 	}
 	return versionId, nil
 }
@@ -343,22 +316,16 @@ func (s *subscriberListsService) GetVersion(ctx context.Context, listId, version
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &SubscriberList{}
+	err = s.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var slVersion SubscriberList
-	err = json.Unmarshal(responseBody, &slVersion)
-	if err != nil {
-		return nil, err
-	}
-	return &slVersion, nil
+	return resp, nil
 }
 
-func (s *subscriberListsService) AddToVersion(ctx context.Context, listId string, versionId string, distinctIds []string) (*Response, error) {
+func (s *subscriberListsService) AddToVersion(ctx context.Context, listId string, versionId string, distinctIds []string) (map[string]any, error) {
 	listId, err := s.validateListId(listId)
 	if err != nil {
 		return nil, err
@@ -366,12 +333,9 @@ func (s *subscriberListsService) AddToVersion(ctx context.Context, listId string
 	versionId, err = s.validateVersionId(versionId)
 	if err != nil {
 		return nil, err
-	}
-	if len(distinctIds) == 0 {
-		return s.nonErrDefaultResponse, nil
 	}
 	urlStr := fmt.Sprintf("%ssubscriber/add/", s.listAPIUrlWithVersion(listId, versionId))
-	payload := map[string]interface{}{"distinct_ids": distinctIds}
+	payload := map[string]any{"distinct_ids": distinctIds}
 	// prepare http.Request object
 	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
 	if err != nil {
@@ -383,14 +347,16 @@ func (s *subscriberListsService) AddToVersion(ctx context.Context, listId string
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	suprResponse, err := s.formatAPIResponse(httpResponse)
+	//
+	resp := map[string]any{}
+	err = s.client.parseApiResponse(httpResponse, &resp)
 	if err != nil {
 		return nil, err
 	}
-	return suprResponse, nil
+	return resp, nil
 }
 
-func (s *subscriberListsService) RemoveFromVersion(ctx context.Context, listId string, versionId string, distinctIds []string) (*Response, error) {
+func (s *subscriberListsService) RemoveFromVersion(ctx context.Context, listId string, versionId string, distinctIds []string) (map[string]any, error) {
 	listId, err := s.validateListId(listId)
 	if err != nil {
 		return nil, err
@@ -399,11 +365,8 @@ func (s *subscriberListsService) RemoveFromVersion(ctx context.Context, listId s
 	if err != nil {
 		return nil, err
 	}
-	if len(distinctIds) == 0 {
-		return s.nonErrDefaultResponse, nil
-	}
 	urlStr := fmt.Sprintf("%ssubscriber/remove/", s.listAPIUrlWithVersion(listId, versionId))
-	payload := map[string]interface{}{"distinct_ids": distinctIds}
+	payload := map[string]any{"distinct_ids": distinctIds}
 	// prepare http.Request object
 	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
 	if err != nil {
@@ -415,11 +378,13 @@ func (s *subscriberListsService) RemoveFromVersion(ctx context.Context, listId s
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	suprResponse, err := s.formatAPIResponse(httpResponse)
+	//
+	resp := map[string]any{}
+	err = s.client.parseApiResponse(httpResponse, &resp)
 	if err != nil {
 		return nil, err
 	}
-	return suprResponse, nil
+	return resp, nil
 }
 
 func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, versionId string) (*SubscriberList, error) {
@@ -432,7 +397,7 @@ func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, 
 		return nil, err
 	}
 	urlStr := fmt.Sprintf("%sfinish_sync/", s.listAPIUrlWithVersion(listId, versionId))
-	payload := map[string]interface{}{}
+	payload := map[string]any{}
 	// prepare http.Request object
 	request, err := s.client.prepareHttpRequest("PATCH", urlStr, payload)
 	if err != nil {
@@ -444,57 +409,52 @@ func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, 
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &SubscriberList{}
+	err = s.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var slVersion SubscriberList
-	err = json.Unmarshal(responseBody, &slVersion)
-	if err != nil {
-		return nil, err
-	}
-	return &slVersion, nil
+	return resp, nil
 }
 
-func (s *subscriberListsService) DeleteVersion(ctx context.Context, listId string, versionId string) (*Response, error) {
+func (s *subscriberListsService) DeleteVersion(ctx context.Context, listId string, versionId string) error {
 	listId, err := s.validateListId(listId)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	versionId, err = s.validateVersionId(versionId)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	urlStr := fmt.Sprintf("%sdelete/", s.listAPIUrlWithVersion(listId, versionId))
-	payload := map[string]interface{}{}
+	payload := map[string]any{}
 	// prepare http.Request object
 	request, err := s.client.prepareHttpRequest("PATCH", urlStr, payload)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer httpResponse.Body.Close()
-	suprResponse, err := s.formatAPIResponse(httpResponse)
+	//
+	err = s.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return suprResponse, nil
+	return nil
 }
 
 func (s *subscriberListsService) formatAPIResponse(httpRes *http.Response) (*Response, error) {
 	respBody, err := io.ReadAll(httpRes.Body)
 	if err != nil {
-		return nil, err
+		return nil, &Error{Err: err}
 	}
 	if httpRes.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpRes.StatusCode, string(respBody))
+		return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
 	}
 	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }

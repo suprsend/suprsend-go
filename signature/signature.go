@@ -9,21 +9,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"reflect"
 )
 
-func GetRequestSignature(urlStr string, httpVerb string, content interface{},
+func GetRequestSignature(urlStr string, httpVerb string, content any,
 	headers map[string]string, secret string,
 ) ([]byte, string, error) {
 	//
 	var contentBody []byte
 	var contentMd5 string
 	// possible methods: POST/GET/PUT
-	if httpVerb == "GET" || content == nil {
+	if httpVerb == "GET" || SafeCheckNil(content) {
 		contentBody, contentMd5 = []byte(""), ""
 	} else {
 		cBytes, err := json.Marshal(content)
 		if err != nil {
-			return contentBody, contentMd5, err
+			return contentBody, contentMd5, fmt.Errorf("failed to marshal content: %w", err)
 		}
 		contentBody = cBytes
 		// MD5 of the content
@@ -64,4 +65,16 @@ func getUrlPath(urlStr string) (string, error) {
 		uri = fmt.Sprintf("%s?%s", uri, u.Query().Encode())
 	}
 	return uri, nil
+}
+
+func SafeCheckNil(input any) bool {
+	if input == nil {
+		return true
+	}
+	v := reflect.ValueOf(input)
+	// Only call IsNil on types that can be nil
+	return (v.Kind() == reflect.Ptr || v.Kind() == reflect.Slice ||
+		v.Kind() == reflect.Map || v.Kind() == reflect.Chan ||
+		v.Kind() == reflect.Interface || v.Kind() == reflect.Func) &&
+		v.IsNil()
 }

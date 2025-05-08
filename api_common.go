@@ -1,5 +1,10 @@
 package suprsend
 
+import (
+	"net/url"
+	"strconv"
+)
+
 type ListApiMetaInfo struct {
 	Count  int `json:"count"`
 	Limit  int `json:"limit"`
@@ -24,6 +29,33 @@ type CursorListApiOptions struct {
 	Limit  int
 	Before string
 	After  string
-	// other filter params can added to more
-	More map[string]string
+	// add more filters like this: {"key": "val1"}
+	ExtraParams map[string]string
+	// For multivalue params: {"key2[]": ["val2", "val3"]}
+	MultiValueParams map[string][]string
+}
+
+func (o *CursorListApiOptions) BuildQuery() string {
+	if o == nil {
+		return ""
+	}
+	params := url.Values{}
+	if o.Limit > 0 {
+		params.Add("limit", strconv.Itoa(o.Limit))
+	}
+	if o.Before != "" {
+		params.Add("before", o.Before)
+	}
+	if o.After != "" {
+		params.Add("after", o.After)
+	}
+	for k, v := range o.ExtraParams {
+		params.Add(k, v)
+	}
+	for k, v := range o.MultiValueParams {
+		for _, vv := range v {
+			params.Add(k, vv)
+		}
+	}
+	return params.Encode()
 }

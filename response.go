@@ -8,23 +8,23 @@ type Response struct {
 	Message    string `json:"message"`
 }
 
-func (r Response) String() string {
+func (r *Response) String() string {
 	return fmt.Sprintf("Response{Success: %v, StatusCode: %v, Message: %v}",
 		r.Success, r.StatusCode, r.Message)
 }
 
 type BulkResponse struct {
 	Status        string
-	FailedRecords []map[string]interface{}
+	FailedRecords []map[string]any
 	Total         int
 	Success       int
 	Failure       int
 	Warnings      []string
 }
 
-func (r BulkResponse) String() string {
+func (b *BulkResponse) String() string {
 	return fmt.Sprintf("BulkResponse{Status: %v, Total: %v, Success: %v, Failure: %v, Warnings: %v}",
-		r.Status, r.Total, r.Success, r.Failure, len(r.Warnings))
+		b.Status, b.Total, b.Success, b.Failure, len(b.Warnings))
 }
 
 func (b *BulkResponse) mergeChunkResponse(chResponse *chunkResponse) {
@@ -57,7 +57,7 @@ type chunkResponse struct {
 	total         int
 	success       int
 	failure       int
-	failedRecords []map[string]interface{}
+	failedRecords []map[string]any
 }
 
 func emptyChunkSuccessResponse() *chunkResponse {
@@ -67,11 +67,11 @@ func emptyChunkSuccessResponse() *chunkResponse {
 		total:         0,
 		success:       0,
 		failure:       0,
-		failedRecords: []map[string]interface{}{},
+		failedRecords: []map[string]any{},
 	}
 }
 
-func invalidRecordsChunkResponse(invalidRecords []map[string]interface{}) *chunkResponse {
+func invalidRecordsChunkResponse(invalidRecords []map[string]any) *chunkResponse {
 	return &chunkResponse{
 		status:        "fail",
 		statusCode:    500,

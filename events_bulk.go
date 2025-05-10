@@ -36,11 +36,11 @@ type bulkEvents struct {
 	//
 	response *BulkResponse
 	// invalid_record json: {"record": event-json, "error": error_str, "code": 500}
-	_invalidRecords []map[string]interface{}
+	_invalidRecords []map[string]any
 }
 
 type pendingEventRecord struct {
-	record     map[string]interface{}
+	record     map[string]any
 	recordSize int
 }
 
@@ -121,7 +121,7 @@ type bulkEventsChunk struct {
 	client *Client
 	_url   string
 	//
-	_chunk         []map[string]interface{}
+	_chunk         []map[string]any
 	_runningSize   int
 	_runningLength int
 	response       *chunkResponse
@@ -134,12 +134,12 @@ func newBulkEventsChunk(client *Client) *bulkEventsChunk {
 		//
 		client: client,
 		_url:   fmt.Sprintf("%sevent/", client.baseUrl),
-		_chunk: []map[string]interface{}{},
+		_chunk: []map[string]any{},
 	}
 	return bec
 }
 
-func (b *bulkEventsChunk) _addEventToChunk(event map[string]interface{}, eventSize int) {
+func (b *bulkEventsChunk) _addEventToChunk(event map[string]any, eventSize int) {
 	// First add size, then event to reduce effects of race condition
 	b._runningSize += eventSize
 	b._chunk = append(b._chunk, event)
@@ -154,7 +154,7 @@ func (b *bulkEventsChunk) _checkLimitReached() bool {
 returns whether passed event was able to get added to this chunk or not,
 if true, event gets added to chunk
 */
-func (b *bulkEventsChunk) tryToAddIntoChunk(event map[string]interface{}, eventSize int) bool {
+func (b *bulkEventsChunk) tryToAddIntoChunk(event map[string]any, eventSize int) bool {
 	if event == nil {
 		return true
 	}
@@ -165,9 +165,8 @@ func (b *bulkEventsChunk) tryToAddIntoChunk(event map[string]interface{}, eventS
 	if (b._runningSize + eventSize) > b._chunk_apparent_size_in_bytes {
 		return false
 	}
-
 	if !ALLOW_ATTACHMENTS_IN_BULK_API {
-		delete(event["properties"].(map[string]interface{}), "$attachments")
+		delete(event["properties"].(map[string]any), "$attachments")
 	}
 	// Add Event to chunk
 	b._addEventToChunk(event, eventSize)
@@ -181,7 +180,6 @@ func (b *bulkEventsChunk) trigger() {
 		suprResponse := b.formatAPIResponse(nil, err)
 		b.response = suprResponse
 	}
-	//
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
 		suprResponse := b.formatAPIResponse(nil, err)
@@ -195,13 +193,12 @@ func (b *bulkEventsChunk) trigger() {
 }
 
 func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
-	//
 	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
-		failedRecords := []map[string]interface{}{}
+		failedRecords := []map[string]any{}
 		if statusCode >= 400 {
 			for _, c := range b._chunk {
 				failedRecords = append(failedRecords,
-					map[string]interface{}{
+					map[string]any{
 						"record": c,
 						"error":  errMsg,
 						"code":   statusCode,
@@ -228,7 +225,6 @@ func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *
 		if err != nil {
 			return bulkRespFunc(500, err.Error())
 		}
-		//
 		return bulkRespFunc(httpRes.StatusCode, string(respBody))
 	}
 	return nil

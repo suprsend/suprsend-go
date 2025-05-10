@@ -9,11 +9,11 @@ type Brand struct {
 	EmbeddedPreferenceUrl  *string  `json:"embedded_preference_url,omitempty"`
 	HostedPreferenceDomain *string  `json:"hosted_preference_domain,omitempty"`
 	//
-	PrimaryColor   *string                `json:"primary_color,omitempty"`
-	SecondaryColor *string                `json:"secondary_color,omitempty"`
-	TertiaryColor  *string                `json:"tertiary_color,omitempty"`
-	SocialLinks    *BrandSocialLinks      `json:"social_links,omitempty"`
-	Properties     map[string]interface{} `json:"properties,omitempty"`
+	PrimaryColor   *string           `json:"primary_color,omitempty"`
+	SecondaryColor *string           `json:"secondary_color,omitempty"`
+	TertiaryColor  *string           `json:"tertiary_color,omitempty"`
+	SocialLinks    *BrandSocialLinks `json:"social_links,omitempty"`
+	Properties     map[string]any    `json:"properties,omitempty"`
 }
 
 type BrandSocialLinks struct {

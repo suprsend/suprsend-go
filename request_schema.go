@@ -32,16 +32,16 @@ func loadJsonSchema(schemaName string) (*gojsonschema.Schema, error) {
 	relPath := fmt.Sprintf("request_json/%s.json", schemaName)
 	content, err := fs.ReadFile(relPath)
 	if err != nil {
-		return nil, fmt.Errorf("SuprsendMissingSchema: %s. %w", schemaName, err)
+		return nil, &Error{Message: fmt.Sprintf("SuprsendMissingSchema: %s. %v", schemaName, err), Err: err}
 	}
 	if len(content) == 0 {
-		return nil, fmt.Errorf("SuprsendMissingSchema: %s. %v", schemaName, "empty content")
+		return nil, &Error{Message: fmt.Sprintf("SuprsendMissingSchema: %s. %v", schemaName, "empty content")}
 	}
 	// loading the schema
 	var res gojsonschema.JSONLoader = gojsonschema.NewBytesLoader(content)
 	schema, err := gojsonschema.NewSchema(res)
 	if err != nil {
-		return nil, fmt.Errorf("SuprsendInvalidSchema: %s. %w", schemaName, err)
+		return nil, &Error{Message: fmt.Sprintf("SuprsendInvalidSchema: %s. %v", schemaName, err), Err: err}
 	}
 	return schema, nil
 }

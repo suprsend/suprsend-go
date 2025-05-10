@@ -1,10 +1,10 @@
 package suprsend
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -21,7 +21,7 @@ var RESERVED_EVENT_NAMES = []string{
 type Event struct {
 	DistinctId     string
 	EventName      string
-	Properties     map[string]interface{}
+	Properties     map[string]any
 	IdempotencyKey string
 	TenantId       string
 	// Brand has been renamed to Tenant. Brand is kept for backward-compatibilty.
@@ -32,22 +32,22 @@ type Event struct {
 func (e *Event) validateDistinctId() error {
 	e.DistinctId = strings.TrimSpace(e.DistinctId)
 	if e.DistinctId == "" {
-		return errors.New("distinct_id missing")
+		return &Error{Message: "distinct_id missing"}
 	}
 	return nil
 }
 
 func (e *Event) checkProperties() {
 	if e.Properties == nil {
-		e.Properties = map[string]interface{}{}
+		e.Properties = map[string]any{}
 	}
 }
 
 func (e *Event) checkEventPrefix() error {
-	if !Contains(RESERVED_EVENT_NAMES, e.EventName) {
+	if !slices.Contains(RESERVED_EVENT_NAMES, e.EventName) {
 		if strings.HasPrefix(e.EventName, "$") || strings.HasPrefix(e.EventName, "ss_") ||
 			strings.HasPrefix(e.EventName, "SS_") {
-			return errors.New("event_names starting with [$,ss_] are reserved by SuprSend")
+			return &Error{Message: "event_names starting with [$,ss_] are reserved by SuprSend"}
 		}
 	}
 	return nil
@@ -56,7 +56,7 @@ func (e *Event) checkEventPrefix() error {
 func (e *Event) validateEventName() error {
 	e.EventName = strings.TrimSpace(e.EventName)
 	if e.EventName == "" {
-		return errors.New("event_name missing")
+		return &Error{Message: "event_name missing"}
 	}
 	err := e.checkEventPrefix()
 	if err != nil {
@@ -76,16 +76,16 @@ func (e *Event) AddAttachment(filePath string, ao *AttachmentOption) error {
 	}
 	// add the attachment to properties->$attachments
 	if a, found := e.Properties["$attachments"]; !found || a == nil {
-		e.Properties["$attachments"] = []map[string]interface{}{}
+		e.Properties["$attachments"] = []map[string]any{}
 	}
-	allAttachments := e.Properties["$attachments"].([]map[string]interface{})
+	allAttachments := e.Properties["$attachments"].([]map[string]any)
 	allAttachments = append(allAttachments, attachment)
 	e.Properties["$attachments"] = allAttachments
 	//
 	return nil
 }
 
-func (e *Event) getFinalJson(client *Client, isPartOfBulk bool) (map[string]interface{}, int, error) {
+func (e *Event) getFinalJson(client *Client, isPartOfBulk bool) (map[string]any, int, error) {
 	var err error
 	err = e.validateDistinctId()
 	if err != nil {
@@ -97,15 +97,15 @@ func (e *Event) getFinalJson(client *Client, isPartOfBulk bool) (map[string]inte
 	}
 	e.checkProperties()
 	//
-	suprProps := map[string]interface{}{"$ss_sdk_version": client.userAgent}
+	suprProps := map[string]any{"$ss_sdk_version": client.userAgent}
 	// props
 	maps.Copy(e.Properties, suprProps)
 	//
-	eventMap := map[string]interface{}{
+	eventMap := map[string]any{
 		"$insert_id":  uuid.New().String(),
 		"$time":       time.Now().UnixMilli(),
 		"event":       e.EventName,
-		"env":         client.ApiKey,
+		"env":         client.getWsIdentifierValue(),
 		"distinct_id": e.DistinctId,
 		"properties":  e.Properties,
 	}
@@ -129,16 +129,16 @@ func (e *Event) getFinalJson(client *Client, isPartOfBulk bool) (map[string]inte
 	if err != nil {
 		return nil, 0, err
 	}
-	if apparentSize > SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES {
+	if apparentSize > BODY_MAX_APPARENT_SIZE_IN_BYTES {
 		errStr := fmt.Sprintf("event size too big - %d Bytes, must not cross %s", apparentSize,
-			SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES_READABLE)
-		return nil, 0, errors.New(errStr)
+			BODY_MAX_APPARENT_SIZE_IN_BYTES_READABLE)
+		return nil, 0, &Error{Code: 413, Message: errStr}
 	}
 	return eventMap, apparentSize, nil
 }
 
-func (e *Event) asJson() map[string]interface{} {
-	eventMap := map[string]interface{}{
+func (e *Event) asJson() map[string]any {
+	eventMap := map[string]any{
 		"event":       e.EventName,
 		"distinct_id": e.DistinctId,
 		"properties":  e.Properties,
@@ -183,7 +183,7 @@ func (e *eventsCollector) Collect(event *Event) (*Response, error) {
 	return suprResp, nil
 }
 
-func (e *eventsCollector) send(eventMap map[string]interface{}) (*Response, error) {
+func (e *eventsCollector) send(eventMap map[string]any) (*Response, error) {
 	// prepare http.Request object
 	request, err := e.client.prepareHttpRequest("POST", e._url, eventMap)
 	if err != nil {
@@ -205,11 +205,10 @@ func (e *eventsCollector) send(eventMap map[string]interface{}) (*Response, erro
 func (e *eventsCollector) formatAPIResponse(httpRes *http.Response) (*Response, error) {
 	respBody, err := io.ReadAll(httpRes.Body)
 	if err != nil {
-		return nil, err
+		return nil, &Error{Err: err}
 	}
 	if httpRes.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpRes.StatusCode, string(respBody))
-
+		return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
 	}
 	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gabriel-vasile/mimetype"
-	homedir "github.com/mitchellh/go-homedir"
 )
 
 type AttachmentOption struct {
@@ -19,7 +18,7 @@ type AttachmentOption struct {
 	IgnoreIfError bool
 }
 
-func GetAttachmentJson(filePath string, ao *AttachmentOption) (map[string]interface{}, error) {
+func GetAttachmentJson(filePath string, ao *AttachmentOption) (map[string]any, error) {
 	fileName, ignoreIfError := "", false
 	if ao != nil {
 		fileName, ignoreIfError = ao.FileName, ao.IgnoreIfError
@@ -41,17 +40,17 @@ func checkIsUrl(filePath string) bool {
 	return false
 }
 
-func getAttachmentJsonForUrl(fileUrl string, fileName string, ignoreIfError bool) (map[string]interface{}, error) {
-	return map[string]interface{}{
+func getAttachmentJsonForUrl(fileUrl string, fileName string, ignoreIfError bool) (map[string]any, error) {
+	return map[string]any{
 		"filename":        fileName,
 		"url":             fileUrl,
 		"ignore_if_error": ignoreIfError,
 	}, nil
 }
 
-func getAttachmentJsonForFile(filePath string, fileName string, ignoreIfError bool) (map[string]interface{}, error) {
+func getAttachmentJsonForFile(filePath string, fileName string, ignoreIfError bool) (map[string]any, error) {
 	// Get absolute path
-	absPath, err := homedir.Expand(filePath)
+	absPath, err := expandHomeDir(filePath)
 	if err != nil {
 		if ignoreIfError {
 			log.Println("WARNING: ignoring error while processing attachment file.", err)
@@ -72,15 +71,33 @@ func getAttachmentJsonForFile(filePath string, fileName string, ignoreIfError bo
 			log.Println("WARNING: ignoring error while processing attachment file.", err)
 			return nil, nil
 		}
-		return nil, err
+		return nil, &Error{Err: err}
 	}
 	b64Str := base64.StdEncoding.EncodeToString(content)
 	mimeType := mimetype.Detect(content).String()
 	//
-	return map[string]interface{}{
+	return map[string]any{
 		"filename":        finalFileName,
 		"contentType":     mimeType,
 		"data":            b64Str,
 		"ignore_if_error": ignoreIfError,
 	}, nil
+}
+
+// expandHomeDir expands file paths relative to the user's home directory (~) into absolute paths.
+func expandHomeDir(path string) (string, error) {
+	if !strings.HasPrefix(path, "~") {
+		return path, nil
+	}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", &Error{Err: err}
+	}
+	if path == "~" {
+		return homeDir, nil
+	}
+	if !strings.HasPrefix(path, "~"+string(filepath.Separator)) {
+		return "", &Error{Message: "cannot expand user-specific home dir"}
+	}
+	return filepath.Join(homeDir, strings.TrimPrefix(path, "~")), nil
 }

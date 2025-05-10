@@ -50,10 +50,10 @@ func (w *workflowsService) Trigger(workflow *WorkflowTriggerRequest) (*Response,
 func (w *workflowsService) formatAPIResponse(httpRes *http.Response) (*Response, error) {
 	respBody, err := io.ReadAll(httpRes.Body)
 	if err != nil {
-		return nil, err
+		return nil, &Error{Err: err}
 	}
 	if httpRes.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpRes.StatusCode, string(respBody))
+		return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
 	}
 	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }

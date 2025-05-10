@@ -1,7 +1,6 @@
 package suprsend
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -75,7 +74,7 @@ type SubscriberListCreateInput struct {
 
 // Broadcast request params on SubscriberList
 type SubscriberListBroadcast struct {
-	Body           map[string]interface{}
+	Body           map[string]any
 	IdempotencyKey string
 	TenantId       string
 	// Brand has been renamed to Tenant. BrandId is kept for backward-compatibilty.
@@ -85,7 +84,7 @@ type SubscriberListBroadcast struct {
 
 func (s *SubscriberListBroadcast) AddAttachment(filePath string, ao *AttachmentOption) error {
 	if d, found := s.Body["data"]; !found || d == nil {
-		s.Body["data"] = map[string]interface{}{}
+		s.Body["data"] = map[string]any{}
 	}
 	attachment, err := GetAttachmentJson(filePath, ao)
 	if err != nil {
@@ -94,17 +93,17 @@ func (s *SubscriberListBroadcast) AddAttachment(filePath string, ao *AttachmentO
 	if attachment == nil {
 		return nil
 	}
-	data := s.Body["data"].(map[string]interface{})
+	data := s.Body["data"].(map[string]any)
 	if a, found := data["$attachments"]; !found || a == nil {
-		data["$attachments"] = []map[string]interface{}{}
+		data["$attachments"] = []map[string]any{}
 	}
-	allAttachments := data["$attachments"].([]map[string]interface{})
+	allAttachments := data["$attachments"].([]map[string]any)
 	allAttachments = append(allAttachments, attachment)
 	data["$attachments"] = allAttachments
 	return nil
 }
 
-func (s *SubscriberListBroadcast) getFinalJson(client *Client) (map[string]interface{}, int, error) {
+func (s *SubscriberListBroadcast) getFinalJson(client *Client) (map[string]any, int, error) {
 	s.Body["$insert_id"] = uuid.New().String()
 	s.Body["$time"] = time.Now().UnixMilli()
 	if s.IdempotencyKey != "" {
@@ -126,10 +125,10 @@ func (s *SubscriberListBroadcast) getFinalJson(client *Client) (map[string]inter
 	if err != nil {
 		return nil, 0, err
 	}
-	if apparentSize > SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES {
+	if apparentSize > BODY_MAX_APPARENT_SIZE_IN_BYTES {
 		errStr := fmt.Sprintf("SubscriberListBroadcast body too big - %d Bytes, must not cross %s", apparentSize,
-			SINGLE_EVENT_MAX_APPARENT_SIZE_IN_BYTES_READABLE)
-		return nil, 0, errors.New(errStr)
+			BODY_MAX_APPARENT_SIZE_IN_BYTES_READABLE)
+		return nil, 0, &Error{Code: 413, Message: errStr}
 	}
 	return s.Body, apparentSize, nil
 }

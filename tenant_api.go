@@ -2,9 +2,7 @@ package suprsend
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/url"
 	"strconv"
 )
@@ -49,29 +47,22 @@ func (t *tenantsService) List(ctx context.Context, opts *TenantListOptions) (*Te
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := t.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &TenantList{}
+	err = t.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var tenantList TenantList
-	err = json.Unmarshal(responseBody, &tenantList)
-	if err != nil {
-		return nil, err
-	}
-	return &tenantList, nil
+	return resp, nil
 }
 
 func (t *tenantsService) tenantAPIUrl(tenantId string) string {
-	tenantId = url.QueryEscape(tenantId)
+	tenantId = url.PathEscape(tenantId)
 	return fmt.Sprintf("%s%s/", t._url, tenantId)
 }
 
@@ -82,26 +73,18 @@ func (t *tenantsService) Get(ctx context.Context, tenantId string) (*Tenant, err
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := t.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
 	//
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	resp := &Tenant{}
+	err = t.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var tenant Tenant
-	err = json.Unmarshal(responseBody, &tenant)
-	if err != nil {
-		return nil, err
-	}
-	return &tenant, nil
+	return resp, nil
 }
 
 func (t *tenantsService) Upsert(ctx context.Context, tenantId string, payload *Tenant) (*Tenant, error) {
@@ -111,25 +94,18 @@ func (t *tenantsService) Upsert(ctx context.Context, tenantId string, payload *T
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := t.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	resp := &Tenant{}
+	err = t.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return nil, fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	var tenant Tenant
-	err = json.Unmarshal(responseBody, &tenant)
-	if err != nil {
-		return nil, err
-	}
-	return &tenant, nil
+	return resp, nil
 }
 
 func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
@@ -139,19 +115,15 @@ func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
 	if err != nil {
 		return err
 	}
-	//
 	httpResponse, err := t.client.httpClient.Do(request)
 	if err != nil {
 		return err
 	}
 	defer httpResponse.Body.Close()
-	responseBody, err := io.ReadAll(httpResponse.Body)
+	//
+	err = t.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
 		return err
 	}
-	if httpResponse.StatusCode >= 400 {
-		return fmt.Errorf("code: %v. message: %v", httpResponse.StatusCode, string(responseBody))
-	}
-	// successfully deleted
 	return nil
 }

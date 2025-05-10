@@ -165,7 +165,6 @@ func (b *bulkEventsChunk) tryToAddIntoChunk(event map[string]any, eventSize int)
 	if (b._runningSize + eventSize) > b._chunk_apparent_size_in_bytes {
 		return false
 	}
-
 	if !ALLOW_ATTACHMENTS_IN_BULK_API {
 		delete(event["properties"].(map[string]any), "$attachments")
 	}
@@ -181,7 +180,6 @@ func (b *bulkEventsChunk) trigger() {
 		suprResponse := b.formatAPIResponse(nil, err)
 		b.response = suprResponse
 	}
-	//
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
 		suprResponse := b.formatAPIResponse(nil, err)
@@ -195,7 +193,6 @@ func (b *bulkEventsChunk) trigger() {
 }
 
 func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
-	//
 	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
 		failedRecords := []map[string]any{}
 		if statusCode >= 400 {
@@ -228,7 +225,6 @@ func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *
 		if err != nil {
 			return bulkRespFunc(500, err.Error())
 		}
-		//
 		return bulkRespFunc(httpRes.StatusCode, string(respBody))
 	}
 	return nil

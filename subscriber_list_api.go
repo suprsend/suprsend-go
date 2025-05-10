@@ -65,7 +65,6 @@ func (s *subscriberListsService) GetAll(ctx context.Context, opts *SubscriberLis
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -103,7 +102,6 @@ func (s *subscriberListsService) Create(ctx context.Context, createParams *Subsc
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -134,7 +132,6 @@ func (s *subscriberListsService) Get(ctx context.Context, listId string) (*Subsc
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -161,7 +158,6 @@ func (s *subscriberListsService) Add(ctx context.Context, listId string, distinc
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -188,7 +184,6 @@ func (s *subscriberListsService) Remove(ctx context.Context, listId string, dist
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -215,7 +210,6 @@ func (s *subscriberListsService) Delete(ctx context.Context, listId string) erro
 	if err != nil {
 		return err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return err
@@ -266,7 +260,6 @@ func (s *subscriberListsService) StartSync(ctx context.Context, listId string) (
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -310,7 +303,6 @@ func (s *subscriberListsService) GetVersion(ctx context.Context, listId, version
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -341,7 +333,6 @@ func (s *subscriberListsService) AddToVersion(ctx context.Context, listId string
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -372,7 +363,6 @@ func (s *subscriberListsService) RemoveFromVersion(ctx context.Context, listId s
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -403,7 +393,6 @@ func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, 
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -434,7 +423,6 @@ func (s *subscriberListsService) DeleteVersion(ctx context.Context, listId strin
 	if err != nil {
 		return err
 	}
-	//
 	httpResponse, err := s.client.httpClient.Do(request)
 	if err != nil {
 		return err

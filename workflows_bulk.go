@@ -165,7 +165,6 @@ func (b *bulkWorkflowsChunk) tryToAddIntoChunk(body map[string]any, bodySize int
 	if (b._runningSize + bodySize) > b._chunk_apparent_size_in_bytes {
 		return false
 	}
-
 	if !ALLOW_ATTACHMENTS_IN_BULK_API {
 		delete(body["data"].(map[string]any), "$attachments")
 	}
@@ -182,7 +181,6 @@ func (b *bulkWorkflowsChunk) trigger() {
 		suprResponse := b.formatAPIResponse(nil, err)
 		b.response = suprResponse
 	}
-	//
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
 		suprResponse := b.formatAPIResponse(nil, err)
@@ -196,7 +194,6 @@ func (b *bulkWorkflowsChunk) trigger() {
 }
 
 func (b *bulkWorkflowsChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
-	//
 	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
 		failedRecords := []map[string]any{}
 		if statusCode >= 400 {
@@ -229,7 +226,6 @@ func (b *bulkWorkflowsChunk) formatAPIResponse(httpRes *http.Response, err error
 		if err != nil {
 			return bulkRespFunc(500, err.Error())
 		}
-		//
 		return bulkRespFunc(httpRes.StatusCode, string(respBody))
 	}
 	return nil

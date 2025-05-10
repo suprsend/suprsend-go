@@ -47,7 +47,6 @@ func (t *tenantsService) List(ctx context.Context, opts *TenantListOptions) (*Te
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := t.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -74,7 +73,6 @@ func (t *tenantsService) Get(ctx context.Context, tenantId string) (*Tenant, err
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := t.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -96,7 +94,6 @@ func (t *tenantsService) Upsert(ctx context.Context, tenantId string, payload *T
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := t.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -118,7 +115,6 @@ func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
 	if err != nil {
 		return err
 	}
-	//
 	httpResponse, err := t.client.httpClient.Do(request)
 	if err != nil {
 		return err

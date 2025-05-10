@@ -48,7 +48,6 @@ func (b *brandsService) List(ctx context.Context, opts *BrandListOptions) (*Bran
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -75,7 +74,6 @@ func (b *brandsService) Get(ctx context.Context, brandId string) (*Brand, error)
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -97,7 +95,6 @@ func (b *brandsService) Upsert(ctx context.Context, brandId string, payload *Bra
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err

@@ -71,7 +71,7 @@ func getAttachmentJsonForFile(filePath string, fileName string, ignoreIfError bo
 			log.Println("WARNING: ignoring error while processing attachment file.", err)
 			return nil, nil
 		}
-		return nil, err
+		return nil, &Error{Err: err}
 	}
 	b64Str := base64.StdEncoding.EncodeToString(content)
 	mimeType := mimetype.Detect(content).String()
@@ -91,7 +91,7 @@ func expandHomeDir(path string) (string, error) {
 	}
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", err
+		return "", &Error{Err: err}
 	}
 	if path == "~" {
 		return homeDir, nil

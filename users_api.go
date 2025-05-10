@@ -51,7 +51,6 @@ func (u *usersService) List(ctx context.Context, opts *CursorListApiOptions) (*C
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := u.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -81,7 +80,6 @@ func (u *usersService) Get(ctx context.Context, distinctId string) (map[string]a
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := u.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -106,7 +104,6 @@ func (u *usersService) Upsert(ctx context.Context, distinctId string, payload ma
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := u.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -135,7 +132,6 @@ func (u *usersService) AsyncEdit(ctx context.Context, editInstance UserEdit) (*R
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := u.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -214,7 +210,6 @@ func (u *usersService) Merge(ctx context.Context, distinctId string, payload Use
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := u.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -236,7 +231,6 @@ func (u *usersService) Delete(ctx context.Context, distinctId string) error {
 	if err != nil {
 		return err
 	}
-	//
 	httpResponse, err := u.client.httpClient.Do(request)
 	if err != nil {
 		return err
@@ -261,7 +255,6 @@ func (u *usersService) BulkDelete(ctx context.Context, payload UserBulkDeletePay
 	if err != nil {
 		return err
 	}
-	//
 	httpResponse, err := u.client.httpClient.Do(request)
 	if err != nil {
 		return err
@@ -282,7 +275,6 @@ func (u *usersService) GetObjectsSubscribedTo(ctx context.Context, distinctId st
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := u.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -304,7 +296,6 @@ func (u *usersService) GetListsSubscribedTo(ctx context.Context, distinctId stri
 	if err != nil {
 		return nil, err
 	}
-	//
 	httpResponse, err := u.client.httpClient.Do(request)
 	if err != nil {
 		return nil, err
@@ -327,6 +318,7 @@ func (u *usersService) GetBulkEditInstance() BulkUsersEdit {
 	return newBulkUsersEdit(u.client)
 }
 
+// Deprecated: this method will be removed in near future. Use GetEditInstance instead.
 func (u *usersService) GetInstance(distinctId string) Subscriber {
 	return newSubscriber(u.client, distinctId)
 }

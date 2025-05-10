@@ -16,19 +16,15 @@ import (
 )
 
 const (
-	AuthMethod_WsKeySecret  string = "ws_key_secret"
-	AuthMethod_ServiceToken string = "service_token"
+	AuthMethod_WsKeySecret string = "ws_key_secret"
 )
 
 type Client struct {
-	// auth_methods: ws_key_secret / service_token
+	// auth_methods: ws_key_secret
 	AuthMethod string
 	// -- For workspace key/secret clients
 	ApiKey    string
 	ApiSecret string
-	// -- For service token clients
-	ServiceToken string
-	WorkspaceUid string
 	//
 	Users           *usersService
 	Tenants         *tenantsService
@@ -61,19 +57,6 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 		AuthMethod: AuthMethod_WsKeySecret,
 		ApiKey:     apiKey,
 		ApiSecret:  apiSecret,
-	}
-	err := c.init(opts...)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
-}
-
-func NewServiceTokenClient(token string, workspaceUid string, opts ...ClientOption) (*Client, error) {
-	c := &Client{
-		AuthMethod:   AuthMethod_ServiceToken,
-		ServiceToken: token,
-		WorkspaceUid: workspaceUid,
 	}
 	err := c.init(opts...)
 	if err != nil {
@@ -155,7 +138,7 @@ func (c *Client) setDerivedBaseUrl() {
 }
 
 func (c *Client) basicValidation() error {
-	if !slices.Contains([]string{AuthMethod_WsKeySecret, AuthMethod_ServiceToken}, c.AuthMethod) {
+	if !slices.Contains([]string{AuthMethod_WsKeySecret}, c.AuthMethod) {
 		return ErrInvalidAuthMethod
 	}
 	if c.AuthMethod == AuthMethod_WsKeySecret {
@@ -164,13 +147,6 @@ func (c *Client) basicValidation() error {
 		}
 		if c.ApiSecret == "" {
 			return ErrMissingAPISecret
-		}
-	} else if c.AuthMethod == AuthMethod_ServiceToken {
-		if c.ServiceToken == "" {
-			return ErrMissingServiceToken
-		}
-		if c.WorkspaceUid == "" {
-			return ErrMissingWorkspaceUid
 		}
 	}
 	if c.baseUrl == "" {
@@ -182,8 +158,6 @@ func (c *Client) basicValidation() error {
 func (c *Client) getWsIdentifierValue() string {
 	if c.AuthMethod == AuthMethod_WsKeySecret {
 		return c.ApiKey
-	} else if c.AuthMethod == AuthMethod_ServiceToken {
-		return c.WorkspaceUid
 	}
 	return ""
 }
@@ -211,25 +185,6 @@ func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody 
 		}
 		headers["Authorization"] = fmt.Sprintf("%s:%s", c.ApiKey, sig)
 		//
-		request, err = http.NewRequest(httpMethod, httpUrl, bytes.NewBuffer(contentBody))
-		if err != nil {
-			return nil, &Error{Err: err}
-		}
-	} else if c.AuthMethod == AuthMethod_ServiceToken {
-		var contentBody []byte
-		if httpMethod == "GET" || signature.SafeCheckNil(httpBody) {
-			contentBody = []byte("")
-		} else {
-			cBytes, err := json.Marshal(httpBody)
-			if err != nil {
-				return nil, &Error{Err: fmt.Errorf("failed to marshal content: %w", err)}
-			}
-			contentBody = cBytes
-		}
-		headers["Authorization"] = fmt.Sprintf("ServiceToken %s", c.ServiceToken)
-		headers["X-SS-WSUID"] = c.WorkspaceUid
-		//
-		var err error
 		request, err = http.NewRequest(httpMethod, httpUrl, bytes.NewBuffer(contentBody))
 		if err != nil {
 			return nil, &Error{Err: err}

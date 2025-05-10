@@ -5,12 +5,10 @@ import (
 )
 
 var (
-	ErrInvalidAuthMethod   = &Error{Code: 400, Message: "suprsend: invalid auth_method"}
-	ErrMissingAPIKey       = &Error{Code: 400, Message: "suprsend: missing api_key"}
-	ErrMissingAPISecret    = &Error{Code: 400, Message: "suprsend: missing api_secret"}
-	ErrMissingServiceToken = &Error{Code: 400, Message: "suprsend: missing service_token"}
-	ErrMissingWorkspaceUid = &Error{Code: 400, Message: "suprsend: missing workspace_uid"}
-	ErrMissingBaseUrl      = &Error{Code: 400, Message: "suprsend: missing base_url"}
+	ErrInvalidAuthMethod = &Error{Code: 400, Message: "suprsend: invalid auth_method"}
+	ErrMissingAPIKey     = &Error{Code: 400, Message: "suprsend: missing api_key"}
+	ErrMissingAPISecret  = &Error{Code: 400, Message: "suprsend: missing api_secret"}
+	ErrMissingBaseUrl    = &Error{Code: 400, Message: "suprsend: missing base_url"}
 )
 
 type Error struct {

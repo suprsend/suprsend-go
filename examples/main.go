@@ -47,7 +47,7 @@ func triggerWorkflowAPIExample() {
 		return
 	}
 	// Create WorkflowTriggerRequest body
-	wfReqBody := map[string]interface{}{
+	wfReqBody := map[string]any{
 		"workflow": "workflow-slug", // mandatory
 		// "actor":    "actor-distinct-id", // optional
 		// recipients: an array. each element is either string/dict
@@ -55,25 +55,25 @@ func triggerWorkflowAPIExample() {
 		// in case of dict, along with distinct_id, value can contain user profile info like channels etc..
 		// e.g ["distinct_id1", "distinct_id1"]
 		// or [{"distinct_id": "__distinct_id_1__", "$email": ["a@example.com"], "prop1": "v1"}]
-		"recipients": []map[string]interface{}{
+		"recipients": []map[string]any{
 			{
 				"distinct_id": "__distinct_id1__",
 				// if $channels is present, communication will be tried on mentioned channels only (for this request).
 				// "$channels": []string{"email"},
 				"$email": []string{"user@example.com"},
-				"$androidpush": []map[string]interface{}{
+				"$androidpush": []map[string]any{
 					{"token": "__android_push_token__", "provider": "fcm", "device_id": ""},
 				},
 				"name": "Recipient 1",
 			},
 		},
 		// # data can be any json / serializable map
-		"data": map[string]interface{}{
+		"data": map[string]any{
 			"first_name":   "User",
 			"spend_amount": "$10",
-			"nested_key_example": map[string]interface{}{
+			"nested_key_example": map[string]any{
 				"nested_key1": "some_value_1",
-				"nested_key2": map[string]interface{}{
+				"nested_key2": map[string]any{
 					"nested_key3": "some_value_3",
 				},
 			},
@@ -107,7 +107,7 @@ func bulkWorkflowTriggerAPIExample() {
 	}
 	// WorkflowTriggerRequest: 1
 	wf1 := &suprsend.WorkflowTriggerRequest{
-		Body: map[string]interface{}{
+		Body: map[string]any{
 			"workflow": "workflow-slug",
 			// "actor":    "actor-distinct-id", // optional
 			// recipients: an array. each element is either string/dict
@@ -115,25 +115,25 @@ func bulkWorkflowTriggerAPIExample() {
 			// in case of dict, along with distinct_id, value can contain user profile info like channels etc..
 			// e.g ["distinct_id1", "distinct_id1"]
 			// or [{"distinct_id": "__distinct_id_1__", "$email": ["a@example.com"], "prop1": "v1"}]
-			"recipients": []map[string]interface{}{
+			"recipients": []map[string]any{
 				{
 					"distinct_id": "__distinct_id1__",
 					// if $channels is present, communication will be tried on mentioned channels only (for this request).
 					// "$channels": []string{"email"},
 					"$email": []string{"user@example.com"},
-					"$androidpush": []map[string]interface{}{
+					"$androidpush": []map[string]any{
 						{"token": "__android_push_token__", "provider": "fcm", "device_id": ""},
 					},
 					"name": "Recipient 1",
 				},
 			},
 			// # data can be any json / serializable python-dictionary
-			"data": map[string]interface{}{
+			"data": map[string]any{
 				"first_name":   "User",
 				"spend_amount": "$10",
-				"nested_key_example": map[string]interface{}{
+				"nested_key_example": map[string]any{
 					"nested_key1": "some_value_1",
-					"nested_key2": map[string]interface{}{
+					"nested_key2": map[string]any{
 						"nested_key3": "some_value_3",
 					},
 				},
@@ -145,7 +145,7 @@ func bulkWorkflowTriggerAPIExample() {
 
 	// WorkflowTriggerRequest: 2
 	wf2 := &suprsend.WorkflowTriggerRequest{
-		Body: map[string]interface{}{
+		Body: map[string]any{
 			"workflow": "workflow-slug",
 			// "actor":    "actor-distinct-id", // optional
 			// recipients: an array. each element is either string/dict
@@ -153,25 +153,25 @@ func bulkWorkflowTriggerAPIExample() {
 			// in case of dict, along with distinct_id, value can contain user profile info like channels etc..
 			// e.g ["distinct_id1", "distinct_id1"]
 			// or [{"distinct_id": "__distinct_id_1__", "$email": ["a@example.com"], "prop1": "v1"}]
-			"recipients": []map[string]interface{}{
+			"recipients": []map[string]any{
 				{
 					"distinct_id": "__distinct_id1__",
 					// if $channels is present, communication will be tried on mentioned channels only (for this request).
 					// "$channels": []string{"email"},
 					"$email": []string{"user@example.com"},
-					"$androidpush": []map[string]interface{}{
+					"$androidpush": []map[string]any{
 						{"token": "__android_push_token__", "provider": "fcm", "device_id": ""},
 					},
 					"name": "Recipient 1",
 				},
 			},
 			// # data can be any json / serializable python-dictionary
-			"data": map[string]interface{}{
+			"data": map[string]any{
 				"first_name":   "User",
 				"spend_amount": "$10",
-				"nested_key_example": map[string]interface{}{
+				"nested_key_example": map[string]any{
 					"nested_key1": "some_value_1",
-					"nested_key2": map[string]interface{}{
+					"nested_key2": map[string]any{
 						"nested_key3": "some_value_3",
 					},
 				},
@@ -204,34 +204,34 @@ func triggerDynamicWorkflowExample() {
 		return
 	}
 	// Create workflow body
-	wfBody := map[string]interface{}{
+	wfBody := map[string]any{
 		"name":                  "Workflow Name",
 		"template":              "template slug",
 		"notification_category": "category",
 		// "delay":                 "15m", // Chek duration format in documentation
-		"users": []map[string]interface{}{
+		"users": []map[string]any{
 			{
 				"distinct_id": "0f988f74-6982-41c5-8752-facb6911fb08",
 				// if $channels is present, communication will be tried on mentioned channels only.
 				// "$channels": []string{"email"},
 				"$email": []string{"user@example.com"},
-				"$androidpush": []map[string]interface{}{
+				"$androidpush": []map[string]any{
 					{"token": "__android_push_token__", "provider": "fcm", "device_id": ""},
 				},
 			},
 		},
 		// delivery instruction. how should notifications be sent, and whats the success metric
-		"delivery": map[string]interface{}{
+		"delivery": map[string]any{
 			"smart":   false,
 			"success": "seen",
 		},
 		// # data can be any json / serializable python-dictionary
-		"data": map[string]interface{}{
+		"data": map[string]any{
 			"first_name":   "User",
 			"spend_amount": "$10",
-			"nested_key_example": map[string]interface{}{
+			"nested_key_example": map[string]any{
 				"nested_key1": "some_value_1",
-				"nested_key2": map[string]interface{}{
+				"nested_key2": map[string]any{
 					"nested_key3": "some_value_3",
 				},
 			},
@@ -266,7 +266,7 @@ func sendEventExample() {
 	ev := &suprsend.Event{
 		EventName:  "__event_name__",
 		DistinctId: "__distinct_id__",
-		Properties: map[string]interface{}{
+		Properties: map[string]any{
 			"k1": "v1",
 		},
 		// IdempotencyKey: "",
@@ -305,8 +305,8 @@ func updateUserProfileExample() {
 	// Add iospush token, token providers: apns
 	user.AddIospush("__ios_push_token__", "apns")
 	// Add webpush token (vapid)
-	user.AddWebpush(map[string]interface{}{
-		"keys": map[string]interface{}{
+	user.AddWebpush(map[string]any{
+		"keys": map[string]any{
 			"auth":   "",
 			"p256dh": "",
 		},
@@ -314,26 +314,26 @@ func updateUserProfileExample() {
 	}, "vapid")
 
 	// add slack using email
-	user.AddSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
+	user.AddSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
 	// add slack using user_id
-	user.AddSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
+	user.AddSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
 	// add slack using channel_id
-	user.AddSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
+	user.AddSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
 	// add slack using incoming-webhook
-	user.AddSlack(map[string]interface{}{
-		"incoming_webhook": map[string]interface{}{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
+	user.AddSlack(map[string]any{
+		"incoming_webhook": map[string]any{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
 	})
 	// DM on Team's channel using conversation id
-	user.AddMSTeams(map[string]interface{}{
+	user.AddMSTeams(map[string]any{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "conversation_id": "XXXXXXXXXXXX",
 	})
 	// add teams via DM user using team user id
-	user.AddMSTeams(map[string]interface{}{
+	user.AddMSTeams(map[string]any{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "user_id": "XXXXXXXXXXXX",
 	})
 	// add teams using incoming webhook
-	user.AddMSTeams(map[string]interface{}{
-		"incoming_webhook": map[string]interface{}{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
+	user.AddMSTeams(map[string]any{
+		"incoming_webhook": map[string]any{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
 	})
 	//
 	// remove email channel
@@ -348,34 +348,34 @@ func updateUserProfileExample() {
 	user.RemoveIospush("__ios_push_token__", "apns")
 
 	// remove webpush token
-	user.RemoveWebpush(map[string]interface{}{
-		"keys": map[string]interface{}{
+	user.RemoveWebpush(map[string]any{
+		"keys": map[string]any{
 			"auth":   "",
 			"p256dh": "",
 		},
 		"endpoint": "",
 	}, "vapid")
 	// remove slack using email
-	user.RemoveSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
+	user.RemoveSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
 	// remove slack using user_id
-	user.RemoveSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
+	user.RemoveSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
 	// remove slack using channel_id
-	user.RemoveSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
+	user.RemoveSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
 	// remove slack using incoming-webhook
-	user.RemoveSlack(map[string]interface{}{
-		"incoming_webhook": map[string]interface{}{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
+	user.RemoveSlack(map[string]any{
+		"incoming_webhook": map[string]any{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
 	})
 	// remove teams via DM on Team's channel using conversation id
-	user.RemoveMSTeams(map[string]interface{}{
+	user.RemoveMSTeams(map[string]any{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "conversation_id": "XXXXXXXXXXXX",
 	})
 	// remove teams via DM user using team user id
-	user.RemoveMSTeams(map[string]interface{}{
+	user.RemoveMSTeams(map[string]any{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "user_id": "XXXXXXXXXXXX",
 	})
 	// remove teams using incoming webhook
-	user.RemoveMSTeams(map[string]interface{}{
-		"incoming_webhook": map[string]interface{}{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
+	user.RemoveMSTeams(map[string]any{
+		"incoming_webhook": map[string]any{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
 	})
 
 	// Set user preferred language. languageCode must be in [ISO 639-1 2-letter] format
@@ -395,17 +395,17 @@ func updateUserProfileExample() {
 	// # for ms teams:             $ms_teams
 
 	// set a user property using a map
-	user.Set(map[string]interface{}{"prop1": "val1", "prop2": "val2"})
+	user.Set(map[string]any{"prop1": "val1", "prop2": "val2"})
 	// set a user property using a key, value pair
 	user.SetKV("prop", "value")
 	// set a user property once using map
-	user.SetOnce(map[string]interface{}{"prop3": "val3"})
+	user.SetOnce(map[string]any{"prop3": "val3"})
 	// set a user property once using a key value pair
 	user.SetOnceKV("prop4", "val4")
 	// increment an already existing user property using key value pair
 	user.IncrementKV("increment_prop", 2)
 	// increment an already existing property using map
-	user.Increment(map[string]interface{}{"increment_prop1": 5})
+	user.Increment(map[string]any{"increment_prop1": 5})
 
 	// Save user
 	_, err = user.Save()
@@ -424,11 +424,11 @@ func bulkDynamicWorkflowsExample() {
 	}
 	// Workflow: 1
 	wf1 := &suprsend.Workflow{
-		Body: map[string]interface{}{
+		Body: map[string]any{
 			"name":                  "__workflow_name__",
 			"template":              "__template_slug__",
 			"notification_category": "__category__", // system/transactional/promotional
-			"users": []map[string]interface{}{
+			"users": []map[string]any{
 				{
 					"distinct_id": "__distinct_id__",
 					"$email":      []string{"__email__"},
@@ -441,11 +441,11 @@ func bulkDynamicWorkflowsExample() {
 
 	// Workflow: 2
 	wf2 := &suprsend.Workflow{
-		Body: map[string]interface{}{
+		Body: map[string]any{
 			"name":                  "__workflow_name__",
 			"template":              "__template_slug__",
 			"notification_category": "__category__", // system/transactional/promotional
-			"users": []map[string]interface{}{
+			"users": []map[string]any{
 				{
 					"distinct_id": "__distinct_id__",
 					"$email":      []string{"__email__"},
@@ -481,7 +481,7 @@ func bulkEventsExample() {
 	ev1 := &suprsend.Event{
 		EventName:  "__event_name__",
 		DistinctId: "__distinct_id__",
-		Properties: map[string]interface{}{
+		Properties: map[string]any{
 			"k1": "v1",
 		},
 	}
@@ -567,7 +567,7 @@ func tenantExample() {
 		SocialLinks: &suprsend.TenantSocialLinks{
 			Facebook: suprsend.String("https://facebook.com/tenant"),
 		},
-		Properties: map[string]interface{}{
+		Properties: map[string]any{
 			"k1": "tenant settings 1",
 			"k2": "tenant settings 2",
 		},
@@ -635,7 +635,7 @@ func subscriberListExample() {
 
 	// ================= broadcast to a list
 	broadcastIns := &suprsend.SubscriberListBroadcast{
-		Body: map[string]interface{}{
+		Body: map[string]any{
 			"list_id":               "users-with-prepaid-vouchers-1",
 			"template":              "template slug",
 			"notification_category": "category",
@@ -645,12 +645,12 @@ func subscriberListExample() {
 			"channels": []string{"email"},
 			"delay":    "1m", // check docs for delay format
 			// "trigger_at":            "", // check docs for trigger_at format
-			"data": map[string]interface{}{
+			"data": map[string]any{
 				"first_name":   "User",
 				"spend_amount": "$10",
-				"nested_key_example": map[string]interface{}{
+				"nested_key_example": map[string]any{
 					"nested_key1": "some_value_1",
-					"nested_key2": map[string]interface{}{
+					"nested_key2": map[string]any{
 						"nested_key3": "some_value_3",
 					},
 				},
@@ -671,11 +671,11 @@ func subscriberListExample() {
 	log.Println(res)
 
 	// delete active list
-	deleteListResp, err := suprClient.SubscriberLists.Delete(ctx, "users-with-prepaid-vouchers-1")
+	err = suprClient.SubscriberLists.Delete(ctx, "users-with-prepaid-vouchers-1")
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("delete list resp: ", deleteListResp)
+	log.Println("delete list")
 }
 
 func subscriberListVersioningExample() {
@@ -761,11 +761,11 @@ func subscriberListVersioningExample() {
 	log.Println(tempListVersion)
 
 	// delete versioned list
-	deleteVersionResp, err := suprClient.SubscriberLists.DeleteVersion(ctx, "users-with-prepaid-vouchers-1", tempListVersion.VersionId)
+	err = suprClient.SubscriberLists.DeleteVersion(ctx, "users-with-prepaid-vouchers-1", tempListVersion.VersionId)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println("delete version resp: ", deleteVersionResp)
+	log.Println("delete version")
 }
 
 func objectCrudOperationsExample() {
@@ -781,7 +781,7 @@ func objectCrudOperationsExample() {
 	}
 	//
 	// ================= Create object
-	object, _ := suprClient.Objects.Upsert(context.Background(), obj, map[string]interface{}{
+	object, _ := suprClient.Objects.Upsert(context.Background(), obj, map[string]any{
 		"prop1": "val1",
 	})
 	log.Println(object)
@@ -801,9 +801,9 @@ func objectCrudOperationsExample() {
 	object, _ = suprClient.Objects.Edit(context.Background(),
 		suprsend.ObjectEditRequest{
 			Identifier: &obj,
-			Payload: map[string]interface{}{
+			Payload: map[string]any{
 				"prop1": "val1",
-				"operations": []map[string]interface{}{
+				"operations": []map[string]any{
 					{
 						"$set": map[string]any{
 							"k1": "v1",
@@ -824,7 +824,7 @@ func objectCrudOperationsExample() {
 		ObjectType: "sdk",
 		Id:         "delete-supr-go",
 	}
-	object, _ = suprClient.Objects.Upsert(context.Background(), delObj, map[string]interface{}{
+	object, _ = suprClient.Objects.Upsert(context.Background(), delObj, map[string]any{
 		"prop1": "val1",
 	})
 	log.Println(object)
@@ -838,7 +838,7 @@ func objectCrudOperationsExample() {
 		ObjectType: "sdk",
 		Id:         "delete-supr-go-1",
 	}
-	object, _ = suprClient.Objects.Upsert(context.Background(), delObj1, map[string]interface{}{
+	object, _ = suprClient.Objects.Upsert(context.Background(), delObj1, map[string]any{
 		"prop1": "val1",
 	})
 	log.Println(object)
@@ -847,13 +847,13 @@ func objectCrudOperationsExample() {
 		ObjectType: "sdk",
 		Id:         "delete-supr-go-2",
 	}
-	object, _ = suprClient.Objects.Upsert(context.Background(), delObj2, map[string]interface{}{
+	object, _ = suprClient.Objects.Upsert(context.Background(), delObj2, map[string]any{
 		"prop1": "val1",
 	})
 	log.Println(object)
 
-	err = suprClient.Objects.BulkDelete(context.Background(), delObj1.ObjectType, map[string]any{
-		"object_ids": []string{delObj1.Id, delObj2.Id},
+	err = suprClient.Objects.BulkDelete(context.Background(), delObj1.ObjectType, suprsend.ObjectBulkDeletePayload{
+		ObjectIds: []string{delObj1.Id, delObj2.Id},
 	})
 	if err != nil {
 		log.Println("Error Bulk deleting object: ", err)
@@ -906,8 +906,8 @@ func updateObjectPropertiesExample() {
 	// Add iospush token, token providers: apns
 	object.AddIospush("__ios_push_token__", "apns")
 	// Add webpush token (vapid)
-	object.AddWebpush(map[string]interface{}{
-		"keys": map[string]interface{}{
+	object.AddWebpush(map[string]any{
+		"keys": map[string]any{
 			"auth":   "",
 			"p256dh": "",
 		},
@@ -915,26 +915,26 @@ func updateObjectPropertiesExample() {
 	}, "vapid")
 
 	// add slack using email
-	object.AddSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
+	object.AddSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
 	// add slack using user_id
-	object.AddSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
+	object.AddSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
 	// add slack using channel_id
-	object.AddSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
+	object.AddSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
 	// add slack using incoming-webhook
-	object.AddSlack(map[string]interface{}{
-		"incoming_webhook": map[string]interface{}{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
+	object.AddSlack(map[string]any{
+		"incoming_webhook": map[string]any{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
 	})
 	// DM on Team's channel using conversation id
-	object.AddMSTeams(map[string]interface{}{
+	object.AddMSTeams(map[string]any{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "conversation_id": "XXXXXXXXXXXX",
 	})
 	// add teams via DM user using team user id
-	object.AddMSTeams(map[string]interface{}{
+	object.AddMSTeams(map[string]any{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "user_id": "XXXXXXXXXXXX",
 	})
 	// add teams using incoming webhook
-	object.AddMSTeams(map[string]interface{}{
-		"incoming_webhook": map[string]interface{}{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
+	object.AddMSTeams(map[string]any{
+		"incoming_webhook": map[string]any{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
 	})
 	//
 	// remove email channel
@@ -949,34 +949,34 @@ func updateObjectPropertiesExample() {
 	object.RemoveIospush("__ios_push_token__", "apns")
 
 	// remove webpush token
-	object.RemoveWebpush(map[string]interface{}{
-		"keys": map[string]interface{}{
+	object.RemoveWebpush(map[string]any{
+		"keys": map[string]any{
 			"auth":   "",
 			"p256dh": "",
 		},
 		"endpoint": "",
 	}, "vapid")
 	// remove slack using email
-	object.RemoveSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
+	object.RemoveSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "email": "user@example.com"})
 	// remove slack using user_id
-	object.RemoveSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
+	object.RemoveSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "user_id": "UXXXXXXXX"})
 	// remove slack using channel_id
-	object.RemoveSlack(map[string]interface{}{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
+	object.RemoveSlack(map[string]any{"access_token": "xoxb-xxxxxxxxxxxxxxxxx", "channel_id": "CXXXXXXXX"})
 	// remove slack using incoming-webhook
-	object.RemoveSlack(map[string]interface{}{
-		"incoming_webhook": map[string]interface{}{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
+	object.RemoveSlack(map[string]any{
+		"incoming_webhook": map[string]any{"url": "https://hooks.slack.com/services/TXXXXXX/BXXXXX/XXXXXXXXXXX"},
 	})
 	// remove teams via DM on Team's channel using conversation id
-	object.RemoveMSTeams(map[string]interface{}{
+	object.RemoveMSTeams(map[string]any{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "conversation_id": "XXXXXXXXXXXX",
 	})
 	// remove teams via DM user using team user id
-	object.RemoveMSTeams(map[string]interface{}{
+	object.RemoveMSTeams(map[string]any{
 		"tenant_id": "XXXXXXX", "service_url": "https://smba.trafficmanager.net/XXXXXXXXXX", "user_id": "XXXXXXXXXXXX",
 	})
 	// remove teams using incoming webhook
-	object.RemoveMSTeams(map[string]interface{}{
-		"incoming_webhook": map[string]interface{}{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
+	object.RemoveMSTeams(map[string]any{
+		"incoming_webhook": map[string]any{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
 	})
 
 	// Set user preferred language. languageCode must be in [ISO 639-1 2-letter] format
@@ -986,17 +986,17 @@ func updateObjectPropertiesExample() {
 	// If you need to remove all emails for this user, call user.Unset(["$email"])
 	object.Unset([]string{"$email"})
 	// set a user property using a map
-	object.Set(map[string]interface{}{"prop1": "val1", "prop2": "val2"})
+	object.Set(map[string]any{"prop1": "val1", "prop2": "val2"})
 	// set a user property using a key, value pair
 	object.SetKV("prop", "value")
 	// set a user property once using map
-	object.SetOnce(map[string]interface{}{"prop3": "val3"})
+	object.SetOnce(map[string]any{"prop3": "val3"})
 	// set a user property once using a key value pair
 	object.SetOnceKV("prop4", "val4")
 	// increment an already existing user property using key value pair
 	object.IncrementKV("increment_prop", 2)
 	// increment an already existing property using map
-	object.Increment(map[string]interface{}{"increment_prop1": 5})
+	object.Increment(map[string]any{"increment_prop1": 5})
 
 	// Save user
 	resp, err := suprClient.Objects.Edit(context.Background(), suprsend.ObjectEditRequest{

@@ -25,6 +25,7 @@ type UsersService interface {
 	GetBulkEditInstance() BulkUsersEdit
 	// Old accessor method (to be deprecated)
 	GetInstance(string) Subscriber
+	GetUserPreferences(context.Context, string, *UserPreferencesOptions) (*UserPreferencesResponse, error)
 }
 
 type usersService struct {
@@ -321,4 +322,53 @@ func (u *usersService) GetBulkEditInstance() BulkUsersEdit {
 // Deprecated: this method will be removed in near future. Use GetEditInstance instead.
 func (u *usersService) GetInstance(distinctId string) Subscriber {
 	return newSubscriber(u.client, distinctId)
+}
+
+type UserPreferencesResponse struct {
+	Sections           []any `json:"sections"`
+	ChannelPreferences []any `json:"channel_preferences"`
+}
+
+// GetUserPreferences fetches the current notification preferences for the user across all categories and channels.
+func (u *usersService) GetUserPreferences(ctx context.Context, distinctId string, opts *UserPreferencesOptions) (*UserPreferencesResponse, error) {
+	if strings.TrimSpace(distinctId) == "" {
+		return nil, &Error{Message: "distinct_id is required"}
+	}
+	urlStr := fmt.Sprintf("%s%s/preference/", u._url, url.PathEscape(strings.TrimSpace(distinctId)))
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+		if opts.ShowOptOutChannels != nil {
+			query.Set("show_opt_out_channels", fmt.Sprintf("%v", *opts.ShowOptOutChannels))
+		}
+		if opts.Tags != "" {
+			query.Set("tags", opts.Tags)
+		}
+	}
+	if len(query) > 0 {
+		urlStr += "?" + query.Encode()
+	}
+	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserPreferencesResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+type UserPreferencesOptions struct {
+	TenantId           string
+	ShowOptOutChannels *bool
+	Tags               string // can be a simple tag or a JSON string for advanced filtering
 }

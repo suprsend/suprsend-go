@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 type TenantsService interface {
@@ -12,6 +13,8 @@ type TenantsService interface {
 	Upsert(context.Context, string, *Tenant) (*Tenant, error)
 	List(context.Context, *TenantListOptions) (*TenantList, error)
 	Delete(context.Context, string) error
+	UpdateCategoryPreference(string, string, TenantPreferenceCategoryUpdateBody, *TenantPreferenceCategoryOptions) (*TenantCategoryPreferencesResponse, error)
+	GetAllCategoriesPreference(string) (*TenantCategoryPreferencesResponse, error)
 }
 
 type tenantsService struct {
@@ -20,6 +23,30 @@ type tenantsService struct {
 }
 
 var _ TenantsService = &tenantsService{}
+
+type TenantCategoryMeta struct {
+	Count  int `json:"count"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+}
+
+type TenantCategoryPreferencesResponse struct {
+	Meta    TenantCategoryMeta `json:"meta"`
+	Results []TenantCategory   `json:"results"`
+}
+
+type TenantCategory struct {
+	Name                     string   `json:"name"`
+	Category                 string   `json:"category"`
+	Description              string   `json:"description"`
+	RootCategory             string   `json:"root_category"`
+	DefaultPreference        string   `json:"default_preference"`
+	DefaultMandatoryChannels []string `json:"default_mandatory_channels"`
+	VisibleToSubscriber      bool     `json:"visible_to_subscriber"`
+	Preference               string   `json:"preference"`
+	MandatoryChannels        []string `json:"mandatory_channels"`
+	BlockedChannels          []string `json:"blocked_channels"`
+}
 
 func newTenantsService(client *Client) *tenantsService {
 	ts := &tenantsService{
@@ -126,4 +153,78 @@ func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
 		return err
 	}
 	return nil
+}
+
+func (t *tenantsService) UpdateCategoryPreference(tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategoryPreferencesResponse, error) {
+	if strings.TrimSpace(tenantId) == "" {
+		return nil, &Error{Message: "tenant_id is required"}
+	}
+
+	if strings.TrimSpace(category) == "" {
+		return nil, &Error{Message: "category is required"}
+	}
+
+	urlStr := fmt.Sprintf("%s%s/category/%s", t._url, url.PathEscape(strings.TrimSpace(tenantId)), url.PathEscape(strings.TrimSpace(category)))
+
+	query := url.Values{}
+	if opts != nil {
+		if len(opts.Tags) != 0 {
+			query.Set("tags", strings.Join(opts.Tags, ","))
+		}
+	}
+
+	if len(query) > 0 {
+		urlStr += "?" + query.Encode()
+	}
+
+	request, err := t.client.prepareHttpRequest("PATCH", urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := t.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &TenantCategoryPreferencesResponse{}
+	err = t.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (t *tenantsService) GetAllCategoriesPreference(tenantId string) (*TenantCategoryPreferencesResponse, error) {
+	if strings.TrimSpace(tenantId) == "" {
+		return nil, &Error{Message: "tenant_id is required"}
+	}
+
+	urlStr := fmt.Sprintf("%s%s/category", t._url, url.PathEscape(strings.TrimSpace(tenantId)))
+
+	request, err := t.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := t.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &TenantCategoryPreferencesResponse{}
+	err = t.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+type TenantPreferenceCategoryOptions struct {
+	Tags []string `json:"tags"`
+}
+
+type TenantPreferenceCategoryUpdateBody struct {
+	Preference          string   `json:"preference"`
+	VisibleToSubscriber *string  `json:"visible_to_subscriber"`
+	MandatoryChannels   []string `json:"mandatory_channels"`
+	BlockedChannels     []string `json:"blocked_channels"`
 }

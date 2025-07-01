@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -25,7 +26,14 @@ type UsersService interface {
 	GetBulkEditInstance() BulkUsersEdit
 	// Old accessor method (to be deprecated)
 	GetInstance(string) Subscriber
+	UpdateCategoryPreference(string, string, UserUpdateCategoryPreferenceBody, *UserCategoryUpdatePreferenceOptions) (*UserCategoryPreferenceResponse, error)
+	UpdateGlobalChannelPreferences(string, UserGlobalChannelPreferenceUpdateBody, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
+	BulkUpdatePreferences(UserBulkPreferenceUpdateBody, *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error)
+	ResetPreferences(UserBulkPreferenceUpdateBody, *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error)
 	GetUserPreferences(context.Context, string, *UserPreferencesOptions) (*UserPreferencesResponse, error)
+	GetCategoriesPreferences(context.Context, string, *UserPreferencesOptions) (*UserPreferencesResponse, error)
+	GetGlobalChannelPreferences(context.Context, string, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
+	GetCategoryPreference(context.Context, string, string, *UserCategoryPreferenceOptions) (*UserCategoryPreferenceResponse, error)
 }
 
 type usersService struct {
@@ -329,6 +337,24 @@ type UserPreferencesResponse struct {
 	ChannelPreferences []any `json:"channel_preferences"`
 }
 
+type UserGlobalChannelPreferencesResponse struct {
+	ChannelPreferences []any `json:"channel_preferences"`
+}
+
+type UserCategoryPreferenceResponse struct {
+	Name               string `json:"name"`
+	Category           string `json:"category"`
+	Description        string `json:"description"`
+	OriginalPreference string `json:"original_preference"`
+	Preference         string `json:"preference"`
+	IsEditable         bool   `json:"is_editable"`
+	Channels           []any  `json:"channels"`
+}
+
+type UserBulkPreferenceResponse struct {
+	Success bool `json:"success"`
+}
+
 // GetUserPreferences fetches the current notification preferences for the user across all categories and channels.
 func (u *usersService) GetUserPreferences(ctx context.Context, distinctId string, opts *UserPreferencesOptions) (*UserPreferencesResponse, error) {
 	if strings.TrimSpace(distinctId) == "" {
@@ -367,8 +393,310 @@ func (u *usersService) GetUserPreferences(ctx context.Context, distinctId string
 	return resp, nil
 }
 
+func (u *usersService) GetCategoriesPreferences(ctx context.Context, distinctId string, opts *UserPreferencesOptions) (*UserPreferencesResponse, error) {
+	if strings.TrimSpace(distinctId) == "" {
+		return nil, &Error{Message: "distinct_id is required"}
+	}
+	urlStr := fmt.Sprintf("%s%s/preference/category", u._url, url.PathEscape(strings.TrimSpace(distinctId)))
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+		if opts.ShowOptOutChannels != nil {
+			query.Set("show_opt_out_channels", fmt.Sprintf("%v", *opts.ShowOptOutChannels))
+		}
+		if opts.Tags != "" {
+			query.Set("tags", opts.Tags)
+		}
+	}
+	if len(query) > 0 {
+		urlStr += "?" + query.Encode()
+	}
+
+	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserPreferencesResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (u *usersService) GetGlobalChannelPreferences(ctx context.Context, distinctId string, opts *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error) {
+	if strings.TrimSpace(distinctId) == "" {
+		return nil, &Error{Message: "distinct_id is required"}
+	}
+
+	urlStr := fmt.Sprintf("%s%s/preference/channel_preference", u._url, url.PathEscape(strings.TrimSpace(distinctId)))
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+	}
+
+	if len(query) > 0 {
+		urlStr += "?" + query.Encode()
+	}
+
+	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserGlobalChannelPreferencesResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (u *usersService) GetCategoryPreference(ctx context.Context, distinctId string, category string, opts *UserCategoryPreferenceOptions) (*UserCategoryPreferenceResponse, error) {
+	if strings.TrimSpace(distinctId) == "" {
+		return nil, &Error{Message: "distinct_id is required"}
+	}
+
+	if strings.TrimSpace(category) == "" {
+		return nil, &Error{Message: "category is required"}
+	}
+
+	urlStr := fmt.Sprintf("%s%s/preference/category/%s", u._url, url.PathEscape(strings.TrimSpace(distinctId)), url.PathEscape(strings.TrimSpace(category)))
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+
+		if strconv.FormatBool(opts.ShowOptOutChannels) != "" {
+			query.Set("show_opt_out_channels", strconv.FormatBool(opts.ShowOptOutChannels))
+		}
+	}
+
+	if len(query) > 0 {
+		urlStr += "?" + query.Encode()
+	}
+
+	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserCategoryPreferenceResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (u *usersService) UpdateCategoryPreference(distinctId string, category string, body UserUpdateCategoryPreferenceBody, opts *UserCategoryUpdatePreferenceOptions) (*UserCategoryPreferenceResponse, error) {
+	if strings.TrimSpace(distinctId) == "" {
+		return nil, &Error{Message: "distinct_id is required"}
+	}
+
+	if strings.TrimSpace(category) == "" {
+		return nil, &Error{Message: "category is required"}
+	}
+
+	urlStr := fmt.Sprintf("%s%s/preference/category/%s", u._url, url.PathEscape(strings.TrimSpace(distinctId)), url.PathEscape(strings.TrimSpace(category)))
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+	}
+
+	if len(query) > 0 {
+		urlStr += "?" + query.Encode()
+	}
+
+	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserCategoryPreferenceResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (u *usersService) UpdateGlobalChannelPreferences(distinctId string, body UserGlobalChannelPreferenceUpdateBody, opts *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error) {
+	if strings.TrimSpace(distinctId) == "" {
+		return nil, &Error{Message: "distinct_id is required"}
+	}
+
+	urlStr := fmt.Sprintf("%s%s/preference/channel_preference", u._url, url.PathEscape(strings.TrimSpace(distinctId)))
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+	}
+
+	if len(query) > 0 {
+		urlStr += "?" + query.Encode()
+	}
+
+	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserGlobalChannelPreferencesResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+
+}
+
+func (u *usersService) BulkUpdatePreferences(body UserBulkPreferenceUpdateBody, opts *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error) {
+	urlStr := fmt.Sprintf("%s/subscriber/preference", u._bulkUrl)
+
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+	}
+
+	if len(query) > 0 {
+		urlStr += "?" + query.Encode()
+	}
+
+	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserBulkPreferenceResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (u *usersService) ResetPreferences(body UserBulkPreferenceUpdateBody, opts *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error) {
+	urlStr := fmt.Sprintf("%s/subscriber/preference/reset", u._bulkUrl)
+
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+	}
+
+	if len(query) > 0 {
+		urlStr += "?" + query.Encode()
+	}
+
+	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserBulkPreferenceResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+type UserChannelPreferenceIn struct {
+	Channel      string `json:"channel"`
+	IsRestricted bool   `json:"is_restricted"`
+}
+
 type UserPreferencesOptions struct {
 	TenantId           string
 	ShowOptOutChannels *bool
 	Tags               string // can be a simple tag or a JSON string for advanced filtering
+}
+
+type UserGlobalPreferenceOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type UserCategoryPreferenceOptions struct {
+	TenantId           string `json:"tenant_id"`
+	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
+}
+
+type UserCategoryUpdatePreferenceOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type UserBulkPreferenceUpdateOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type UserPreferenceResetOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type UserUpdateCategoryPreferenceBody struct {
+	Preference     *string   `json:"tenant_id"`
+	OptOutChannels []*string `json:"opt_out_channels"`
+}
+
+type UserGlobalChannelPreferenceUpdateBody struct {
+	ChannelPreferences []UserChannelPreferenceIn `json:"channel_preferences"`
+}
+
+type UserCategoryPreferenceIn struct {
+	Category       string    `json:"category"`
+	Preference     string    `json:"preference"`
+	OptOutChannels []*string `json:"opt_out_channels,omitempty"`
+}
+
+type UserBulkPreferenceUpdateBody struct {
+	DistinctIDs        []string                    `json:"distinct_ids,omitempty"`
+	ChannelPreferences []*UserChannelPreferenceIn  `json:"channel_preferences,omitempty"`
+	Categories         []*UserCategoryPreferenceIn `json:"categories,omitempty"`
+}
+
+type UserBulkResetPreferenceBody struct {
+	DistinctIDs             []string `json:"distinct_ids"`
+	ResetChannelPreferences *bool    `json:"reset_channel_preferences"`
+	ResetCategories         *bool    `json:"reset_categories"`
 }

@@ -26,10 +26,10 @@ type UsersService interface {
 	GetBulkEditInstance() BulkUsersEdit
 	// Old accessor method (to be deprecated)
 	GetInstance(string) Subscriber
-	UpdateCategoryPreference(string, string, UserUpdateCategoryPreferenceBody, *UserCategoryUpdatePreferenceOptions) (*UserCategoryPreferenceResponse, error)
-	UpdateGlobalChannelPreferences(string, UserGlobalChannelPreferenceUpdateBody, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
-	BulkUpdatePreferences(UserBulkPreferenceUpdateBody, *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error)
-	ResetPreferences(UserBulkPreferenceUpdateBody, *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error)
+	UpdateCategoryPreference(context.Context, string, string, UserUpdateCategoryPreferenceBody, *UserCategoryUpdatePreferenceOptions) (*UserCategoryPreferenceResponse, error)
+	UpdateGlobalChannelPreferences(context.Context, string, UserGlobalChannelPreferenceUpdateBody, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
+	BulkUpdatePreferences(context.Context, UserBulkPreferenceUpdateBody, *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error)
+	ResetPreferences(context.Context, UserBulkResetPreferenceBody, *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error)
 	GetUserPreferences(context.Context, string, *UserPreferencesOptions) (*UserPreferencesResponse, error)
 	GetCategoriesPreferences(context.Context, string, *UserPreferencesOptions) (*UserPreferencesResponse, error)
 	GetGlobalChannelPreferences(context.Context, string, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
@@ -507,7 +507,7 @@ func (u *usersService) GetCategoryPreference(ctx context.Context, distinctId str
 	return resp, nil
 }
 
-func (u *usersService) UpdateCategoryPreference(distinctId string, category string, body UserUpdateCategoryPreferenceBody, opts *UserCategoryUpdatePreferenceOptions) (*UserCategoryPreferenceResponse, error) {
+func (u *usersService) UpdateCategoryPreference(ctx context.Context, distinctId string, category string, body UserUpdateCategoryPreferenceBody, opts *UserCategoryUpdatePreferenceOptions) (*UserCategoryPreferenceResponse, error) {
 	if strings.TrimSpace(distinctId) == "" {
 		return nil, &Error{Message: "distinct_id is required"}
 	}
@@ -545,7 +545,7 @@ func (u *usersService) UpdateCategoryPreference(distinctId string, category stri
 	return resp, nil
 }
 
-func (u *usersService) UpdateGlobalChannelPreferences(distinctId string, body UserGlobalChannelPreferenceUpdateBody, opts *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error) {
+func (u *usersService) UpdateGlobalChannelPreferences(ctx context.Context, distinctId string, body UserGlobalChannelPreferenceUpdateBody, opts *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error) {
 	if strings.TrimSpace(distinctId) == "" {
 		return nil, &Error{Message: "distinct_id is required"}
 	}
@@ -580,8 +580,9 @@ func (u *usersService) UpdateGlobalChannelPreferences(distinctId string, body Us
 
 }
 
-func (u *usersService) BulkUpdatePreferences(body UserBulkPreferenceUpdateBody, opts *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error) {
-	urlStr := fmt.Sprintf("%s/subscriber/preference", u._bulkUrl)
+func (u *usersService) BulkUpdatePreferences(ctx context.Context, body UserBulkPreferenceUpdateBody, opts *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error) {
+	urlStr := fmt.Sprintf("%spreference", u._bulkUrl)
+	fmt.Printf("%v", urlStr)
 
 	query := url.Values{}
 	if opts != nil {
@@ -611,8 +612,8 @@ func (u *usersService) BulkUpdatePreferences(body UserBulkPreferenceUpdateBody, 
 	return resp, nil
 }
 
-func (u *usersService) ResetPreferences(body UserBulkPreferenceUpdateBody, opts *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error) {
-	urlStr := fmt.Sprintf("%s/subscriber/preference/reset", u._bulkUrl)
+func (u *usersService) ResetPreferences(ctx context.Context, body UserBulkResetPreferenceBody, opts *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error) {
+	urlStr := fmt.Sprintf("%spreference/reset", u._bulkUrl)
 
 	query := url.Values{}
 	if opts != nil {
@@ -675,7 +676,7 @@ type UserPreferenceResetOptions struct {
 }
 
 type UserUpdateCategoryPreferenceBody struct {
-	Preference     *string   `json:"tenant_id"`
+	Preference     *string   `json:"preference"`
 	OptOutChannels []*string `json:"opt_out_channels"`
 }
 

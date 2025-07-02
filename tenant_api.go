@@ -13,8 +13,8 @@ type TenantsService interface {
 	Upsert(context.Context, string, *Tenant) (*Tenant, error)
 	List(context.Context, *TenantListOptions) (*TenantList, error)
 	Delete(context.Context, string) error
-	UpdateCategoryPreference(string, string, TenantPreferenceCategoryUpdateBody, *TenantPreferenceCategoryOptions) (*TenantCategoryPreferencesResponse, error)
-	GetAllCategoriesPreference(string) (*TenantCategoryPreferencesResponse, error)
+	UpdateCategoryPreference(context.Context, string, string, TenantPreferenceCategoryUpdateBody, *TenantPreferenceCategoryOptions) (*TenantCategoryPreferencesResponse, error)
+	GetAllCategoriesPreference(context.Context, string) (*TenantCategoryPreferencesResponse, error)
 }
 
 type tenantsService struct {
@@ -155,7 +155,7 @@ func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
 	return nil
 }
 
-func (t *tenantsService) UpdateCategoryPreference(tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategoryPreferencesResponse, error) {
+func (t *tenantsService) UpdateCategoryPreference(ctx context.Context, tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategoryPreferencesResponse, error) {
 	if strings.TrimSpace(tenantId) == "" {
 		return nil, &Error{Message: "tenant_id is required"}
 	}
@@ -164,7 +164,7 @@ func (t *tenantsService) UpdateCategoryPreference(tenantId, category string, bod
 		return nil, &Error{Message: "category is required"}
 	}
 
-	urlStr := fmt.Sprintf("%s%s/category/%s", t._url, url.PathEscape(strings.TrimSpace(tenantId)), url.PathEscape(strings.TrimSpace(category)))
+	urlStr := fmt.Sprintf("%s%s/preference/category/%s/", t._url, url.PathEscape(strings.TrimSpace(tenantId)), url.PathEscape(strings.TrimSpace(category)))
 
 	query := url.Values{}
 	if opts != nil {
@@ -194,7 +194,7 @@ func (t *tenantsService) UpdateCategoryPreference(tenantId, category string, bod
 	return resp, nil
 }
 
-func (t *tenantsService) GetAllCategoriesPreference(tenantId string) (*TenantCategoryPreferencesResponse, error) {
+func (t *tenantsService) GetAllCategoriesPreference(ctx context.Context, tenantId string) (*TenantCategoryPreferencesResponse, error) {
 	if strings.TrimSpace(tenantId) == "" {
 		return nil, &Error{Message: "tenant_id is required"}
 	}
@@ -224,7 +224,7 @@ type TenantPreferenceCategoryOptions struct {
 
 type TenantPreferenceCategoryUpdateBody struct {
 	Preference          string   `json:"preference"`
-	VisibleToSubscriber *string  `json:"visible_to_subscriber"`
+	VisibleToSubscriber bool     `json:"visible_to_subscriber"`
 	MandatoryChannels   []string `json:"mandatory_channels"`
 	BlockedChannels     []string `json:"blocked_channels"`
 }

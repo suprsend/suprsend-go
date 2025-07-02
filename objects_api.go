@@ -350,7 +350,7 @@ func (o *objectsService) GetPreference(ctx context.Context, obj ObjectIdentifier
 		return nil, &Error{Message: "object_type is required"}
 	}
 
-	urlStr := fmt.Sprintf("%s%s%spreference/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
+	urlStr := fmt.Sprintf("%s%s/%s/preference/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
 
 	query := url.Values{}
 	if opts != nil {
@@ -394,7 +394,7 @@ func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj Obj
 		return nil, &Error{Message: "object_type is required"}
 	}
 
-	urlStr := fmt.Sprintf("%s%s%spreference/category", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
+	urlStr := fmt.Sprintf("%s%s/%s/preference/category", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
 
 	query := url.Values{}
 	if opts != nil {
@@ -438,7 +438,7 @@ func (o *objectsService) GetGlobalChannelsPreferences(ctx context.Context, obj O
 		return nil, &Error{Message: "object_type is required"}
 	}
 
-	urlStr := fmt.Sprintf("%s%s%spreference/channel_preference", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
+	urlStr := fmt.Sprintf("%s%s/%s/preference/channel_preference", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
 
 	query := url.Values{}
 	if opts != nil {
@@ -476,10 +476,10 @@ func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectId
 		return nil, &Error{Message: "object_type is required"}
 	}
 	if strings.TrimSpace(category) == "" {
-		return nil, &Error{Message: "object_type is required"}
+		return nil, &Error{Message: "category is required"}
 	}
 
-	urlStr := fmt.Sprintf("%s%s%spreference/category/%s", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category)))
+	urlStr := fmt.Sprintf("%s%s/%s/preference/category/%s", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category)))
 
 	query := url.Values{}
 	if opts != nil {
@@ -520,10 +520,10 @@ func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj Objec
 		return nil, &Error{Message: "object_type is required"}
 	}
 	if strings.TrimSpace(category) == "" {
-		return nil, &Error{Message: "object_type is required"}
+		return nil, &Error{Message: "category is required"}
 	}
 
-	urlStr := fmt.Sprintf("%s%s%spreference/category/%s", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category)))
+	urlStr := fmt.Sprintf("%s%s/%s/preference/category/%s", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category)))
 
 	query := url.Values{}
 	if opts != nil {
@@ -536,7 +536,7 @@ func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj Objec
 		urlStr += "?" + query.Encode()
 	}
 
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
 	}
@@ -561,7 +561,7 @@ func (o *objectsService) UpdateGlobalChannelsPreferences(ctx context.Context, ob
 		return nil, &Error{Message: "object_type is required"}
 	}
 
-	urlStr := fmt.Sprintf("%s%s%spreference/channel_preference", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
+	urlStr := fmt.Sprintf("%s%s/%s/preference/channel_preference", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
 
 	query := url.Values{}
 	if opts != nil {
@@ -583,6 +583,7 @@ func (o *objectsService) UpdateGlobalChannelsPreferences(ctx context.Context, ob
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
+
 	resp := &ObjectGlobalChannelPreferencesResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {

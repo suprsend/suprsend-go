@@ -13,8 +13,8 @@ type TenantsService interface {
 	Upsert(context.Context, string, *Tenant) (*Tenant, error)
 	List(context.Context, *TenantListOptions) (*TenantList, error)
 	Delete(context.Context, string) error
-	UpdateCategoryPreference(context.Context, string, string, TenantPreferenceCategoryUpdateBody, *TenantPreferenceCategoryOptions) (*TenantCategoryPreferencesResponse, error)
 	GetAllCategoriesPreference(context.Context, string) (*TenantCategoryPreferencesResponse, error)
+	UpdateCategoryPreference(context.Context, string, string, TenantPreferenceCategoryUpdateBody, *TenantPreferenceCategoryOptions) (*TenantCategory, error)
 }
 
 type tenantsService struct {
@@ -46,6 +46,17 @@ type TenantCategory struct {
 	Preference               string   `json:"preference"`
 	MandatoryChannels        []string `json:"mandatory_channels"`
 	BlockedChannels          []string `json:"blocked_channels"`
+}
+
+type TenantPreferenceCategoryOptions struct {
+	Tags []string `json:"tags"`
+}
+
+type TenantPreferenceCategoryUpdateBody struct {
+	Preference          string   `json:"preference"`
+	VisibleToSubscriber bool     `json:"visible_to_subscriber"`
+	MandatoryChannels   []string `json:"mandatory_channels"`
+	BlockedChannels     []string `json:"blocked_channels"`
 }
 
 func newTenantsService(client *Client) *tenantsService {
@@ -155,7 +166,7 @@ func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
 	return nil
 }
 
-func (t *tenantsService) UpdateCategoryPreference(ctx context.Context, tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategoryPreferencesResponse, error) {
+func (t *tenantsService) UpdateCategoryPreference(ctx context.Context, tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategory, error) {
 	if strings.TrimSpace(tenantId) == "" {
 		return nil, &Error{Message: "tenant_id is required"}
 	}
@@ -164,7 +175,7 @@ func (t *tenantsService) UpdateCategoryPreference(ctx context.Context, tenantId,
 		return nil, &Error{Message: "category is required"}
 	}
 
-	urlStr := fmt.Sprintf("%s%s/preference/category/%s/", t._url, url.PathEscape(strings.TrimSpace(tenantId)), url.PathEscape(strings.TrimSpace(category)))
+	urlStr := fmt.Sprintf("%s%s/category/%s/", t._url, url.PathEscape(strings.TrimSpace(tenantId)), url.PathEscape(strings.TrimSpace(category)))
 
 	query := url.Values{}
 	if opts != nil {
@@ -186,7 +197,8 @@ func (t *tenantsService) UpdateCategoryPreference(ctx context.Context, tenantId,
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &TenantCategoryPreferencesResponse{}
+
+	resp := &TenantCategory{}
 	err = t.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -216,15 +228,4 @@ func (t *tenantsService) GetAllCategoriesPreference(ctx context.Context, tenantI
 		return nil, err
 	}
 	return resp, nil
-}
-
-type TenantPreferenceCategoryOptions struct {
-	Tags []string `json:"tags"`
-}
-
-type TenantPreferenceCategoryUpdateBody struct {
-	Preference          string   `json:"preference"`
-	VisibleToSubscriber bool     `json:"visible_to_subscriber"`
-	MandatoryChannels   []string `json:"mandatory_channels"`
-	BlockedChannels     []string `json:"blocked_channels"`
 }

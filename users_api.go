@@ -26,14 +26,14 @@ type UsersService interface {
 	GetBulkEditInstance() BulkUsersEdit
 	// Old accessor method (to be deprecated)
 	GetInstance(string) Subscriber
-	UpdateCategoryPreference(context.Context, string, string, UserUpdateCategoryPreferenceBody, *UserCategoryUpdatePreferenceOptions) (*UserCategoryPreferenceResponse, error)
-	UpdateGlobalChannelPreferences(context.Context, string, UserGlobalChannelPreferenceUpdateBody, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
-	BulkUpdatePreferences(context.Context, UserBulkPreferenceUpdateBody, *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error)
-	ResetPreferences(context.Context, UserBulkResetPreferenceBody, *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error)
 	GetUserPreferences(context.Context, string, *UserPreferencesOptions) (*UserPreferencesResponse, error)
 	GetCategoriesPreferences(context.Context, string, *UserPreferencesOptions) (*UserPreferencesResponse, error)
 	GetGlobalChannelPreferences(context.Context, string, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
 	GetCategoryPreference(context.Context, string, string, *UserCategoryPreferenceOptions) (*UserCategoryPreferenceResponse, error)
+	UpdateCategoryPreference(context.Context, string, string, UserUpdateCategoryPreferenceBody, *UserCategoryUpdatePreferenceOptions) (*UserCategoryPreferenceResponse, error)
+	UpdateGlobalChannelPreferences(context.Context, string, UserGlobalChannelPreferenceUpdateBody, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
+	BulkUpdatePreferences(context.Context, UserBulkPreferenceUpdateBody, *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error)
+	ResetPreferences(context.Context, UserBulkResetPreferenceBody, *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error)
 }
 
 type usersService struct {
@@ -43,6 +43,88 @@ type usersService struct {
 }
 
 var _ UsersService = &usersService{}
+
+type UserChannelPreferenceIn struct {
+	Channel      string `json:"channel"`
+	IsRestricted bool   `json:"is_restricted"`
+}
+
+type UserPreferencesOptions struct {
+	TenantId           string
+	ShowOptOutChannels *bool
+	Tags               string // can be a simple tag or a JSON string for advanced filtering
+}
+
+type UserGlobalPreferenceOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type UserCategoryPreferenceOptions struct {
+	TenantId           string `json:"tenant_id"`
+	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
+}
+
+type UserCategoryUpdatePreferenceOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type UserBulkPreferenceUpdateOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type UserPreferenceResetOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type UserUpdateCategoryPreferenceBody struct {
+	Preference     *string   `json:"preference"`
+	OptOutChannels []*string `json:"opt_out_channels"`
+}
+
+type UserGlobalChannelPreferenceUpdateBody struct {
+	ChannelPreferences []UserChannelPreferenceIn `json:"channel_preferences"`
+}
+
+type UserCategoryPreferenceIn struct {
+	Category       string    `json:"category"`
+	Preference     string    `json:"preference"`
+	OptOutChannels []*string `json:"opt_out_channels,omitempty"`
+}
+
+type UserBulkPreferenceUpdateBody struct {
+	DistinctIDs        []string                    `json:"distinct_ids,omitempty"`
+	ChannelPreferences []*UserChannelPreferenceIn  `json:"channel_preferences,omitempty"`
+	Categories         []*UserCategoryPreferenceIn `json:"categories,omitempty"`
+}
+
+type UserBulkResetPreferenceBody struct {
+	DistinctIDs             []string `json:"distinct_ids"`
+	ResetChannelPreferences *bool    `json:"reset_channel_preferences"`
+	ResetCategories         *bool    `json:"reset_categories"`
+}
+
+type UserPreferencesResponse struct {
+	Sections           []any `json:"sections"`
+	ChannelPreferences []any `json:"channel_preferences"`
+}
+
+type UserGlobalChannelPreferencesResponse struct {
+	ChannelPreferences []any `json:"channel_preferences"`
+}
+
+type UserCategoryPreferenceResponse struct {
+	Name               string `json:"name"`
+	Category           string `json:"category"`
+	Description        string `json:"description"`
+	OriginalPreference string `json:"original_preference"`
+	Preference         string `json:"preference"`
+	IsEditable         bool   `json:"is_editable"`
+	Channels           []any  `json:"channels"`
+}
+
+type UserBulkPreferenceResponse struct {
+	Success bool `json:"success"`
+}
 
 func newUsersService(client *Client) *usersService {
 	us := &usersService{
@@ -332,29 +414,6 @@ func (u *usersService) GetInstance(distinctId string) Subscriber {
 	return newSubscriber(u.client, distinctId)
 }
 
-type UserPreferencesResponse struct {
-	Sections           []any `json:"sections"`
-	ChannelPreferences []any `json:"channel_preferences"`
-}
-
-type UserGlobalChannelPreferencesResponse struct {
-	ChannelPreferences []any `json:"channel_preferences"`
-}
-
-type UserCategoryPreferenceResponse struct {
-	Name               string `json:"name"`
-	Category           string `json:"category"`
-	Description        string `json:"description"`
-	OriginalPreference string `json:"original_preference"`
-	Preference         string `json:"preference"`
-	IsEditable         bool   `json:"is_editable"`
-	Channels           []any  `json:"channels"`
-}
-
-type UserBulkPreferenceResponse struct {
-	Success bool `json:"success"`
-}
-
 // GetUserPreferences fetches the current notification preferences for the user across all categories and channels.
 func (u *usersService) GetUserPreferences(ctx context.Context, distinctId string, opts *UserPreferencesOptions) (*UserPreferencesResponse, error) {
 	if strings.TrimSpace(distinctId) == "" {
@@ -641,63 +700,4 @@ func (u *usersService) ResetPreferences(ctx context.Context, body UserBulkResetP
 		return nil, err
 	}
 	return resp, nil
-}
-
-type UserChannelPreferenceIn struct {
-	Channel      string `json:"channel"`
-	IsRestricted bool   `json:"is_restricted"`
-}
-
-type UserPreferencesOptions struct {
-	TenantId           string
-	ShowOptOutChannels *bool
-	Tags               string // can be a simple tag or a JSON string for advanced filtering
-}
-
-type UserGlobalPreferenceOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-type UserCategoryPreferenceOptions struct {
-	TenantId           string `json:"tenant_id"`
-	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
-}
-
-type UserCategoryUpdatePreferenceOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-type UserBulkPreferenceUpdateOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-type UserPreferenceResetOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-type UserUpdateCategoryPreferenceBody struct {
-	Preference     *string   `json:"preference"`
-	OptOutChannels []*string `json:"opt_out_channels"`
-}
-
-type UserGlobalChannelPreferenceUpdateBody struct {
-	ChannelPreferences []UserChannelPreferenceIn `json:"channel_preferences"`
-}
-
-type UserCategoryPreferenceIn struct {
-	Category       string    `json:"category"`
-	Preference     string    `json:"preference"`
-	OptOutChannels []*string `json:"opt_out_channels,omitempty"`
-}
-
-type UserBulkPreferenceUpdateBody struct {
-	DistinctIDs        []string                    `json:"distinct_ids,omitempty"`
-	ChannelPreferences []*UserChannelPreferenceIn  `json:"channel_preferences,omitempty"`
-	Categories         []*UserCategoryPreferenceIn `json:"categories,omitempty"`
-}
-
-type UserBulkResetPreferenceBody struct {
-	DistinctIDs             []string `json:"distinct_ids"`
-	ResetChannelPreferences *bool    `json:"reset_channel_preferences"`
-	ResetCategories         *bool    `json:"reset_categories"`
 }

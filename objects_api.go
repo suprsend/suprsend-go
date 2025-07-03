@@ -24,12 +24,12 @@ type ObjectsService interface {
 	CreateSubscriptions(context.Context, ObjectIdentifier, map[string]any) (map[string]any, error)
 	DeleteSubscriptions(context.Context, ObjectIdentifier, map[string]any) error
 	GetEditInstance(ObjectIdentifier) ObjectEdit
-	UpdateCategoryPreference(context.Context, ObjectIdentifier, string, ObjectUpdateCategoryPreferenceBody, *ObjectCategoryUpdatePreferenceOptions) (*ObjectCategoryPreferenceResponse, error)
-	UpdateGlobalChannelsPreferences(context.Context, ObjectIdentifier, ObjectGlobalChannelPreferenceUpdateBody, *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error)
 	GetPreference(context.Context, ObjectIdentifier, *ObjectPreferenceOptions) (*ObjectPreferenceResponse, error)
 	GetAllCategoriesPreference(context.Context, ObjectIdentifier, *ObjectPreferenceOptions) (*CursorListApiResponse, error)
 	GetGlobalChannelsPreferences(context.Context, ObjectIdentifier, *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error)
 	GetCategoryPreference(context.Context, ObjectIdentifier, string, *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreferenceResponse, error)
+	UpdateCategoryPreference(context.Context, ObjectIdentifier, string, ObjectUpdateCategoryPreferenceBody, *ObjectCategoryUpdatePreferenceOptions) (*ObjectCategoryPreferenceResponse, error)
+	UpdateGlobalChannelsPreferences(context.Context, ObjectIdentifier, ObjectGlobalChannelPreferenceUpdateBody, *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error)
 }
 
 type objectsService struct {
@@ -47,6 +47,34 @@ func newObjectsService(client *Client) *objectsService {
 		_bulkUrl: fmt.Sprintf("%sv1/bulk/object/", client.baseUrl),
 	}
 	return os
+}
+
+type ObjectPreferenceOptions struct {
+	TenantId           string `json:"tenant_id"`
+	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
+	Tags               string `json:"tags"`
+}
+
+type ObjectGlobalPreferenceOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type ObjectCategoryPreferenceOptions struct {
+	TenantId           string `json:"tenant_id"`
+	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
+}
+
+type ObjectCategoryUpdatePreferenceOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+type ObjectUpdateCategoryPreferenceBody struct {
+	Preference     string   `json:"preference"`
+	OptOutChannels []string `json:"opt_out_channels"`
+}
+
+type ObjectGlobalChannelPreferenceUpdateBody struct {
+	ChannelPreferences []UserChannelPreferenceIn `json:"channel_preferences"`
 }
 
 type ObjectPreferenceResponse struct {
@@ -590,32 +618,4 @@ func (o *objectsService) UpdateGlobalChannelsPreferences(ctx context.Context, ob
 		return nil, err
 	}
 	return resp, nil
-}
-
-type ObjectPreferenceOptions struct {
-	TenantId           string `json:"tenant_id"`
-	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
-	Tags               string `json:"tags"`
-}
-
-type ObjectGlobalPreferenceOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-type ObjectCategoryPreferenceOptions struct {
-	TenantId           string `json:"tenant_id"`
-	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
-}
-
-type ObjectCategoryUpdatePreferenceOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-type ObjectUpdateCategoryPreferenceBody struct {
-	Preference     string   `json:"preference"`
-	OptOutChannels []string `json:"opt_out_channels"`
-}
-
-type ObjectGlobalChannelPreferenceUpdateBody struct {
-	ChannelPreferences []UserChannelPreferenceIn `json:"channel_preferences"`
 }

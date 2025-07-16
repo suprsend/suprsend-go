@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
+	"os"
 	"runtime"
 	"slices"
 	"strings"
@@ -38,9 +41,10 @@ type Client struct {
 	BulkEvents *bulkEventsService
 	BulkUsers  *bulkSubscribersService
 	//
-	baseUrl string
-	debug   bool
-	timeout int
+	baseUrl  string
+	debug    bool
+	timeout  int
+	proxyUrl string
 	//
 	sdkVersion string
 	userAgent  string
@@ -85,7 +89,7 @@ func (c *Client) init(opts ...ClientOption) error {
 		return err
 	}
 	if c.httpClient == nil {
-		c.httpClient = defaultHTTPClient(c.debug, c.timeout)
+		c.httpClient = defaultHTTPClient(c.debug, c.timeout, c.proxyUrl)
 	}
 	c.commonHeaders = map[string]string{
 		"Content-Type": "application/json; charset=utf-8",
@@ -110,17 +114,33 @@ func (c *Client) init(opts ...ClientOption) error {
 	return nil
 }
 
-func defaultHTTPClient(debug bool, timeout int) *http.Client {
+func defaultHTTPClient(debug bool, timeout int, proxyUrl string) *http.Client {
+	transport := &http.Transport{}
+
+	if proxyUrl == "" {
+		proxyUrl = os.Getenv("HTTP_PROXY")
+	}
+
+	if proxyUrl != "" {
+		log.Printf("Proxy url found: %s\n", proxyUrl)
+		parsed, err := url.Parse(proxyUrl)
+		if err != nil {
+			log.Printf("Invalid HTTP_PROXY: %v\n", err)
+		} else {
+			transport.Proxy = http.ProxyURL(parsed)
+		}
+	}
 	if debug {
 		return &http.Client{
 			Timeout: time.Duration(timeout) * time.Second,
 			Transport: LoggingRoundTripper{
-				Proxied: http.DefaultTransport,
+				Proxied: transport,
 			},
 		}
 	} else {
 		return &http.Client{
-			Timeout: time.Duration(timeout) * time.Second,
+			Timeout:   time.Duration(timeout) * time.Second,
+			Transport: transport,
 		}
 	}
 }

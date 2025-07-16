@@ -21,6 +21,13 @@ func WithDebug(debug bool) ClientOption {
 	}
 }
 
+func WithProxyUrl(proxyUrl string) ClientOption {
+	return func(c *Client) error {
+		c.proxyUrl = proxyUrl
+		return nil
+	}
+}
+
 func WithHTTPClient(client *http.Client) ClientOption {
 	return func(c *Client) error {
 		c.httpClient = client

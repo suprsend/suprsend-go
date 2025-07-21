@@ -38,7 +38,7 @@ func preferencesApiExample() {
 	log.Println(preferences_cat_1)
 
 	// ----- get category preferences
-	preferences_cat_2, err := suprClient.Users.GetCategoryPreference(ctx, "__distinct_id1__", "akhil-system", nil)
+	preferences_cat_2, err := suprClient.Users.GetCategoryPreference(ctx, "__distinct_id1__", "__category_slug__", nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -125,7 +125,7 @@ func preferencesApiExample() {
 
 	// ----- Tenants
 	/// Get All Categories Preference for a tenant
-	preferences_gt, err := suprClient.Tenants.GetAllCategoriesPreference(ctx, "__distinct_id1__")
+	preferences_gt, err := suprClient.Tenants.GetAllCategoriesPreference(ctx, "__tenant_id__")
 	if err != nil {
 		log.Fatalln(err)
 	}

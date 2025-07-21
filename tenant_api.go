@@ -24,15 +24,9 @@ type tenantsService struct {
 
 var _ TenantsService = &tenantsService{}
 
-type TenantCategoryMeta struct {
-	Count  int `json:"count"`
-	Limit  int `json:"limit"`
-	Offset int `json:"offset"`
-}
-
 type TenantCategoryPreferencesResponse struct {
-	Meta    TenantCategoryMeta `json:"meta"`
-	Results []TenantCategory   `json:"results"`
+	Meta    *ListApiMetaInfo `json:"meta"`
+	Results []TenantCategory `json:"results"`
 }
 
 type TenantCategory struct {
@@ -43,20 +37,33 @@ type TenantCategory struct {
 	DefaultPreference        string   `json:"default_preference"`
 	DefaultMandatoryChannels []string `json:"default_mandatory_channels"`
 	VisibleToSubscriber      bool     `json:"visible_to_subscriber"`
-	Preference               string   `json:"preference"`
+	Preference               *string  `json:"preference"`
 	MandatoryChannels        []string `json:"mandatory_channels"`
 	BlockedChannels          []string `json:"blocked_channels"`
+	Tags                     []string `json:"tags"`
+	EffectiveTags            []string `json:"effective_tags"`
 }
 
 type TenantPreferenceCategoryOptions struct {
 	Tags []string `json:"tags"`
 }
 
+func (opts *TenantPreferenceCategoryOptions) BuildQuery() string {
+	query := url.Values{}
+	if opts != nil {
+		if len(opts.Tags) != 0 {
+			query.Set("tags", strings.Join(opts.Tags, ","))
+		}
+	}
+
+	return query.Encode()
+}
+
 type TenantPreferenceCategoryUpdateBody struct {
-	Preference          string   `json:"preference"`
-	VisibleToSubscriber bool     `json:"visible_to_subscriber"`
-	MandatoryChannels   []string `json:"mandatory_channels"`
-	BlockedChannels     []string `json:"blocked_channels"`
+	Preference          string   `json:"preference, omitempty"`
+	VisibleToSubscriber *bool    `json:"visible_to_subscriber, omitempty"`
+	MandatoryChannels   []string `json:"mandatory_channels, omitempty"`
+	BlockedChannels     []string `json:"blocked_channels, omitempty"`
 }
 
 func newTenantsService(client *Client) *tenantsService {
@@ -166,27 +173,28 @@ func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
 	return nil
 }
 
+func (t *tenantsService) GetAllCategoriesPreference(ctx context.Context, tenantId string) (*TenantCategoryPreferencesResponse, error) {
+	urlStr := fmt.Sprintf("%s%s/category/", t._url, url.PathEscape(strings.TrimSpace(tenantId)))
+
+	request, err := t.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := t.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &TenantCategoryPreferencesResponse{}
+	err = t.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (t *tenantsService) UpdateCategoryPreference(ctx context.Context, tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategory, error) {
-	if strings.TrimSpace(tenantId) == "" {
-		return nil, &Error{Message: "tenant_id is required"}
-	}
-
-	if strings.TrimSpace(category) == "" {
-		return nil, &Error{Message: "category is required"}
-	}
-
-	urlStr := fmt.Sprintf("%s%s/category/%s/", t._url, url.PathEscape(strings.TrimSpace(tenantId)), url.PathEscape(strings.TrimSpace(category)))
-
-	query := url.Values{}
-	if opts != nil {
-		if len(opts.Tags) != 0 {
-			query.Set("tags", strings.Join(opts.Tags, ","))
-		}
-	}
-
-	if len(query) > 0 {
-		urlStr += "?" + query.Encode()
-	}
+	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/category/%s/", t._url, url.PathEscape(strings.TrimSpace(tenantId)), url.PathEscape(strings.TrimSpace(category))), opts.BuildQuery())
 
 	request, err := t.client.prepareHttpRequest("PATCH", urlStr, body)
 	if err != nil {
@@ -199,30 +207,6 @@ func (t *tenantsService) UpdateCategoryPreference(ctx context.Context, tenantId,
 	defer httpResponse.Body.Close()
 
 	resp := &TenantCategory{}
-	err = t.client.parseApiResponse(httpResponse, resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (t *tenantsService) GetAllCategoriesPreference(ctx context.Context, tenantId string) (*TenantCategoryPreferencesResponse, error) {
-	if strings.TrimSpace(tenantId) == "" {
-		return nil, &Error{Message: "tenant_id is required"}
-	}
-
-	urlStr := fmt.Sprintf("%s%s/category", t._url, url.PathEscape(strings.TrimSpace(tenantId)))
-
-	request, err := t.client.prepareHttpRequest("GET", urlStr, nil)
-	if err != nil {
-		return nil, err
-	}
-	httpResponse, err := t.client.httpClient.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	defer httpResponse.Body.Close()
-	resp := &TenantCategoryPreferencesResponse{}
 	err = t.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err

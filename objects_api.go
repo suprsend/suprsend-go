@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strconv"
 	"strings"
 )
 
@@ -20,16 +19,18 @@ type ObjectsService interface {
 	Edit(context.Context, ObjectEditRequest) (map[string]any, error)
 	Delete(context.Context, ObjectIdentifier) error
 	BulkDelete(context.Context, string, ObjectBulkDeletePayload) error
+	//
 	GetSubscriptions(context.Context, ObjectIdentifier, *CursorListApiOptions) (*CursorListApiResponse, error)
 	CreateSubscriptions(context.Context, ObjectIdentifier, map[string]any) (map[string]any, error)
 	DeleteSubscriptions(context.Context, ObjectIdentifier, map[string]any) error
 	GetEditInstance(ObjectIdentifier) ObjectEdit
-	GetPreference(context.Context, ObjectIdentifier, *ObjectPreferenceOptions) (*ObjectPreferenceResponse, error)
-	GetAllCategoriesPreference(context.Context, ObjectIdentifier, *ObjectPreferenceOptions) (*CursorListApiResponse, error)
-	GetGlobalChannelsPreferences(context.Context, ObjectIdentifier, *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error)
+	//
+	GetFullPreference(context.Context, ObjectIdentifier, *ObjectPreferenceOptions) (*ObjectPreferenceResponse, error)
+	GetGlobalChannelsPreference(context.Context, ObjectIdentifier, *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error)
+	UpdateGlobalChannelsPreference(context.Context, ObjectIdentifier, ObjectGlobalChannelPreferenceUpdateBody, *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error)
+	GetAllCategoriesPreference(context.Context, ObjectIdentifier, *ObjectPreferenceOptions) (*ObjectCategoriesPreferenceResponse, error)
 	GetCategoryPreference(context.Context, ObjectIdentifier, string, *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreferenceResponse, error)
 	UpdateCategoryPreference(context.Context, ObjectIdentifier, string, ObjectUpdateCategoryPreferenceBody, *ObjectCategoryUpdatePreferenceOptions) (*ObjectCategoryPreferenceResponse, error)
-	UpdateGlobalChannelsPreferences(context.Context, ObjectIdentifier, ObjectGlobalChannelPreferenceUpdateBody, *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error)
 }
 
 type objectsService struct {
@@ -47,53 +48,6 @@ func newObjectsService(client *Client) *objectsService {
 		_bulkUrl: fmt.Sprintf("%sv1/bulk/object/", client.baseUrl),
 	}
 	return os
-}
-
-type ObjectPreferenceOptions struct {
-	TenantId           string `json:"tenant_id"`
-	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
-	Tags               string `json:"tags"`
-}
-
-type ObjectGlobalPreferenceOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-type ObjectCategoryPreferenceOptions struct {
-	TenantId           string `json:"tenant_id"`
-	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
-}
-
-type ObjectCategoryUpdatePreferenceOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-type ObjectUpdateCategoryPreferenceBody struct {
-	Preference     string   `json:"preference"`
-	OptOutChannels []string `json:"opt_out_channels"`
-}
-
-type ObjectGlobalChannelPreferenceUpdateBody struct {
-	ChannelPreferences []UserChannelPreferenceIn `json:"channel_preferences"`
-}
-
-type ObjectPreferenceResponse struct {
-	Sections           []any `json:"sections"`
-	ChannelPreferences []any `json:"channel_preferences"`
-}
-
-type ObjectGlobalChannelPreferencesResponse struct {
-	ChannelPreferences []any `json:"channel_preferences"`
-}
-
-type ObjectCategoryPreferenceResponse struct {
-	Name               string `json:"name"`
-	Category           string `json:"category"`
-	Description        string `json:"description"`
-	OriginalPreference string `json:"original_preference"`
-	Preference         string `json:"preference"`
-	IsEditable         bool   `json:"is_editable"`
-	Channels           []any  `json:"channels"`
 }
 
 func (o *objectsService) List(ctx context.Context, objectType string, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
@@ -370,32 +324,8 @@ func (o *objectsService) GetEditInstance(obj ObjectIdentifier) ObjectEdit {
 	return newObjectEdit(o.client, obj)
 }
 
-func (o *objectsService) GetPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectPreferenceOptions) (*ObjectPreferenceResponse, error) {
-	if strings.TrimSpace(obj.Id) == "" {
-		return nil, &Error{Message: "object_id is required"}
-	}
-	if strings.TrimSpace(obj.ObjectType) == "" {
-		return nil, &Error{Message: "object_type is required"}
-	}
-
-	urlStr := fmt.Sprintf("%s%s/%s/preference/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
-
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-		if opts.Tags != "" {
-			query.Set("tags", opts.Tags)
-		}
-		if strconv.FormatBool(opts.ShowOptOutChannels) != "" {
-			query.Set("show_opt_out_channels", strconv.FormatBool(opts.ShowOptOutChannels))
-		}
-	}
-
-	if len(query) > 0 {
-		urlStr += "?" + query.Encode()
-	}
+func (o *objectsService) GetFullPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectPreferenceOptions) (*ObjectPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id))), opts.BuildQuery())
 
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
@@ -414,70 +344,8 @@ func (o *objectsService) GetPreference(ctx context.Context, obj ObjectIdentifier
 	return resp, nil
 }
 
-func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectPreferenceOptions) (*CursorListApiResponse, error) {
-	if strings.TrimSpace(obj.Id) == "" {
-		return nil, &Error{Message: "object_id is required"}
-	}
-	if strings.TrimSpace(obj.ObjectType) == "" {
-		return nil, &Error{Message: "object_type is required"}
-	}
-
-	urlStr := fmt.Sprintf("%s%s/%s/preference/category", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
-
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-		if opts.Tags != "" {
-			query.Set("tags", opts.Tags)
-		}
-		if strconv.FormatBool(opts.ShowOptOutChannels) != "" {
-			query.Set("show_opt_out_channels", strconv.FormatBool(opts.ShowOptOutChannels))
-		}
-	}
-
-	if len(query) > 0 {
-		urlStr += "?" + query.Encode()
-	}
-
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
-	if err != nil {
-		return nil, err
-	}
-	httpResponse, err := o.client.httpClient.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	defer httpResponse.Body.Close()
-	resp := &CursorListApiResponse{}
-	err = o.client.parseApiResponse(httpResponse, resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (o *objectsService) GetGlobalChannelsPreferences(ctx context.Context, obj ObjectIdentifier, opts *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error) {
-	if strings.TrimSpace(obj.Id) == "" {
-		return nil, &Error{Message: "object_id is required"}
-	}
-	if strings.TrimSpace(obj.ObjectType) == "" {
-		return nil, &Error{Message: "object_type is required"}
-	}
-
-	urlStr := fmt.Sprintf("%s%s/%s/preference/channel_preference", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
-
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-	}
-
-	if len(query) > 0 {
-		urlStr += "?" + query.Encode()
-	}
+func (o *objectsService) GetGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/channel_preference/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id))), opts.BuildQuery())
 
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
@@ -496,32 +364,49 @@ func (o *objectsService) GetGlobalChannelsPreferences(ctx context.Context, obj O
 	return resp, nil
 }
 
+func (o *objectsService) UpdateGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, body ObjectGlobalChannelPreferenceUpdateBody, opts *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/channel_preference/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id))), opts.BuildQuery())
+
+	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := o.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+
+	resp := &ObjectGlobalChannelPreferencesResponse{}
+	err = o.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectPreferenceOptions) (*ObjectCategoriesPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/category/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id))), opts.BuildQuery())
+
+	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := o.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &ObjectCategoriesPreferenceResponse{}
+	err = o.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, opts *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreferenceResponse, error) {
-	if strings.TrimSpace(obj.Id) == "" {
-		return nil, &Error{Message: "object_id is required"}
-	}
-	if strings.TrimSpace(obj.ObjectType) == "" {
-		return nil, &Error{Message: "object_type is required"}
-	}
-	if strings.TrimSpace(category) == "" {
-		return nil, &Error{Message: "category is required"}
-	}
-
-	urlStr := fmt.Sprintf("%s%s/%s/preference/category/%s", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category)))
-
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-		if strconv.FormatBool(opts.ShowOptOutChannels) != "" {
-			query.Set("show_opt_out_channels", strconv.FormatBool(opts.ShowOptOutChannels))
-		}
-	}
-
-	if len(query) > 0 {
-		urlStr += "?" + query.Encode()
-	}
+	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/category/%s/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category))), opts.BuildQuery())
 
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
@@ -541,28 +426,7 @@ func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectId
 }
 
 func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, body ObjectUpdateCategoryPreferenceBody, opts *ObjectCategoryUpdatePreferenceOptions) (*ObjectCategoryPreferenceResponse, error) {
-	if strings.TrimSpace(obj.Id) == "" {
-		return nil, &Error{Message: "object_id is required"}
-	}
-	if strings.TrimSpace(obj.ObjectType) == "" {
-		return nil, &Error{Message: "object_type is required"}
-	}
-	if strings.TrimSpace(category) == "" {
-		return nil, &Error{Message: "category is required"}
-	}
-
-	urlStr := fmt.Sprintf("%s%s/%s/preference/category/%s", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category)))
-
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-	}
-
-	if len(query) > 0 {
-		urlStr += "?" + query.Encode()
-	}
+	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/category/%s/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category))), opts.BuildQuery())
 
 	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
 	if err != nil {
@@ -574,45 +438,6 @@ func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj Objec
 	}
 	defer httpResponse.Body.Close()
 	resp := &ObjectCategoryPreferenceResponse{}
-	err = o.client.parseApiResponse(httpResponse, resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
-
-func (o *objectsService) UpdateGlobalChannelsPreferences(ctx context.Context, obj ObjectIdentifier, body ObjectGlobalChannelPreferenceUpdateBody, opts *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error) {
-	if strings.TrimSpace(obj.Id) == "" {
-		return nil, &Error{Message: "object_id is required"}
-	}
-	if strings.TrimSpace(obj.ObjectType) == "" {
-		return nil, &Error{Message: "object_type is required"}
-	}
-
-	urlStr := fmt.Sprintf("%s%s/%s/preference/channel_preference", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)))
-
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-	}
-
-	if len(query) > 0 {
-		urlStr += "?" + query.Encode()
-	}
-
-	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
-	if err != nil {
-		return nil, err
-	}
-	httpResponse, err := o.client.httpClient.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	defer httpResponse.Body.Close()
-
-	resp := &ObjectGlobalChannelPreferencesResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err

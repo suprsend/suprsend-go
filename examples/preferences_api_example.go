@@ -17,21 +17,21 @@ func preferencesApiExample() {
 
 	// ----- Users
 	/// ----- get full preferences
-	preferences, err := suprClient.Users.GetUserPreferences(ctx, "__distinct_id1__", nil)
+	preferences, err := suprClient.Users.GetFullPreference(ctx, "__distinct_id1__", nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println(preferences)
 
 	/// ----- get categories preferences
-	preferences_cat, err := suprClient.Users.GetCategoriesPreferences(ctx, "__distinct_id1__", nil)
+	preferences_cat, err := suprClient.Users.GetAllCategoriesPreferences(ctx, "__distinct_id1__", nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println(preferences_cat)
 
 	// ----- get categories preferences
-	preferences_cat_1, err := suprClient.Users.GetGlobalChannelPreferences(ctx, "__distinct_id1__", nil)
+	preferences_cat_1, err := suprClient.Users.GetGlobalChannelsPreference(ctx, "__distinct_id1__", nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -53,7 +53,7 @@ func preferencesApiExample() {
 		OptOutChannels: []*string{&ch1, &ch2},
 	}
 
-	opts := &suprsend.UserCategoryUpdatePreferenceOptions{
+	opts := &suprsend.UserCategoryPreferenceOptions{
 		TenantId: "__tenant_id1__",
 	}
 
@@ -64,7 +64,7 @@ func preferencesApiExample() {
 	log.Println(preferences_cat_ch)
 
 	// ----- update global channel preferences
-	channel_preferences := []suprsend.UserChannelPreferenceIn{
+	channel_preferences := []suprsend.UserGlobalChannelPreference{
 		{Channel: "email", IsRestricted: true},
 		{Channel: "inbox", IsRestricted: true},
 	}
@@ -76,14 +76,14 @@ func preferencesApiExample() {
 		TenantId: "__tenant_id1__",
 	}
 
-	preferences_ch, err := suprClient.Users.UpdateGlobalChannelPreferences(ctx, "__tenant_id1__", body_ch, opts_ch)
+	preferences_ch, err := suprClient.Users.UpdateGlobalChannelsPreference(ctx, "__tenant_id1__", body_ch, opts_ch)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println(preferences_ch)
 
 	// ----- bulk update
-	channel_preferences_b := []*suprsend.UserChannelPreferenceIn{
+	channel_preferences_b := []*suprsend.UserGlobalChannelPreference{
 		{Channel: "email", IsRestricted: true},
 		{Channel: "inbox", IsRestricted: false},
 	}
@@ -132,9 +132,10 @@ func preferencesApiExample() {
 	log.Println(preferences_gt)
 
 	//  Update Categories preference for a tenant
+	visible := true
 	body_c_t := suprsend.TenantPreferenceCategoryUpdateBody{
 		Preference:          "opt_in",
-		VisibleToSubscriber: true,
+		VisibleToSubscriber: &visible,
 		MandatoryChannels:   []string{"email", "sms", "inbox"},
 		BlockedChannels:     []string{"slack"},
 	}
@@ -150,7 +151,7 @@ func preferencesApiExample() {
 		ObjectType: "__object_type__",
 		Id:         "__object_id__",
 	}
-	preferences_ao, err := suprClient.Objects.GetPreference(ctx, obj, nil)
+	preferences_ao, err := suprClient.Objects.GetFullPreference(ctx, obj, nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -173,7 +174,7 @@ func preferencesApiExample() {
 		Id:         "__object_id__",
 	}
 
-	preferences_cho, err := suprClient.Objects.GetGlobalChannelsPreferences(ctx, obj_cho, nil)
+	preferences_cho, err := suprClient.Objects.GetGlobalChannelsPreference(ctx, obj_cho, nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -214,7 +215,7 @@ func preferencesApiExample() {
 		Id:         "__object_id__",
 	}
 
-	channel_preferences_gco := []suprsend.UserChannelPreferenceIn{
+	channel_preferences_gco := []suprsend.ObjectGlobalChannelPreference{
 		{Channel: "email", IsRestricted: true},
 		{Channel: "inbox", IsRestricted: false},
 	}
@@ -223,7 +224,7 @@ func preferencesApiExample() {
 		ChannelPreferences: channel_preferences_gco,
 	}
 
-	preferences_gco, err := suprClient.Objects.UpdateGlobalChannelsPreferences(ctx, obj_gco, body_gco, nil)
+	preferences_gco, err := suprClient.Objects.UpdateGlobalChannelsPreference(ctx, obj_gco, body_gco, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

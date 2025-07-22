@@ -125,7 +125,7 @@ func preferencesApiExample() {
 
 	// ----- Tenants
 	/// Get All Categories Preference for a tenant
-	preferences_gt, err := suprClient.Tenants.GetAllCategoriesPreference(ctx, "__tenant_id__")
+	preferences_gt, err := suprClient.Tenants.GetAllCategoriesPreference(ctx, "__tenant_id__", nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -133,13 +133,13 @@ func preferencesApiExample() {
 
 	//  Update Categories preference for a tenant
 	visible := true
-	body_c_t := suprsend.TenantPreferenceCategoryUpdateBody{
+	body_c_t := suprsend.TenantCategoryPreferenceUpdateBody{
 		Preference:          "opt_in",
 		VisibleToSubscriber: &visible,
 		MandatoryChannels:   []string{"email", "sms", "inbox"},
 		BlockedChannels:     []string{"slack"},
 	}
-	preferences_c_t, err := suprClient.Tenants.UpdateCategoryPreference(ctx, "__tenant_id1__", "__category_slug__", body_c_t, nil)
+	preferences_c_t, err := suprClient.Tenants.UpdateCategoryPreference(ctx, "__tenant_id1__", "__category_slug__", body_c_t)
 	if err != nil {
 		log.Fatalln(err)
 	}

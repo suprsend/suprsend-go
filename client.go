@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"runtime"
 	"slices"
 	"strings"
@@ -38,9 +39,10 @@ type Client struct {
 	BulkEvents *bulkEventsService
 	BulkUsers  *bulkSubscribersService
 	//
-	baseUrl string
-	debug   bool
-	timeout int
+	baseUrl  string
+	debug    bool
+	timeout  int
+	proxyUrl *url.URL
 	//
 	sdkVersion string
 	userAgent  string
@@ -85,7 +87,7 @@ func (c *Client) init(opts ...ClientOption) error {
 		return err
 	}
 	if c.httpClient == nil {
-		c.httpClient = defaultHTTPClient(c.debug, c.timeout)
+		c.httpClient = defaultHTTPClient(c.debug, c.timeout, c.proxyUrl)
 	}
 	c.commonHeaders = map[string]string{
 		"Content-Type": "application/json; charset=utf-8",
@@ -110,17 +112,26 @@ func (c *Client) init(opts ...ClientOption) error {
 	return nil
 }
 
-func defaultHTTPClient(debug bool, timeout int) *http.Client {
+func defaultHTTPClient(debug bool, timeout int, proxyUrl *url.URL) *http.Client {
+	transport := http.DefaultTransport
+
+	if proxyUrl != nil {
+		transportClone := transport.(*http.Transport).Clone()
+		transportClone.Proxy = http.ProxyURL(proxyUrl)
+		transport = transportClone
+	}
+
 	if debug {
 		return &http.Client{
 			Timeout: time.Duration(timeout) * time.Second,
 			Transport: LoggingRoundTripper{
-				Proxied: http.DefaultTransport,
+				Proxied: transport,
 			},
 		}
 	} else {
 		return &http.Client{
-			Timeout: time.Duration(timeout) * time.Second,
+			Timeout:   time.Duration(timeout) * time.Second,
+			Transport: transport,
 		}
 	}
 }

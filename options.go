@@ -2,6 +2,7 @@ package suprsend
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -23,7 +24,11 @@ func WithDebug(debug bool) ClientOption {
 
 func WithProxyUrl(proxyUrl string) ClientOption {
 	return func(c *Client) error {
-		c.proxyUrl = proxyUrl
+		parsed, err := url.Parse(proxyUrl)
+		if err != nil {
+			return &Error{Code: 404, Message: "invalid proxyUrl", Err: err}
+		}
+		c.proxyUrl = parsed
 		return nil
 	}
 }

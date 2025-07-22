@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"runtime"
 	"slices"
 	"strings"
@@ -44,7 +42,7 @@ type Client struct {
 	baseUrl  string
 	debug    bool
 	timeout  int
-	proxyUrl string
+	proxyUrl *url.URL
 	//
 	sdkVersion string
 	userAgent  string
@@ -114,22 +112,15 @@ func (c *Client) init(opts ...ClientOption) error {
 	return nil
 }
 
-func defaultHTTPClient(debug bool, timeout int, proxyUrl string) *http.Client {
-	transport := &http.Transport{}
+func defaultHTTPClient(debug bool, timeout int, proxyUrl *url.URL) *http.Client {
+	transport := http.DefaultTransport
 
-	if proxyUrl == "" {
-		proxyUrl = os.Getenv("HTTP_PROXY")
+	if proxyUrl != nil {
+		transportClone := transport.(*http.Transport).Clone()
+		transportClone.Proxy = http.ProxyURL(proxyUrl)
+		transport = transportClone
 	}
 
-	if proxyUrl != "" {
-		log.Printf("Proxy url found: %s\n", proxyUrl)
-		parsed, err := url.Parse(proxyUrl)
-		if err != nil {
-			log.Printf("Invalid HTTP_PROXY: %v\n", err)
-		} else {
-			transport.Proxy = http.ProxyURL(parsed)
-		}
-	}
 	if debug {
 		return &http.Client{
 			Timeout: time.Duration(timeout) * time.Second,

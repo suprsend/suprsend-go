@@ -159,6 +159,12 @@ type TenantCategoriesPreferenceOptions struct {
 func (opts *TenantCategoriesPreferenceOptions) BuildQuery() string {
 	query := url.Values{}
 	if opts != nil {
+		if opts.Limit > 0 {
+			query.Set("limit", strconv.Itoa(opts.Limit))
+		}
+		if opts.Offset > 0 {
+			query.Set("offset", strconv.Itoa(opts.Offset))
+		}
 		if opts.Tags != "" {
 			query.Set("tags", opts.Tags)
 		}

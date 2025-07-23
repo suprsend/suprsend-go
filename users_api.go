@@ -26,14 +26,14 @@ type UsersService interface {
 	// Old accessor method (to be deprecated)
 	GetInstance(string) Subscriber
 	//
-	GetFullPreference(context.Context, string, *UserPreferencesOptions) (*UserPreferencesResponse, error)
-	GetGlobalChannelsPreference(context.Context, string, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
-	UpdateGlobalChannelsPreference(context.Context, string, UserGlobalChannelPreferenceUpdateBody, *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error)
-	GetAllCategoriesPreferences(context.Context, string, *UserPreferencesOptions) (*UserCategoriesPreferenceResponse, error)
-	GetCategoryPreference(context.Context, string, string, *UserCategoryPreferenceOptions) (*UserCategoryPreferenceResponse, error)
-	UpdateCategoryPreference(context.Context, string, string, UserUpdateCategoryPreferenceBody, *UserCategoryPreferenceOptions) (*UserCategoryPreferenceResponse, error)
-	BulkUpdatePreferences(context.Context, UserBulkPreferenceUpdateBody, *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error)
-	ResetPreferences(context.Context, UserBulkResetPreferenceBody, *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error)
+	GetFullPreference(context.Context, string, *UserFullPreferencesOptions) (*UserFullPreferenceResponse, error)
+	GetGlobalChannelsPreference(context.Context, string, *UserGlobalChannelsPreferenceOptions) (*UserGlobalChannelsPreferenceResponse, error)
+	UpdateGlobalChannelsPreference(context.Context, string, UserGlobalChannelsPreferenceUpdateBody, *UserGlobalChannelsPreferenceOptions) (*UserGlobalChannelsPreferenceResponse, error)
+	GetAllCategoriesPreference(context.Context, string, *UserCategoriesPreferenceOptions) (*UserCategoriesPreferenceResponse, error)
+	GetCategoryPreference(context.Context, string, string, *UserCategoryPreferenceOptions) (*UserCategoryPreference, error)
+	UpdateCategoryPreference(context.Context, string, string, UserUpdateCategoryPreferenceBody, *UserCategoryPreferenceOptions) (*UserCategoryPreference, error)
+	BulkUpdatePreferences(context.Context, UserBulkPreferenceUpdateBody, *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceUpdateResponse, error)
+	ResetPreferences(context.Context, UserBulkPreferenceResetBody, *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceUpdateResponse, error)
 }
 
 type usersService struct {
@@ -333,9 +333,8 @@ func (u *usersService) GetInstance(distinctId string) Subscriber {
 }
 
 // GetFullPreference fetches the current notification preferences for the user across all categories and channels.
-func (u *usersService) GetFullPreference(ctx context.Context, distinctId string, opts *UserPreferencesOptions) (*UserPreferencesResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/preference/", u._url, url.PathEscape(strings.TrimSpace(distinctId))), opts.BuildQuery())
-
+func (u *usersService) GetFullPreference(ctx context.Context, distinctId string, opts *UserFullPreferencesOptions) (*UserFullPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
 	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -345,7 +344,7 @@ func (u *usersService) GetFullPreference(ctx context.Context, distinctId string,
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserPreferencesResponse{}
+	resp := &UserFullPreferenceResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -353,9 +352,8 @@ func (u *usersService) GetFullPreference(ctx context.Context, distinctId string,
 	return resp, nil
 }
 
-func (u *usersService) GetGlobalChannelsPreference(ctx context.Context, distinctId string, opts *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/preference/channel_preference/", u._url, url.PathEscape(strings.TrimSpace(distinctId))), opts.BuildQuery())
-
+func (u *usersService) GetGlobalChannelsPreference(ctx context.Context, distinctId string, opts *UserGlobalChannelsPreferenceOptions) (*UserGlobalChannelsPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
 	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -365,7 +363,7 @@ func (u *usersService) GetGlobalChannelsPreference(ctx context.Context, distinct
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserGlobalChannelPreferencesResponse{}
+	resp := &UserGlobalChannelsPreferenceResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -373,9 +371,8 @@ func (u *usersService) GetGlobalChannelsPreference(ctx context.Context, distinct
 	return resp, nil
 }
 
-func (u *usersService) UpdateGlobalChannelsPreference(ctx context.Context, distinctId string, body UserGlobalChannelPreferenceUpdateBody, opts *UserGlobalPreferenceOptions) (*UserGlobalChannelPreferencesResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/preference/channel_preference/", u._url, url.PathEscape(strings.TrimSpace(distinctId))), opts.BuildQuery())
-
+func (u *usersService) UpdateGlobalChannelsPreference(ctx context.Context, distinctId string, body UserGlobalChannelsPreferenceUpdateBody, opts *UserGlobalChannelsPreferenceOptions) (*UserGlobalChannelsPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
 	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
@@ -385,7 +382,7 @@ func (u *usersService) UpdateGlobalChannelsPreference(ctx context.Context, disti
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserGlobalChannelPreferencesResponse{}
+	resp := &UserGlobalChannelsPreferenceResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -393,9 +390,8 @@ func (u *usersService) UpdateGlobalChannelsPreference(ctx context.Context, disti
 	return resp, nil
 }
 
-func (u *usersService) GetAllCategoriesPreferences(ctx context.Context, distinctId string, opts *UserPreferencesOptions) (*UserCategoriesPreferenceResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/preference/category/", u._url, url.PathEscape(strings.TrimSpace(distinctId))), opts.BuildQuery())
-
+func (u *usersService) GetAllCategoriesPreference(ctx context.Context, distinctId string, opts *UserCategoriesPreferenceOptions) (*UserCategoriesPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
 	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -413,9 +409,8 @@ func (u *usersService) GetAllCategoriesPreferences(ctx context.Context, distinct
 	return resp, nil
 }
 
-func (u *usersService) GetCategoryPreference(ctx context.Context, distinctId string, category string, opts *UserCategoryPreferenceOptions) (*UserCategoryPreferenceResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/preference/category/%s/", u._url, url.PathEscape(strings.TrimSpace(distinctId)), url.PathEscape(strings.TrimSpace(category))), opts.BuildQuery())
-
+func (u *usersService) GetCategoryPreference(ctx context.Context, distinctId string, category string, opts *UserCategoryPreferenceOptions) (*UserCategoryPreference, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", u.userDetailAPIUrl(distinctId), url.PathEscape(category)), opts.BuildQuery())
 	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -425,7 +420,7 @@ func (u *usersService) GetCategoryPreference(ctx context.Context, distinctId str
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserCategoryPreferenceResponse{}
+	resp := &UserCategoryPreference{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -433,9 +428,8 @@ func (u *usersService) GetCategoryPreference(ctx context.Context, distinctId str
 	return resp, nil
 }
 
-func (u *usersService) UpdateCategoryPreference(ctx context.Context, distinctId string, category string, body UserUpdateCategoryPreferenceBody, opts *UserCategoryPreferenceOptions) (*UserCategoryPreferenceResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/preference/category/%s/", u._url, url.PathEscape(strings.TrimSpace(distinctId)), url.PathEscape(strings.TrimSpace(category))), opts.BuildQuery())
-
+func (u *usersService) UpdateCategoryPreference(ctx context.Context, distinctId string, category string, body UserUpdateCategoryPreferenceBody, opts *UserCategoryPreferenceOptions) (*UserCategoryPreference, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", u.userDetailAPIUrl(distinctId), url.PathEscape(category)), opts.BuildQuery())
 	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
@@ -445,7 +439,7 @@ func (u *usersService) UpdateCategoryPreference(ctx context.Context, distinctId 
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserCategoryPreferenceResponse{}
+	resp := &UserCategoryPreference{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -453,9 +447,8 @@ func (u *usersService) UpdateCategoryPreference(ctx context.Context, distinctId 
 	return resp, nil
 }
 
-func (u *usersService) BulkUpdatePreferences(ctx context.Context, body UserBulkPreferenceUpdateBody, opts *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceResponse, error) {
+func (u *usersService) BulkUpdatePreferences(ctx context.Context, body UserBulkPreferenceUpdateBody, opts *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceUpdateResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/", u._bulkUrl), opts.BuildQuery())
-
 	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
@@ -465,7 +458,7 @@ func (u *usersService) BulkUpdatePreferences(ctx context.Context, body UserBulkP
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserBulkPreferenceResponse{}
+	resp := &UserBulkPreferenceUpdateResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -473,9 +466,8 @@ func (u *usersService) BulkUpdatePreferences(ctx context.Context, body UserBulkP
 	return resp, nil
 }
 
-func (u *usersService) ResetPreferences(ctx context.Context, body UserBulkResetPreferenceBody, opts *UserPreferenceResetOptions) (*UserBulkPreferenceResponse, error) {
+func (u *usersService) ResetPreferences(ctx context.Context, body UserBulkPreferenceResetBody, opts *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceUpdateResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/reset/", u._bulkUrl), opts.BuildQuery())
-
 	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
@@ -485,7 +477,7 @@ func (u *usersService) ResetPreferences(ctx context.Context, body UserBulkResetP
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserBulkPreferenceResponse{}
+	resp := &UserBulkPreferenceUpdateResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err

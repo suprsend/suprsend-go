@@ -6,18 +6,13 @@ import (
 	"strconv"
 )
 
-type UserGlobalChannelPreference struct {
-	Channel      string `json:"channel"`
-	IsRestricted bool   `json:"is_restricted"`
-}
-
-type UserPreferencesOptions struct {
+type UserFullPreferencesOptions struct {
 	TenantId           string
 	ShowOptOutChannels *bool
 	Tags               string // can be a simple tag or a JSON string for advanced filtering
 }
 
-func (opts *UserPreferencesOptions) BuildQuery() string {
+func (opts *UserFullPreferencesOptions) BuildQuery() string {
 	query := url.Values{}
 	if opts != nil {
 		if opts.TenantId != "" {
@@ -30,115 +25,85 @@ func (opts *UserPreferencesOptions) BuildQuery() string {
 			query.Set("tags", opts.Tags)
 		}
 	}
-
 	return query.Encode()
 }
 
-type UserGlobalPreferenceOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-func (opts *UserGlobalPreferenceOptions) BuildQuery() string {
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-	}
-
-	return query.Encode()
-}
-
-type UserCategoryPreferenceOptions struct {
-	TenantId           string `json:"tenant_id"`
-	ShowOptOutChannels bool   `json:"show_opt_out_channels"`
-}
-
-func (opts *UserCategoryPreferenceOptions) BuildQuery() string {
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-
-		if strconv.FormatBool(opts.ShowOptOutChannels) != "" {
-			query.Set("show_opt_out_channels", strconv.FormatBool(opts.ShowOptOutChannels))
-		}
-	}
-
-	return query.Encode()
-}
-
-type UserBulkPreferenceUpdateOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-func (opts *UserBulkPreferenceUpdateOptions) BuildQuery() string {
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-	}
-
-	return query.Encode()
-}
-
-type UserPreferenceResetOptions struct {
-	TenantId string `json:"tenant_id"`
-}
-
-func (opts *UserPreferenceResetOptions) BuildQuery() string {
-	query := url.Values{}
-	if opts != nil {
-		if opts.TenantId != "" {
-			query.Set("tenant_id", opts.TenantId)
-		}
-	}
-
-	return query.Encode()
-}
-
-type UserUpdateCategoryPreferenceBody struct {
-	Preference     *string   `json:"preference"`
-	OptOutChannels []*string `json:"opt_out_channels"`
-}
-
-type UserGlobalChannelPreferenceUpdateBody struct {
+type UserFullPreferenceResponse struct {
+	Sections []struct {
+		Name          *string                  `json:"name"`
+		Subcategories []UserCategoryPreference `json:"subcategories"`
+	} `json:"sections"`
 	ChannelPreferences []UserGlobalChannelPreference `json:"channel_preferences"`
 }
 
-type UserCategoryPreferenceIn struct {
-	Category       string    `json:"category"`
-	Preference     string    `json:"preference"`
-	OptOutChannels []*string `json:"opt_out_channels,omitempty"`
+// ------------------------------------------------------------
+
+type UserGlobalChannelPreference struct {
+	Channel      string `json:"channel"`
+	IsRestricted bool   `json:"is_restricted"`
 }
 
-type UserBulkPreferenceUpdateBody struct {
-	DistinctIDs        []string                       `json:"distinct_ids,omitempty"`
-	ChannelPreferences []*UserGlobalChannelPreference `json:"channel_preferences,omitempty"`
-	Categories         []*UserCategoryPreferenceIn    `json:"categories,omitempty"`
+type UserGlobalChannelsPreferenceOptions struct {
+	TenantId string
 }
 
-type UserBulkResetPreferenceBody struct {
-	DistinctIDs             []string `json:"distinct_ids"`
-	ResetChannelPreferences *bool    `json:"reset_channel_preferences"`
-	ResetCategories         *bool    `json:"reset_categories"`
+func (opts *UserGlobalChannelsPreferenceOptions) BuildQuery() string {
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+	}
+	return query.Encode()
 }
 
-type UserPreferencesResponse struct {
-	Sections []struct {
-		Name          *string                          `json:"name"`
-		Subcategories []UserCategoryPreferenceResponse `json:"subcategories"`
-	} `json:"sections"`
-	ChannelPreferences []UserGlobalChannelPreferencesResponse `json:"channel_preferences"`
+type UserGlobalChannelsPreferenceResponse struct {
+	ChannelPreferences []UserGlobalChannelPreference `json:"channel_preferences"`
 }
 
-type UserGlobalChannelPreferencesResponse struct {
-	ChannelPreferences []any `json:"channel_preferences"`
+type UserGlobalChannelsPreferenceUpdateBody struct {
+	ChannelPreferences []UserGlobalChannelPreference `json:"channel_preferences"`
 }
 
-type UserCategoryPreferenceResponse struct {
+// ------------------------------------------------------------
+
+type UserCategoriesPreferenceOptions struct {
+	Limit  int
+	Offset int
+	//
+	TenantId           string
+	ShowOptOutChannels *bool
+	Tags               string // can be a simple tag or a JSON string for advanced filtering
+}
+
+func (opts *UserCategoriesPreferenceOptions) BuildQuery() string {
+	query := url.Values{}
+	if opts != nil {
+		if opts.Limit > 0 {
+			query.Set("limit", strconv.Itoa(opts.Limit))
+		}
+		if opts.Offset > 0 {
+			query.Set("offset", strconv.Itoa(opts.Offset))
+		}
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+		if opts.ShowOptOutChannels != nil {
+			query.Set("show_opt_out_channels", fmt.Sprintf("%v", *opts.ShowOptOutChannels))
+		}
+		if opts.Tags != "" {
+			query.Set("tags", opts.Tags)
+		}
+	}
+	return query.Encode()
+}
+
+type UserCategoriesPreferenceResponse struct {
+	Meta    *ListApiMetaInfo         `json:"meta"`
+	Results []UserCategoryPreference `json:"results"`
+}
+
+type UserCategoryPreference struct {
 	Name               string  `json:"name"`
 	Category           string  `json:"category"`
 	Description        string  `json:"description"`
@@ -154,11 +119,67 @@ type UserCategoryPreferenceResponse struct {
 	EffectiveTags []string `json:"effective_tags"`
 }
 
-type UserBulkPreferenceResponse struct {
+// ------------------------------------------------------------
+
+type UserCategoryPreferenceOptions struct {
+	TenantId           string
+	ShowOptOutChannels *bool
+}
+
+func (opts *UserCategoryPreferenceOptions) BuildQuery() string {
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+		if opts.ShowOptOutChannels != nil {
+			query.Set("show_opt_out_channels", fmt.Sprintf("%v", *opts.ShowOptOutChannels))
+		}
+	}
+	return query.Encode()
+}
+
+type UserUpdateCategoryPreferenceBody struct {
+	Preference     string   `json:"preference"`
+	OptOutChannels []string `json:"opt_out_channels"`
+}
+
+// ------------------------------------------------------------
+
+type UserBulkPreferenceUpdateOptions struct {
+	TenantId string `json:"tenant_id"`
+}
+
+func (opts *UserBulkPreferenceUpdateOptions) BuildQuery() string {
+	query := url.Values{}
+	if opts != nil {
+		if opts.TenantId != "" {
+			query.Set("tenant_id", opts.TenantId)
+		}
+	}
+	return query.Encode()
+}
+
+type UserBulkPreferenceUpdateBody struct {
+	DistinctIDs        []string                       `json:"distinct_ids"`
+	ChannelPreferences []*UserGlobalChannelPreference `json:"channel_preferences,omitempty"`
+	Categories         []*UserCategoryPreferenceIn    `json:"categories,omitempty"`
+}
+
+type UserCategoryPreferenceIn struct {
+	Category       string   `json:"category"`
+	Preference     string   `json:"preference"`
+	OptOutChannels []string `json:"opt_out_channels"`
+}
+
+type UserBulkPreferenceUpdateResponse struct {
 	Success bool `json:"success"`
 }
 
-type UserCategoriesPreferenceResponse struct {
-	Meta    *ListApiMetaInfo                 `json:"meta"`
-	Results []UserCategoryPreferenceResponse `json:"results"`
+// ------------------------------------------------------------
+
+type UserBulkPreferenceResetBody struct {
+	DistinctIDs             []string `json:"distinct_ids"`
+	ResetChannelPreferences bool     `json:"reset_channel_preferences"`
+	ResetCategories         bool     `json:"reset_categories"`
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 )
 
 type ObjectIdentifier struct {
@@ -25,12 +24,12 @@ type ObjectsService interface {
 	DeleteSubscriptions(context.Context, ObjectIdentifier, map[string]any) error
 	GetEditInstance(ObjectIdentifier) ObjectEdit
 	//
-	GetFullPreference(context.Context, ObjectIdentifier, *ObjectPreferenceOptions) (*ObjectPreferenceResponse, error)
-	GetGlobalChannelsPreference(context.Context, ObjectIdentifier, *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error)
-	UpdateGlobalChannelsPreference(context.Context, ObjectIdentifier, ObjectGlobalChannelPreferenceUpdateBody, *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error)
-	GetAllCategoriesPreference(context.Context, ObjectIdentifier, *ObjectPreferenceOptions) (*ObjectCategoriesPreferenceResponse, error)
-	GetCategoryPreference(context.Context, ObjectIdentifier, string, *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreferenceResponse, error)
-	UpdateCategoryPreference(context.Context, ObjectIdentifier, string, ObjectUpdateCategoryPreferenceBody, *ObjectCategoryUpdatePreferenceOptions) (*ObjectCategoryPreferenceResponse, error)
+	GetFullPreference(context.Context, ObjectIdentifier, *ObjectFullPreferenceOptions) (*ObjectFullPreferenceResponse, error)
+	GetGlobalChannelsPreference(context.Context, ObjectIdentifier, *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error)
+	UpdateGlobalChannelsPreference(context.Context, ObjectIdentifier, ObjectGlobalChannelsPreferenceUpdateBody, *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error)
+	GetAllCategoriesPreference(context.Context, ObjectIdentifier, *ObjectCategoriesPreferenceOptions) (*ObjectCategoriesPreferenceResponse, error)
+	GetCategoryPreference(context.Context, ObjectIdentifier, string, *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error)
+	UpdateCategoryPreference(context.Context, ObjectIdentifier, string, ObjectUpdateCategoryPreferenceBody, *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error)
 }
 
 type objectsService struct {
@@ -324,9 +323,8 @@ func (o *objectsService) GetEditInstance(obj ObjectIdentifier) ObjectEdit {
 	return newObjectEdit(o.client, obj)
 }
 
-func (o *objectsService) GetFullPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectPreferenceOptions) (*ObjectPreferenceResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id))), opts.BuildQuery())
-
+func (o *objectsService) GetFullPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectFullPreferenceOptions) (*ObjectFullPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -336,7 +334,7 @@ func (o *objectsService) GetFullPreference(ctx context.Context, obj ObjectIdenti
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &ObjectPreferenceResponse{}
+	resp := &ObjectFullPreferenceResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -344,9 +342,8 @@ func (o *objectsService) GetFullPreference(ctx context.Context, obj ObjectIdenti
 	return resp, nil
 }
 
-func (o *objectsService) GetGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/channel_preference/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id))), opts.BuildQuery())
-
+func (o *objectsService) GetGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -356,7 +353,7 @@ func (o *objectsService) GetGlobalChannelsPreference(ctx context.Context, obj Ob
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &ObjectGlobalChannelPreferencesResponse{}
+	resp := &ObjectGlobalChannelsPreferenceResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -364,9 +361,8 @@ func (o *objectsService) GetGlobalChannelsPreference(ctx context.Context, obj Ob
 	return resp, nil
 }
 
-func (o *objectsService) UpdateGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, body ObjectGlobalChannelPreferenceUpdateBody, opts *ObjectGlobalPreferenceOptions) (*ObjectGlobalChannelPreferencesResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/channel_preference/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id))), opts.BuildQuery())
-
+func (o *objectsService) UpdateGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, body ObjectGlobalChannelsPreferenceUpdateBody, opts *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
 	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
@@ -376,8 +372,7 @@ func (o *objectsService) UpdateGlobalChannelsPreference(ctx context.Context, obj
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-
-	resp := &ObjectGlobalChannelPreferencesResponse{}
+	resp := &ObjectGlobalChannelsPreferenceResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -385,9 +380,8 @@ func (o *objectsService) UpdateGlobalChannelsPreference(ctx context.Context, obj
 	return resp, nil
 }
 
-func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectPreferenceOptions) (*ObjectCategoriesPreferenceResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/category/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id))), opts.BuildQuery())
-
+func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectCategoriesPreferenceOptions) (*ObjectCategoriesPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -405,9 +399,8 @@ func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj Obj
 	return resp, nil
 }
 
-func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, opts *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreferenceResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/category/%s/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category))), opts.BuildQuery())
-
+func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, opts *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id), url.PathEscape(category)), opts.BuildQuery())
 	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -417,7 +410,7 @@ func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectId
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &ObjectCategoryPreferenceResponse{}
+	resp := &ObjectCategoryPreference{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -425,9 +418,8 @@ func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectId
 	return resp, nil
 }
 
-func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, body ObjectUpdateCategoryPreferenceBody, opts *ObjectCategoryUpdatePreferenceOptions) (*ObjectCategoryPreferenceResponse, error) {
-	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/%s/preference/category/%s/", o._url, url.PathEscape(strings.TrimSpace(obj.ObjectType)), url.PathEscape(strings.TrimSpace(obj.Id)), url.PathEscape(strings.TrimSpace(category))), opts.BuildQuery())
-
+func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, body ObjectUpdateCategoryPreferenceBody, opts *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id), url.PathEscape(category)), opts.BuildQuery())
 	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
@@ -437,7 +429,7 @@ func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj Objec
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &ObjectCategoryPreferenceResponse{}
+	resp := &ObjectCategoryPreference{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err

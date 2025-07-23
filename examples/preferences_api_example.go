@@ -8,6 +8,12 @@ import (
 )
 
 func preferencesApiExample() {
+	userPreferencesApiExample()
+	objectPreferencesApiExample()
+	tenantPreferencesApiExample()
+}
+
+func userPreferencesApiExample() {
 	suprClient, err := getSuprsendClient()
 	if err != nil {
 		log.Println(err)
@@ -15,218 +21,239 @@ func preferencesApiExample() {
 	}
 	ctx := context.Background()
 
-	// ----- Users
-	/// ----- get full preferences
+	// ----- get full preferences
 	preferences, err := suprClient.Users.GetFullPreference(ctx, "__distinct_id1__", nil)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println(preferences)
 
-	/// ----- get categories preferences
-	preferences_cat, err := suprClient.Users.GetAllCategoriesPreferences(ctx, "__distinct_id1__", nil)
+	// ------ get global channels preferences
+	globalPrefs, err := suprClient.Users.GetGlobalChannelsPreference(ctx, "__distinct_id1__",
+		&suprsend.UserGlobalChannelsPreferenceOptions{
+			TenantId: "__tenant_id1__",
+		},
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(preferences_cat)
-
-	// ----- get categories preferences
-	preferences_cat_1, err := suprClient.Users.GetGlobalChannelsPreference(ctx, "__distinct_id1__", nil)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(preferences_cat_1)
-
-	// ----- get category preferences
-	preferences_cat_2, err := suprClient.Users.GetCategoryPreference(ctx, "__distinct_id1__", "__category_slug__", nil)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(preferences_cat_2)
-
-	// --- update category preference within channel
-	pref := "opt_in"
-	ch1 := "email"
-	ch2 := "sms"
-	body := &suprsend.UserUpdateCategoryPreferenceBody{
-		Preference:     &pref,
-		OptOutChannels: []*string{&ch1, &ch2},
-	}
-
-	opts := &suprsend.UserCategoryPreferenceOptions{
-		TenantId: "__tenant_id1__",
-	}
-
-	preferences_cat_ch, err := suprClient.Users.UpdateCategoryPreference(ctx, "__distinct_id1__", "__category_slug__", *body, opts)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(preferences_cat_ch)
+	log.Println(globalPrefs)
 
 	// ----- update global channel preferences
-	channel_preferences := []suprsend.UserGlobalChannelPreference{
-		{Channel: "email", IsRestricted: true},
-		{Channel: "inbox", IsRestricted: true},
+	globalChannelsPrefbody := suprsend.UserGlobalChannelsPreferenceUpdateBody{
+		ChannelPreferences: []suprsend.UserGlobalChannelPreference{
+			{Channel: "email", IsRestricted: true},
+			{Channel: "inbox", IsRestricted: true},
+		},
 	}
-	body_ch := suprsend.UserGlobalChannelPreferenceUpdateBody{
-		ChannelPreferences: channel_preferences,
-	}
-
-	opts_ch := &suprsend.UserGlobalPreferenceOptions{
-		TenantId: "__tenant_id1__",
-	}
-
-	preferences_ch, err := suprClient.Users.UpdateGlobalChannelsPreference(ctx, "__tenant_id1__", body_ch, opts_ch)
+	globalPreferences, err := suprClient.Users.UpdateGlobalChannelsPreference(ctx, "__distinct_id1__", globalChannelsPrefbody,
+		&suprsend.UserGlobalChannelsPreferenceOptions{
+			TenantId: "__tenant_id1__",
+		},
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(preferences_ch)
+	log.Println(globalPreferences)
+
+	// ----- get categories preferences
+	allCatsPreferences, err := suprClient.Users.GetAllCategoriesPreference(ctx, "__distinct_id1__",
+		&suprsend.UserCategoriesPreferenceOptions{
+			Limit:    10,
+			Offset:   0,
+			TenantId: "__tenant_id1__",
+		},
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(allCatsPreferences)
+
+	// ----- get category preference
+	singleCatPreference, err := suprClient.Users.GetCategoryPreference(ctx, "__distinct_id1__", "__category_slug__",
+		&suprsend.UserCategoryPreferenceOptions{
+			TenantId:           "__tenant_id1__",
+			ShowOptOutChannels: suprsend.Bool(true),
+		},
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(singleCatPreference)
+
+	// --- update category preference
+	updateSingleCatPreference, err := suprClient.Users.UpdateCategoryPreference(ctx, "__distinct_id1__", "__category_slug__",
+		suprsend.UserUpdateCategoryPreferenceBody{
+			Preference:     "opt_in",
+			OptOutChannels: []string{"email", "sms"},
+		},
+		&suprsend.UserCategoryPreferenceOptions{
+			TenantId: "__tenant_id1__",
+		},
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(updateSingleCatPreference)
 
 	// ----- bulk update
-	channel_preferences_b := []*suprsend.UserGlobalChannelPreference{
-		{Channel: "email", IsRestricted: true},
-		{Channel: "inbox", IsRestricted: false},
+	bulkUpdateBody := suprsend.UserBulkPreferenceUpdateBody{
+		DistinctIDs: []string{"__distinct_id1__"},
+		ChannelPreferences: []*suprsend.UserGlobalChannelPreference{
+			{Channel: "email", IsRestricted: true},
+			{Channel: "inbox", IsRestricted: false},
+		},
+		Categories: []*suprsend.UserCategoryPreferenceIn{
+			{Category: "__category_slug__", Preference: "opt_out", OptOutChannels: []string{"email", "sms"}},
+		},
 	}
-
-	categories := []*suprsend.UserCategoryPreferenceIn{
-		{Category: "__category_slug__", Preference: "opt_out", OptOutChannels: []*string{&ch1, &ch2}},
-	}
-
-	body_b := suprsend.UserBulkPreferenceUpdateBody{
-		DistinctIDs:        []string{"__distinct_id1__"},
-		ChannelPreferences: channel_preferences_b,
-		Categories:         categories,
-	}
-
-	preferences_b, err := suprClient.Users.BulkUpdatePreferences(ctx, body_b, nil)
+	bulkPreferenceUpdateResponse, err := suprClient.Users.BulkUpdatePreferences(ctx, bulkUpdateBody,
+		&suprsend.UserBulkPreferenceUpdateOptions{
+			TenantId: "__tenant_id1__",
+		},
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(preferences_b)
+	log.Println(bulkPreferenceUpdateResponse)
 
 	// -- bulk reset
-	resetChannels := true
-	resetCategories := true
-	body_br := suprsend.UserBulkResetPreferenceBody{
+	bulkPrefResetBody := suprsend.UserBulkPreferenceResetBody{
 		DistinctIDs:             []string{"__distinct_id1__"},
-		ResetChannelPreferences: &resetChannels,
-		ResetCategories:         &resetCategories,
+		ResetChannelPreferences: true,
+		ResetCategories:         true,
 	}
-
-	opts_br := &suprsend.UserPreferenceResetOptions{
-		TenantId: "__tenant_id1__",
-	}
-
-	preferences_br, err := suprClient.Users.ResetPreferences(ctx, body_br, opts_br)
+	bulkPrefResetResp, err := suprClient.Users.ResetPreferences(ctx, bulkPrefResetBody,
+		&suprsend.UserBulkPreferenceUpdateOptions{
+			TenantId: "__tenant_id1__",
+		})
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Println(preferences_br)
+	log.Println(bulkPrefResetResp)
+}
 
+func objectPreferencesApiExample() {
+	suprClient, err := getSuprsendClient()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	ctx := context.Background()
+
+	// ----- get full preferences
+	obj := suprsend.ObjectIdentifier{
+		ObjectType: "__object_type__",
+		Id:         "__object_id__",
+	}
+	preferences, err := suprClient.Objects.GetFullPreference(ctx, obj,
+		&suprsend.ObjectFullPreferenceOptions{
+			TenantId: "__tenant_id1__",
+		},
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(preferences)
+
+	// ------ get global channels preferences
+	globalPrefs, err := suprClient.Objects.GetGlobalChannelsPreference(ctx, obj,
+		&suprsend.ObjectGlobalChannelsPreferenceOptions{
+			TenantId: "__tenant_id1__",
+		},
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(globalPrefs)
+
+	// ----- update global channel preferences
+	globalChannelsPrefbody := suprsend.ObjectGlobalChannelsPreferenceUpdateBody{
+		ChannelPreferences: []suprsend.ObjectGlobalChannelPreference{
+			{Channel: "email", IsRestricted: true},
+			{Channel: "inbox", IsRestricted: false},
+		},
+	}
+	globalPreferences, err := suprClient.Objects.UpdateGlobalChannelsPreference(ctx, obj, globalChannelsPrefbody,
+		&suprsend.ObjectGlobalChannelsPreferenceOptions{
+			TenantId: "__tenant_id1__",
+		},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(globalPreferences)
+
+	// ----- get categories preferences
+	allCatsPreferences, err := suprClient.Objects.GetAllCategoriesPreference(ctx, obj,
+		&suprsend.ObjectCategoriesPreferenceOptions{
+			Limit:    10,
+			Offset:   0,
+			TenantId: "__tenant_id1__",
+		},
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(allCatsPreferences)
+
+	// ----- Get a single category preference
+	singleCatPreference, err := suprClient.Objects.GetCategoryPreference(ctx, obj, "__category_slug__",
+		&suprsend.ObjectCategoryPreferenceOptions{
+			TenantId: "__tenant_id1__",
+		},
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(singleCatPreference)
+
+	// --- update category preference
+	updateSingleCatPreference, err := suprClient.Objects.UpdateCategoryPreference(ctx, obj, "__category_slug__",
+		suprsend.ObjectUpdateCategoryPreferenceBody{
+			Preference:     "opt_in",
+			OptOutChannels: []string{"iospush", "slack"},
+		},
+		&suprsend.ObjectCategoryPreferenceOptions{
+			TenantId: "__tenant_id1__",
+		},
+	)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(updateSingleCatPreference)
+}
+
+func tenantPreferencesApiExample() {
+	suprClient, err := getSuprsendClient()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	ctx := context.Background()
 	// ----- Tenants
-	/// Get All Categories Preference for a tenant
-	preferences_gt, err := suprClient.Tenants.GetAllCategoriesPreference(ctx, "__tenant_id__", nil)
+	// Get All Categories Preference for a tenant
+	preferences_gt, err := suprClient.Tenants.GetAllCategoriesPreference(ctx, "__tenant_id__",
+		&suprsend.TenantCategoriesPreferenceOptions{
+			Limit:  10,
+			Offset: 0,
+			// Tags:   "tag1",
+		})
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println(preferences_gt)
 
 	//  Update Categories preference for a tenant
-	visible := true
 	body_c_t := suprsend.TenantCategoryPreferenceUpdateBody{
 		Preference:          "opt_in",
-		VisibleToSubscriber: &visible,
+		VisibleToSubscriber: suprsend.Bool(true),
 		MandatoryChannels:   []string{"email", "sms", "inbox"},
 		BlockedChannels:     []string{"slack"},
 	}
-	preferences_c_t, err := suprClient.Tenants.UpdateCategoryPreference(ctx, "__tenant_id1__", "__category_slug__", body_c_t)
+	preferences_c_t, err := suprClient.Tenants.UpdateCategoryPreference(ctx, "__tenant_id__", "__category_slug__", body_c_t)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println(preferences_c_t)
-
-	// ----- Objects
-	/// Get All Preferences for an object
-	obj := suprsend.ObjectIdentifier{
-		ObjectType: "__object_type__",
-		Id:         "__object_id__",
-	}
-	preferences_ao, err := suprClient.Objects.GetFullPreference(ctx, obj, nil)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(preferences_ao)
-
-	// Get Preference Category for an object
-	obj_co := suprsend.ObjectIdentifier{
-		ObjectType: "__object_type__",
-		Id:         "__object_id__",
-	}
-	preferences_co, err := suprClient.Objects.GetAllCategoriesPreference(ctx, obj_co, nil)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(preferences_co)
-
-	// Get Global Channels Preferences
-	obj_cho := suprsend.ObjectIdentifier{
-		ObjectType: "__object_type__",
-		Id:         "__object_id__",
-	}
-
-	preferences_cho, err := suprClient.Objects.GetGlobalChannelsPreference(ctx, obj_cho, nil)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(preferences_cho)
-
-	// Get a single category preference for an object
-	obj_cato := suprsend.ObjectIdentifier{
-		ObjectType: "__object_type__",
-		Id:         "__object_id__",
-	}
-
-	preferences_cato, err := suprClient.Objects.GetCategoryPreference(ctx, obj_cato, "__category_slug__", nil)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(preferences_cato)
-
-	// Update category preferences
-	obj_cpo := suprsend.ObjectIdentifier{
-		ObjectType: "__object_type__",
-		Id:         "__object_id__",
-	}
-
-	body_cpo := suprsend.ObjectUpdateCategoryPreferenceBody{
-		Preference:     "opt_in",
-		OptOutChannels: []string{"iospush", "slack"},
-	}
-
-	preferences_cpo, err := suprClient.Objects.UpdateCategoryPreference(ctx, obj_cpo, "__category_slug__", body_cpo, nil)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println(preferences_cpo)
-
-	// Update global channel preferences
-	obj_gco := suprsend.ObjectIdentifier{
-		ObjectType: "__object_type__",
-		Id:         "__object_id__",
-	}
-
-	channel_preferences_gco := []suprsend.ObjectGlobalChannelPreference{
-		{Channel: "email", IsRestricted: true},
-		{Channel: "inbox", IsRestricted: false},
-	}
-
-	body_gco := suprsend.ObjectGlobalChannelPreferenceUpdateBody{
-		ChannelPreferences: channel_preferences_gco,
-	}
-
-	preferences_gco, err := suprClient.Objects.UpdateGlobalChannelsPreference(ctx, obj_gco, body_gco, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(preferences_gco)
 }

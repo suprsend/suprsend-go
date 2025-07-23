@@ -18,10 +18,18 @@ type ObjectsService interface {
 	Edit(context.Context, ObjectEditRequest) (map[string]any, error)
 	Delete(context.Context, ObjectIdentifier) error
 	BulkDelete(context.Context, string, ObjectBulkDeletePayload) error
+	//
 	GetSubscriptions(context.Context, ObjectIdentifier, *CursorListApiOptions) (*CursorListApiResponse, error)
 	CreateSubscriptions(context.Context, ObjectIdentifier, map[string]any) (map[string]any, error)
 	DeleteSubscriptions(context.Context, ObjectIdentifier, map[string]any) error
 	GetEditInstance(ObjectIdentifier) ObjectEdit
+	//
+	GetFullPreference(context.Context, ObjectIdentifier, *ObjectFullPreferenceOptions) (*ObjectFullPreferenceResponse, error)
+	GetGlobalChannelsPreference(context.Context, ObjectIdentifier, *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error)
+	UpdateGlobalChannelsPreference(context.Context, ObjectIdentifier, ObjectGlobalChannelsPreferenceUpdateBody, *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error)
+	GetAllCategoriesPreference(context.Context, ObjectIdentifier, *ObjectCategoriesPreferenceOptions) (*ObjectCategoriesPreferenceResponse, error)
+	GetCategoryPreference(context.Context, ObjectIdentifier, string, *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error)
+	UpdateCategoryPreference(context.Context, ObjectIdentifier, string, ObjectUpdateCategoryPreferenceBody, *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error)
 }
 
 type objectsService struct {
@@ -313,4 +321,118 @@ func (o *objectsService) GetObjectsSubscribedTo(ctx context.Context, obj ObjectI
 
 func (o *objectsService) GetEditInstance(obj ObjectIdentifier) ObjectEdit {
 	return newObjectEdit(o.client, obj)
+}
+
+func (o *objectsService) GetFullPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectFullPreferenceOptions) (*ObjectFullPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
+	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := o.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &ObjectFullPreferenceResponse{}
+	err = o.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (o *objectsService) GetGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
+	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := o.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &ObjectGlobalChannelsPreferenceResponse{}
+	err = o.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (o *objectsService) UpdateGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, body ObjectGlobalChannelsPreferenceUpdateBody, opts *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
+	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := o.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &ObjectGlobalChannelsPreferenceResponse{}
+	err = o.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectCategoriesPreferenceOptions) (*ObjectCategoriesPreferenceResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
+	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := o.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &ObjectCategoriesPreferenceResponse{}
+	err = o.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, opts *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id), url.PathEscape(category)), opts.BuildQuery())
+	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := o.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &ObjectCategoryPreference{}
+	err = o.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, body ObjectUpdateCategoryPreferenceBody, opts *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id), url.PathEscape(category)), opts.BuildQuery())
+	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := o.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &ObjectCategoryPreference{}
+	err = o.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }

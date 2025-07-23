@@ -30,6 +30,8 @@ func main() {
 	//
 	objectApisExample()
 	objectEditApiExample()
+
+	preferencesApiExample()
 }
 
 func getSuprsendClient() (*suprsend.Client, error) {

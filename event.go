@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -166,7 +167,7 @@ func newEventCollectorInstance(client *Client) *eventsCollector {
 	ec := &eventsCollector{
 		client: client,
 		// events url
-		_url: fmt.Sprintf("%sevent/", client.baseUrl),
+		_url: fmt.Sprintf("%sv2/event/", client.baseUrl),
 	}
 	return ec
 }
@@ -210,5 +211,9 @@ func (e *eventsCollector) formatAPIResponse(httpRes *http.Response) (*Response, 
 	if httpRes.StatusCode >= 400 {
 		return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
 	}
-	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
+	var responseData map[string]interface{}
+	if err := json.Unmarshal(respBody, &responseData); err != nil {
+		return nil, &Error{Err: err}
+	}
+	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody), RawResponse: responseData}, nil
 }

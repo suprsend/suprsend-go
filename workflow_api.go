@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -53,9 +54,35 @@ func (w *workflowsService) formatAPIResponse(httpRes *http.Response) (*Response,
 		return nil, &Error{Err: err}
 	}
 	if httpRes.StatusCode >= 400 {
+		var errorResponse map[string]interface{}
+		if jsonErr := json.Unmarshal(respBody, &errorResponse); jsonErr == nil {
+			if errorObj, exists := errorResponse["error"]; exists {
+				if errorMap, ok := errorObj.(map[string]interface{}); ok {
+					if errorMessage, exists := errorMap["message"]; exists {
+						if msg, ok := errorMessage.(string); ok {
+							return nil, &Error{Code: httpRes.StatusCode, Message: msg}
+						}
+					}
+				}
+			}
+			if errorMessage, exists := errorResponse["message"]; exists {
+				if msg, ok := errorMessage.(string); ok {
+					return nil, &Error{Code: httpRes.StatusCode, Message: msg}
+				}
+			}
+		}
 		return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
 	}
-	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
+	var responseData map[string]interface{}
+	var messageID string
+	if err := json.Unmarshal(respBody, &responseData); err != nil {
+		if msgID, exists := responseData["message_id"]; exists {
+			if msgIDtr, ok := msgID.(string); ok {
+				messageID = msgIDtr
+			}
+		}
+	}
+	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: messageID, RawResponse: responseData}, nil
 }
 
 func (w *workflowsService) BulkTriggerInstance() BulkWorkflowsTrigger {

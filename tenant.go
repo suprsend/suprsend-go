@@ -27,6 +27,8 @@ type TenantSocialLinks struct {
 	Discord   *string `json:"discord,omitempty"`
 	Telegram  *string `json:"telegram,omitempty"`
 	Youtube   *string `json:"youtube,omitempty"`
+	Tiktok    *string `json:"tiktok,omitempty"`
+	X         *string `json:"x,omitempty"`
 }
 
 type TenantList struct {

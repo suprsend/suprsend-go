@@ -572,6 +572,8 @@ func tenantExample() {
 		TertiaryColor:  nil,
 		SocialLinks: &suprsend.TenantSocialLinks{
 			Facebook: suprsend.String("https://facebook.com/tenant"),
+			X:        suprsend.String("https://x.com/tenant"),
+			Tiktok:   suprsend.String("https://tiktok.com/tenant"),
 		},
 		Properties: map[string]any{
 			"k1": "tenant settings 1",

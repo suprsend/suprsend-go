@@ -21,7 +21,7 @@ type TenantSocialLinks struct {
 	Website   *string `json:"website,omitempty"`
 	Facebook  *string `json:"facebook,omitempty"`
 	Linkedin  *string `json:"linkedin,omitempty"`
-	Twitter   *string `json:"twitter,omitempty"`
+	Twitter   *string `json:"twitter,omitempty"` // Deprecated: Use X field instead
 	Instagram *string `json:"instagram,omitempty"`
 	Medium    *string `json:"medium,omitempty"`
 	Discord   *string `json:"discord,omitempty"`

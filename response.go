@@ -1,11 +1,14 @@
 package suprsend
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Response struct {
-	Success    bool   `json:"success"`
-	StatusCode int    `json:"status_code"`
-	Message    string `json:"message"`
+	Success     bool           `json:"success"`
+	StatusCode  int            `json:"status_code"`
+	Message     string         `json:"message"`
+	RawResponse map[string]any `json:"raw_response"`
 }
 
 func (r *Response) String() string {
@@ -20,6 +23,7 @@ type BulkResponse struct {
 	Success       int
 	Failure       int
 	Warnings      []string
+	rawResponse   []map[string]any
 }
 
 func (b *BulkResponse) String() string {
@@ -49,6 +53,7 @@ func (b *BulkResponse) mergeChunkResponse(chResponse *chunkResponse) {
 	b.Success += chResponse.success
 	b.Failure += chResponse.failure
 	b.FailedRecords = append(b.FailedRecords, chResponse.failedRecords...)
+	b.rawResponse = append(b.rawResponse, chResponse.rawResponse)
 }
 
 type chunkResponse struct {
@@ -58,6 +63,7 @@ type chunkResponse struct {
 	success       int
 	failure       int
 	failedRecords []map[string]any
+	rawResponse   map[string]any
 }
 
 func emptyChunkSuccessResponse() *chunkResponse {

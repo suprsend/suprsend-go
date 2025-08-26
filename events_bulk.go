@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -133,7 +134,7 @@ func newBulkEventsChunk(client *Client) *bulkEventsChunk {
 		_max_records_in_chunk:         MAX_EVENTS_IN_BULK_API,
 		//
 		client: client,
-		_url:   fmt.Sprintf("%sevent/", client.baseUrl),
+		_url:   fmt.Sprintf("%sv2/bulk/event/", client.baseUrl),
 		_chunk: []map[string]any{},
 	}
 	return bec
@@ -193,7 +194,7 @@ func (b *bulkEventsChunk) trigger() {
 }
 
 func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
-	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
+	bulkRespFunc := func(statusCode int, errMsg string, rawResp map[string]any) *chunkResponse {
 		failedRecords := []map[string]any{}
 		if statusCode >= 400 {
 			for _, c := range b._chunk {
@@ -208,24 +209,72 @@ func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *
 				status: "fail", statusCode: statusCode,
 				total: len(b._chunk), success: 0, failure: len(b._chunk),
 				failedRecords: failedRecords,
+				rawResponse:   rawResp,
 			}
 		} else {
 			return &chunkResponse{
 				status: "success", statusCode: statusCode,
 				total: len(b._chunk), success: len(b._chunk), failure: 0,
 				failedRecords: failedRecords,
+				rawResponse:   rawResp,
 			}
 		}
 	}
 	if err != nil {
-		return bulkRespFunc(500, err.Error())
-
+		return bulkRespFunc(500, err.Error(), nil)
 	} else if httpRes != nil {
 		respBody, err := io.ReadAll(httpRes.Body)
 		if err != nil {
-			return bulkRespFunc(500, err.Error())
+			return bulkRespFunc(500, err.Error(), nil)
 		}
-		return bulkRespFunc(httpRes.StatusCode, string(respBody))
+		var rawResp map[string]any
+		if len(respBody) > 0 {
+			if err := json.Unmarshal(respBody, &rawResp); err != nil {
+				rawResp = map[string]any{"raw_body": string(respBody)}
+			}
+		}
+		if records, ok := rawResp["records"].([]any); ok && len(records) > 0 {
+			failedRecords := []map[string]any{}
+			successCount := 0
+			failureCount := 0
+			for i, record := range records {
+				if recordMap, ok := record.(map[string]any); ok {
+					if status, ok := recordMap["status"].(string); ok {
+						if status == "error" {
+							failureCount++
+							errorInfo := recordMap["error"]
+							statusCode := recordMap["status_code"]
+							failedRecords = append(failedRecords, map[string]any{
+								"record":      b._chunk[i],
+								"error":       errorInfo,
+								"code":        statusCode,
+								"recordIndex": i,
+							})
+						} else if status == "success" {
+							successCount++
+						}
+					}
+				}
+			}
+			var overallStatus string
+			if failureCount == 0 {
+				overallStatus = "success"
+			} else if successCount == 0 {
+				overallStatus = "fail"
+			} else {
+				overallStatus = "partial"
+			}
+			return &chunkResponse{
+				status:        overallStatus,
+				statusCode:    httpRes.StatusCode,
+				total:         len(b._chunk),
+				success:       successCount,
+				failure:       failureCount,
+				failedRecords: failedRecords,
+				rawResponse:   rawResp,
+			}
+		}
+		return bulkRespFunc(httpRes.StatusCode, string(respBody), rawResp)
 	}
 	return nil
 }

@@ -16,3 +16,4 @@
 tests/
 
 .idea/
+.vscode/*

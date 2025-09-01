@@ -4,6 +4,7 @@ go 1.23.0
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.8
+	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/google/uuid v1.6.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/xeipuuv/gojsonschema v1.2.0

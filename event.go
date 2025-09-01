@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
 )
@@ -166,7 +168,7 @@ func newEventCollectorInstance(client *Client) *eventsCollector {
 	ec := &eventsCollector{
 		client: client,
 		// events url
-		_url: fmt.Sprintf("%sevent/", client.baseUrl),
+		_url: fmt.Sprintf("%sv2/event/", client.baseUrl),
 	}
 	return ec
 }
@@ -195,20 +197,53 @@ func (e *eventsCollector) send(eventMap map[string]any) (*Response, error) {
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	suprResponse, err := e.formatAPIResponse(httpResponse)
+	//
+	suprResponse, err := parseV2EventResponse(httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return suprResponse, nil
 }
 
-func (e *eventsCollector) formatAPIResponse(httpRes *http.Response) (*Response, error) {
+// Used by /v2/event/ and /trigger/ endpoints
+func parseV2EventResponse(httpRes *http.Response) (*Response, error) {
+	/*
+		"string" // old response format
+		OR
+		{"status": "success", "message_id": "string"} // new response format // success
+		OR
+		{"status": "error", "error": {"message": "string", "type": "string"}} // error
+	*/
 	respBody, err := io.ReadAll(httpRes.Body)
 	if err != nil {
 		return nil, &Error{Err: err}
 	}
-	if httpRes.StatusCode >= 400 {
-		return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
+	// First try to unmarshal to map. If fails, response is likely "string"
+	var tempMap map[string]any
+	var respPtr *v2EventSingleResponse
+	var isOldResp bool
+	if err := json.Unmarshal(respBody, &tempMap); err != nil {
+		isOldResp = true
+	} else {
+		// If unmarshal to map succeeds, it's new response format
+		respPtr = &v2EventSingleResponse{}
+		if err := mapstructure.WeakDecode(tempMap, respPtr); err != nil || respPtr.Status == "" {
+			// this should never happen, but just in case
+			isOldResp = true
+		}
 	}
-	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
+	if isOldResp { // response is not json
+		if httpRes.StatusCode >= 400 {
+			return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
+		}
+		return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody), RawResponse: tempMap}, nil
+	} else {
+		if httpRes.StatusCode >= 400 {
+			if respPtr.Error != nil {
+				return nil, &Error{Code: httpRes.StatusCode, Message: respPtr.Error.Message}
+			}
+			return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
+		}
+		return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: respPtr.MessageId, RawResponse: tempMap}, nil
+	}
 }

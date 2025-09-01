@@ -2,8 +2,6 @@ package suprsend
 
 import (
 	"fmt"
-	"io"
-	"net/http"
 )
 
 type WorkflowsService interface {
@@ -40,22 +38,11 @@ func (w *workflowsService) Trigger(workflow *WorkflowTriggerRequest) (*Response,
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	suprResponse, err := w.formatAPIResponse(httpResponse)
+	suprResponse, err := parseV2EventResponse(httpResponse)
 	if err != nil {
 		return nil, err
 	}
 	return suprResponse, nil
-}
-
-func (w *workflowsService) formatAPIResponse(httpRes *http.Response) (*Response, error) {
-	respBody, err := io.ReadAll(httpRes.Body)
-	if err != nil {
-		return nil, &Error{Err: err}
-	}
-	if httpRes.StatusCode >= 400 {
-		return nil, &Error{Code: httpRes.StatusCode, Message: string(respBody)}
-	}
-	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }
 
 func (w *workflowsService) BulkTriggerInstance() BulkWorkflowsTrigger {

@@ -2,9 +2,7 @@ package suprsend
 
 import (
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 
 	"github.com/jinzhu/copier"
 )
@@ -167,55 +165,17 @@ func (b *bulkWorkflowsRequestChunk) trigger() {
 	// prepare http.Request object
 	request, err := b.client.prepareHttpRequest("POST", b._url, b._chunk)
 	if err != nil {
-		suprResponse := b.formatAPIResponse(nil, err)
+		suprResponse := parseV2BulkEventResponse(nil, err, b._chunk)
 		b.response = suprResponse
 	}
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
-		suprResponse := b.formatAPIResponse(nil, err)
+		suprResponse := parseV2BulkEventResponse(nil, err, b._chunk)
 		b.response = suprResponse
 
 	} else {
 		defer httpResponse.Body.Close()
-		suprResponse := b.formatAPIResponse(httpResponse, nil)
+		suprResponse := parseV2BulkEventResponse(httpResponse, nil, b._chunk)
 		b.response = suprResponse
 	}
-}
-
-func (b *bulkWorkflowsRequestChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
-	bulkRespFunc := func(statusCode int, errMsg string) *chunkResponse {
-		failedRecords := []map[string]any{}
-		if statusCode >= 400 {
-			for _, c := range b._chunk {
-				failedRecords = append(failedRecords,
-					map[string]any{
-						"record": c,
-						"error":  errMsg,
-						"code":   statusCode,
-					})
-			}
-			return &chunkResponse{
-				status: "fail", statusCode: statusCode,
-				total: len(b._chunk), success: 0, failure: len(b._chunk),
-				failedRecords: failedRecords,
-			}
-		} else {
-			return &chunkResponse{
-				status: "success", statusCode: statusCode,
-				total: len(b._chunk), success: len(b._chunk), failure: 0,
-				failedRecords: failedRecords,
-			}
-		}
-	}
-	if err != nil {
-		return bulkRespFunc(500, err.Error())
-
-	} else if httpRes != nil {
-		respBody, err := io.ReadAll(httpRes.Body)
-		if err != nil {
-			return bulkRespFunc(500, err.Error())
-		}
-		return bulkRespFunc(httpRes.StatusCode, string(respBody))
-	}
-	return nil
 }

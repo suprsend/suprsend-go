@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/jinzhu/copier"
 )
 
@@ -178,26 +179,40 @@ func (b *bulkEventsChunk) trigger() {
 	// prepare http.Request object
 	request, err := b.client.prepareHttpRequest("POST", b._url, b._chunk)
 	if err != nil {
-		suprResponse := b.formatAPIResponse(nil, err)
+		suprResponse := parseV2BulkEventResponse(nil, err, b._chunk)
 		b.response = suprResponse
 	}
 	httpResponse, err := b.client.httpClient.Do(request)
 	if err != nil {
-		suprResponse := b.formatAPIResponse(nil, err)
+		suprResponse := parseV2BulkEventResponse(nil, err, b._chunk)
 		b.response = suprResponse
 
 	} else {
 		defer httpResponse.Body.Close()
-		suprResponse := b.formatAPIResponse(httpResponse, nil)
+		suprResponse := parseV2BulkEventResponse(httpResponse, nil, b._chunk)
 		b.response = suprResponse
 	}
 }
 
-func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *chunkResponse {
-	bulkRespFunc := func(statusCode int, errMsg string, rawResp map[string]any) *chunkResponse {
+// Used by bulk apis: /v2/bulk/event/ and /trigger/ endpoints
+func parseV2BulkEventResponse(httpRes *http.Response, err error, _chunk []map[string]any) *chunkResponse {
+	/*
+		"string"
+		OR
+		{"status": "error", "error": {"message": "string", "type": "string"}}
+		{"status": "success", records: [
+			{"status": "success", "message_id": "string", "status_code": "string"},
+			{"status": "error", "error": {"message": "string", "type": "string"}, "status_code": "string"}
+		]}
+	*/
+	bulkRespFunc := func(statusCode int, errMsg string, respPtr *v2EventBulkResponse) *chunkResponse {
 		failedRecords := []map[string]any{}
 		if statusCode >= 400 {
-			for _, c := range b._chunk {
+			// pick error message from response pointer if present
+			if respPtr != nil && respPtr.Error != nil {
+				errMsg = respPtr.Error.Message
+			}
+			for _, c := range _chunk {
 				failedRecords = append(failedRecords,
 					map[string]any{
 						"record": c,
@@ -207,74 +222,62 @@ func (b *bulkEventsChunk) formatAPIResponse(httpRes *http.Response, err error) *
 			}
 			return &chunkResponse{
 				status: "fail", statusCode: statusCode,
-				total: len(b._chunk), success: 0, failure: len(b._chunk),
+				total: len(_chunk), success: 0, failure: len(_chunk),
 				failedRecords: failedRecords,
-				rawResponse:   rawResp,
 			}
 		} else {
-			return &chunkResponse{
-				status: "success", statusCode: statusCode,
-				total: len(b._chunk), success: len(b._chunk), failure: 0,
-				failedRecords: failedRecords,
-				rawResponse:   rawResp,
-			}
-		}
-	}
-	if err != nil {
-		return bulkRespFunc(500, err.Error(), nil)
-	} else if httpRes != nil {
-		respBody, err := io.ReadAll(httpRes.Body)
-		if err != nil {
-			return bulkRespFunc(500, err.Error(), nil)
-		}
-		var rawResp map[string]any
-		if len(respBody) > 0 {
-			if err := json.Unmarshal(respBody, &rawResp); err != nil {
-				rawResp = map[string]any{"raw_body": string(respBody)}
-			}
-		}
-		if records, ok := rawResp["records"].([]any); ok && len(records) > 0 {
-			failedRecords := []map[string]any{}
-			successCount := 0
-			failureCount := 0
-			for i, record := range records {
-				if recordMap, ok := record.(map[string]any); ok {
-					if status, ok := recordMap["status"].(string); ok {
-						if status == "error" {
-							failureCount++
-							errorInfo := recordMap["error"]
-							statusCode := recordMap["status_code"]
-							failedRecords = append(failedRecords, map[string]any{
-								"record":      b._chunk[i],
-								"error":       errorInfo,
-								"code":        statusCode,
-								"recordIndex": i,
-							})
-						} else if status == "success" {
-							successCount++
-						}
+			// multi-status 207 response. Filter failed records
+			for ri, r := range respPtr.Records {
+				if r.Status == "error" {
+					failedR := map[string]any{
+						"record": nil,
+						"error":  r.Error.Message,
+						"code":   r.StatusCode,
 					}
+					if ri < len(_chunk) {
+						failedR["record"] = _chunk[ri]
+					}
+					failedRecords = append(failedRecords, failedR)
 				}
 			}
-			var overallStatus string
-			if failureCount == 0 {
-				overallStatus = "success"
-			} else if successCount == 0 {
-				overallStatus = "fail"
-			} else {
-				overallStatus = "partial"
-			}
+			// set derived fields
+			respPtr.setDerivedFields()
 			return &chunkResponse{
-				status:        overallStatus,
-				statusCode:    httpRes.StatusCode,
-				total:         len(b._chunk),
-				success:       successCount,
-				failure:       failureCount,
+				status:     respPtr.dStatus,
+				statusCode: statusCode,
+				total:      respPtr.dTotal, success: respPtr.dSuccess, failure: respPtr.dFailure,
 				failedRecords: failedRecords,
-				rawResponse:   rawResp,
 			}
 		}
-		return bulkRespFunc(httpRes.StatusCode, string(respBody), rawResp)
 	}
-	return nil
+	// error during http request
+	if err != nil { //
+		return bulkRespFunc(500, err.Error(), nil)
+	}
+	// try to parse
+	respBody, err := io.ReadAll(httpRes.Body)
+	if err != nil {
+		return bulkRespFunc(500, err.Error(), nil)
+	}
+	// First try to unmarshal to map. If fails, response is likely "string"
+	var tempMap map[string]any
+	var respPtr *v2EventBulkResponse
+	var isOldResp bool
+	if err := json.Unmarshal(respBody, &tempMap); err != nil {
+		isOldResp = true
+	} else {
+		// If unmarshal to map succeeds, it's new response format
+		respPtr = &v2EventBulkResponse{}
+		if err := mapstructure.WeakDecode(tempMap, respPtr); err != nil || respPtr.Status == "" {
+			// this should never happen, but just in case
+			isOldResp = true
+		}
+	}
+	if isOldResp {
+		return bulkRespFunc(httpRes.StatusCode, string(respBody), nil)
+	} else {
+		res := bulkRespFunc(httpRes.StatusCode, "", respPtr)
+		res.rawResponse = tempMap
+		return res
+	}
 }

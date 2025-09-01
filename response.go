@@ -23,7 +23,6 @@ type BulkResponse struct {
 	Success       int
 	Failure       int
 	Warnings      []string
-	rawResponse   []map[string]any
 }
 
 func (b *BulkResponse) String() string {
@@ -39,7 +38,9 @@ func (b *BulkResponse) mergeChunkResponse(chResponse *chunkResponse) {
 	if b.Status == "" {
 		b.Status = chResponse.status
 	} else {
-		if b.Status == "success" {
+		if chResponse.status == "partial" {
+			b.Status = "partial"
+		} else if b.Status == "success" {
 			if chResponse.status == "fail" {
 				b.Status = "partial"
 			}
@@ -53,7 +54,6 @@ func (b *BulkResponse) mergeChunkResponse(chResponse *chunkResponse) {
 	b.Success += chResponse.success
 	b.Failure += chResponse.failure
 	b.FailedRecords = append(b.FailedRecords, chResponse.failedRecords...)
-	b.rawResponse = append(b.rawResponse, chResponse.rawResponse)
 }
 
 type chunkResponse struct {
@@ -74,6 +74,7 @@ func emptyChunkSuccessResponse() *chunkResponse {
 		success:       0,
 		failure:       0,
 		failedRecords: []map[string]any{},
+		rawResponse:   nil,
 	}
 }
 
@@ -85,5 +86,50 @@ func invalidRecordsChunkResponse(invalidRecords []map[string]any) *chunkResponse
 		success:       0,
 		failure:       len(invalidRecords),
 		failedRecords: invalidRecords,
+		rawResponse:   nil,
+	}
+}
+
+type v2EventSingleResponse struct {
+	Status    string `json:"status" mapstructure:"status"`
+	MessageId string `json:"message_id" mapstructure:"message_id"`
+	Error     *struct {
+		Message string `json:"message" mapstructure:"message"`
+		Type    string `json:"type" mapstructure:"type"`
+	} `json:"error" mapstructure:"error"`
+	// in case of bulk, each record has its own status-code
+	StatusCode int `json:"status_code" mapstructure:"status_code"`
+}
+
+type v2EventBulkResponse struct {
+	Status  string                  `json:"status" mapstructure:"status"`
+	Records []v2EventSingleResponse `json:"records" mapstructure:"records"`
+	Error   *struct {
+		Message string `json:"message" mapstructure:"message"`
+		Type    string `json:"type" mapstructure:"type"`
+	} `json:"error" mapstructure:"error"`
+	// derived fields
+	dStatus  string `json:"-"`
+	dTotal   int    `json:"-"`
+	dSuccess int    `json:"-"`
+	dFailure int    `json:"-"`
+}
+
+func (b *v2EventBulkResponse) setDerivedFields() {
+	b.dTotal = len(b.Records)
+	for _, r := range b.Records {
+		if r.Status == "success" {
+			b.dSuccess++
+		}
+	}
+	b.dFailure = b.dTotal - b.dSuccess
+	if b.dFailure > 0 {
+		if b.dSuccess > 0 {
+			b.dStatus = "partial"
+		} else {
+			b.dStatus = "fail"
+		}
+	} else {
+		b.dStatus = "success"
 	}
 }

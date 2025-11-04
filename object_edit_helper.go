@@ -163,6 +163,10 @@ func (o *objectEditHelper) setPreferredLanguage(langCode string, caller string) 
 	o.setDict[KEY_PREFERRED_LANGUAGE] = langCode
 }
 
+func (o *objectEditHelper) setLocale(locale string, caller string) {
+	o.setDict[KEY_LOCALE] = locale
+}
+
 func (o *objectEditHelper) setTimezone(timezone string, caller string) {
 	o.setDict[KEY_TIMEZONE] = timezone
 }

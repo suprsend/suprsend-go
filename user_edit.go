@@ -23,6 +23,7 @@ type UserEdit interface {
 	Unset([]string)
 	//
 	SetPreferredLanguage(string)
+	SetLocale(string)
 	SetTimezone(string)
 	//
 	AddEmail(value string)
@@ -254,6 +255,13 @@ func (u *userEdit) Unset(keys []string) {
 func (u *userEdit) SetPreferredLanguage(langCode string) {
 	caller := "set_preferred_language"
 	u._helper.setPreferredLanguage(langCode, caller)
+	u._collectOperation()
+}
+
+// ----------------------- Locale
+func (u *userEdit) SetLocale(locale string) {
+	caller := "set_locale"
+	u._helper.setLocale(locale, caller)
 	u._collectOperation()
 }
 

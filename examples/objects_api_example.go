@@ -224,7 +224,9 @@ func objectEditApiExample() {
 		"incoming_webhook": map[string]any{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
 	})
 
-	// Set user preferred language. languageCode must be in [ISO 639-1 2-letter] format
+	// Set user locale. languageCode must be in [ISO 639-1 2-letter] format
+	o.SetLocale("es")
+	// deprecated: use setLocale instead
 	o.SetPreferredLanguage("en")
 	// set timezone property at subscriber level based on IANA timezone info
 	o.SetTimezone("America/Los_Angeles")

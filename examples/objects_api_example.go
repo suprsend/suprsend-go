@@ -224,8 +224,9 @@ func objectEditApiExample() {
 		"incoming_webhook": map[string]any{"url": "https://XXXXX.webhook.office.com/webhookb2/XXXXXXXXXX@XXXXXXXXXX/IncomingWebhook/XXXXXXXXXX/XXXXXXXXXX"},
 	})
 
-	// Set user preferred language. languageCode must be in [ISO 639-1 2-letter] format
-	o.SetPreferredLanguage("en")
+	// Set object locale. localeCode must be either in [ISO 639-1 2-letter] format OR lang-region format (e.g. en-US, fr-FR, etc.)
+	// Locale ISO codes combine a language code (ISO 639-1 2-letter) and a country code (ISO 3166-1 alpha-2), separated by a hyphen
+	o.SetLocale("en-US")
 	// set timezone property at subscriber level based on IANA timezone info
 	o.SetTimezone("America/Los_Angeles")
 	// If you need to remove all emails for this user, call user.Unset(["$email"])

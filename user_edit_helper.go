@@ -24,6 +24,7 @@ var IDENT_KEYS_ALL = []string{IDENT_KEY_EMAIL, IDENT_KEY_SMS, IDENT_KEY_ANDROIDP
 const (
 	KEY_ID_PROVIDER        = "$id_provider"
 	KEY_PREFERRED_LANGUAGE = "$preferred_language"
+	KEY_LOCALE             = "$locale"
 	KEY_TIMEZONE           = "$timezone"
 )
 
@@ -182,6 +183,10 @@ func (u *userEditHelper) unsetKey(key string, caller string) {
 
 func (u *userEditHelper) setPreferredLanguage(langCode string, caller string) {
 	u.setDict[KEY_PREFERRED_LANGUAGE] = langCode
+}
+
+func (u *userEditHelper) setLocale(localeCode string, caller string) {
+	u.setDict[KEY_LOCALE] = localeCode
 }
 
 func (u *userEditHelper) setTimezone(timezone string, caller string) {

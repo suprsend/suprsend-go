@@ -20,6 +20,7 @@ type ObjectEdit interface {
 	Unset([]string)
 	//
 	SetPreferredLanguage(string)
+	SetLocale(string)
 	SetTimezone(string)
 	//
 	AddEmail(value string)
@@ -213,6 +214,12 @@ func (o *objectEdit) Unset(keys []string) {
 func (o *objectEdit) SetPreferredLanguage(langCode string) {
 	caller := "set_preferred_language"
 	o._helper.setPreferredLanguage(langCode, caller)
+	o._collectOperation()
+}
+
+func (o *objectEdit) SetLocale(localeCode string) {
+	caller := "set_locale"
+	o._helper.setLocale(localeCode, caller)
 	o._collectOperation()
 }
 

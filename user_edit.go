@@ -259,9 +259,9 @@ func (u *userEdit) SetPreferredLanguage(langCode string) {
 }
 
 // ----------------------- Locale
-func (u *userEdit) SetLocale(locale string) {
+func (u *userEdit) SetLocale(localeCode string) {
 	caller := "set_locale"
-	u._helper.setLocale(locale, caller)
+	u._helper.setLocale(localeCode, caller)
 	u._collectOperation()
 }
 

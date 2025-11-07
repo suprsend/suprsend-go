@@ -27,6 +27,7 @@ type Subscriber interface {
 	Unset([]string)
 	//
 	SetPreferredLanguage(string)
+	SetLocale(string)
 	SetTimezone(string)
 	//
 	AddEmail(value string)
@@ -303,6 +304,12 @@ func (s *subscriber) Unset(keys []string) {
 func (s *subscriber) SetPreferredLanguage(langCode string) {
 	caller := "set_preferred_language"
 	s._helper.setPreferredLanguage(langCode, caller)
+	s._collectEvent()
+}
+
+func (s *subscriber) SetLocale(localeCode string) {
+	caller := "set_locale"
+	s._helper.setLocale(localeCode, caller)
 	s._collectEvent()
 }
 

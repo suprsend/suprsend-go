@@ -185,9 +185,10 @@ func (u *userEditHelper) setPreferredLanguage(langCode string, caller string) {
 	u.setDict[KEY_PREFERRED_LANGUAGE] = langCode
 }
 
-func (u *userEditHelper) setLocale(locale string, caller string) {
-	u.setDict[KEY_LOCALE] = locale
+func (u *userEditHelper) setLocale(localeCode string, caller string) {
+	u.setDict[KEY_LOCALE] = localeCode
 }
+
 func (u *userEditHelper) setTimezone(timezone string, caller string) {
 	u.setDict[KEY_TIMEZONE] = timezone
 }

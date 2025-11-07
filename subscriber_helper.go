@@ -161,6 +161,10 @@ func (s *subscriberHelper) setPreferredLanguage(langCode string, caller string) 
 	s.setDict[KEY_PREFERRED_LANGUAGE] = langCode
 }
 
+func (s *subscriberHelper) setLocale(localeCode string, caller string) {
+	s.setDict[KEY_LOCALE] = localeCode
+}
+
 func (s *subscriberHelper) setTimezone(timezone string, caller string) {
 	s.setDict[KEY_TIMEZONE] = timezone
 }

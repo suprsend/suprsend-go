@@ -217,9 +217,9 @@ func (o *objectEdit) SetPreferredLanguage(langCode string) {
 	o._collectOperation()
 }
 
-func (o *objectEdit) SetLocale(locale string) {
+func (o *objectEdit) SetLocale(localeCode string) {
 	caller := "set_locale"
-	o._helper.setLocale(locale, caller)
+	o._helper.setLocale(localeCode, caller)
 	o._collectOperation()
 }
 

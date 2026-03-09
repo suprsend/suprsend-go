@@ -20,6 +20,9 @@ type UsersService interface {
 	BulkDelete(context.Context, UserBulkDeletePayload) error
 	GetObjectsSubscribedTo(context.Context, string, *CursorListApiOptions) (*CursorListApiResponse, error)
 	GetListsSubscribedTo(context.Context, string, *CursorListApiOptions) (*CursorListApiResponse, error)
+	GetTenants(context.Context, string) (*UserTenantsListResponse, error)
+	UpsertTenant(context.Context, string, string, UserTenantUpsertBody) (*UserTenantDetailResponse, error)
+	DeleteTenant(context.Context, string, string) error
 	//
 	GetEditInstance(string) UserEdit
 	GetBulkEditInstance() BulkUsersEdit
@@ -80,6 +83,14 @@ func (u *usersService) userDetailAPIUrl(distinctId string) string {
 		u._url,
 		url.PathEscape(strings.TrimSpace(distinctId)),
 	)
+}
+
+func (u *usersService) userTenantBaseUrl(distinctId string) string {
+	return fmt.Sprintf("%stenant/", u.userDetailAPIUrl(distinctId))
+}
+
+func (u *usersService) userTenantDetailUrl(distinctId, tenantId string) string {
+	return fmt.Sprintf("%s%s/", u.userTenantBaseUrl(distinctId), url.PathEscape(strings.TrimSpace(tenantId)))
 }
 
 func (u *usersService) Get(ctx context.Context, distinctId string) (map[string]any, error) {
@@ -317,6 +328,58 @@ func (u *usersService) GetListsSubscribedTo(ctx context.Context, distinctId stri
 		return nil, err
 	}
 	return resp, nil
+}
+
+func (u *usersService) GetTenants(ctx context.Context, distinctId string) (*UserTenantsListResponse, error) {
+	urlStr := u.userTenantBaseUrl(distinctId)
+	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserTenantsListResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (u *usersService) UpsertTenant(ctx context.Context, distinctId string, tenantId string, body UserTenantUpsertBody) (*UserTenantDetailResponse, error) {
+	urlStr := u.userTenantDetailUrl(distinctId, tenantId)
+	request, err := u.client.prepareHttpRequest("POST", urlStr, body)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserTenantDetailResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (u *usersService) DeleteTenant(ctx context.Context, distinctId string, tenantId string) error {
+	urlStr := u.userTenantDetailUrl(distinctId, tenantId)
+	request, err := u.client.prepareHttpRequest("DELETE", urlStr, nil)
+	if err != nil {
+		return err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return err
+	}
+	defer httpResponse.Body.Close()
+	return u.client.parseApiResponse(httpResponse, nil)
 }
 
 func (u *usersService) GetEditInstance(distinctId string) UserEdit {

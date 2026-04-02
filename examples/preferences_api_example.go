@@ -238,6 +238,8 @@ func tenantPreferencesApiExample() {
 			Limit:  10,
 			Offset: 0,
 			// Tags:   "tag1",
+			// IncludeDisabled: true,
+			// Locale:          "es",
 		})
 	if err != nil {
 		log.Fatalln(err)
@@ -245,20 +247,22 @@ func tenantPreferencesApiExample() {
 	log.Println(preferences_gt)
 
 	// Get a single preference category for a tenant
-	preferences_single, err := suprClient.Tenants.GetPreferenceCategory(ctx, "__tenant_id__", "__category_slug__")
+	var opts *suprsend.TenantPreferenceCategoryOptions
+	// opts = &suprsend.TenantPreferenceCategoryOptions{Locale: "es"}
+	preferences_single, err := suprClient.Tenants.GetPreferenceCategory(ctx, "__tenant_id__", "__category_slug__", opts)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println(preferences_single)
 
 	// Update preference category for a tenant
-	body_c_t := suprsend.TenantCategoryPreferenceUpdateBody{
-		Preference:          "opt_in",
+	body_c_t := suprsend.TenantPreferenceCategoryUpdateBody{
+		Preference:          suprsend.String("opt_in"),
 		VisibleToSubscriber: suprsend.Bool(true),
 		MandatoryChannels:   []string{"email", "sms", "inbox"},
 		BlockedChannels:     []string{"slack"},
 	}
-	preferences_c_t, err := suprClient.Tenants.UpdatePreferenceCategory(ctx, "__tenant_id__", "__category_slug__", body_c_t)
+	preferences_c_t, err := suprClient.Tenants.UpdatePreferenceCategory(ctx, "__tenant_id__", "__category_slug__", body_c_t, opts)
 	if err != nil {
 		log.Fatalln(err)
 	}

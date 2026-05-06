@@ -21,6 +21,7 @@ type UsersService interface {
 	GetObjectsSubscribedTo(context.Context, string, *CursorListApiOptions) (*CursorListApiResponse, error)
 	GetListsSubscribedTo(context.Context, string, *CursorListApiOptions) (*CursorListApiResponse, error)
 	GetTenants(context.Context, string) (*UserTenantsListResponse, error)
+	GetTenantDetail(context.Context, string, string) (*UserTenantDetailResponse, error)
 	UpsertTenant(context.Context, string, string, UserTenantUpsertBody) (*UserTenantDetailResponse, error)
 	DeleteTenant(context.Context, string, string) error
 	//
@@ -342,6 +343,25 @@ func (u *usersService) GetTenants(ctx context.Context, distinctId string) (*User
 	}
 	defer httpResponse.Body.Close()
 	resp := &UserTenantsListResponse{}
+	err = u.client.parseApiResponse(httpResponse, resp)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (u *usersService) GetTenantDetail(ctx context.Context, distinctId string, tenantId string) (*UserTenantDetailResponse, error) {
+	urlStr := u.userTenantDetailUrl(distinctId, tenantId)
+	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	if err != nil {
+		return nil, err
+	}
+	httpResponse, err := u.client.httpClient.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResponse.Body.Close()
+	resp := &UserTenantDetailResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err

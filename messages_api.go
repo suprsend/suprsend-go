@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-	"strings"
-	"time"
 )
 
 type messagesService struct {
@@ -166,43 +164,43 @@ func (m *messagesService) BulkPatch(ctx context.Context, messages []MessagePatch
 	return resp, nil
 }
 
-// MessageContent holds the rendered content fields for a message.
-// Which fields are populated depends on the channel.
-type MessageContent struct {
-	Subject  string `json:"subject"`
-	Body     string `json:"body"`
-	Title    string `json:"title"`    // push channels
-	Subtitle string `json:"subtitle"` // push channels
-	Data     string `json:"data"`     // push channels, custom JSON string
-}
+// // MessageContent holds the rendered content fields for a message.
+// // Which fields are populated depends on the channel.
+// type MessageContent struct {
+// 	Subject  string `json:"subject"`
+// 	Body     string `json:"body"`
+// 	Title    string `json:"title"`    // push channels
+// 	Subtitle string `json:"subtitle"` // push channels
+// 	Data     string `json:"data"`     // push channels, custom JSON string
+// }
 
-// MessageContentResponse is the response from the message content API.
-type MessageContentResponse struct {
-	NotificationID string          `json:"notification_id"`
-	Channel        string          `json:"channel"`
-	RenderedAt     *time.Time      `json:"rendered_at"`
-	Content        *MessageContent `json:"content"`
-}
+// // MessageContentResponse is the response from the message content API.
+// type MessageContentResponse struct {
+// 	NotificationID string          `json:"notification_id"`
+// 	Channel        string          `json:"channel"`
+// 	RenderedAt     *time.Time      `json:"rendered_at"`
+// 	Content        *MessageContent `json:"content"`
+// }
 
-func (m *messagesService) messageContentURL(messageID string) string {
-	return fmt.Sprintf("%s/%s/content", m._url, url.PathEscape(strings.TrimSpace(messageID)))
-}
+// func (m *messagesService) messageContentURL(messageID string) string {
+// 	return fmt.Sprintf("%s/%s/content", m._url, url.PathEscape(strings.TrimSpace(messageID)))
+// }
 
-func (m *messagesService) GetContent(ctx context.Context, messageID string) (*MessageContentResponse, error) {
-	urlStr := m.messageContentURL(messageID)
-	request, err := m.client.prepareHttpRequest("GET", urlStr, nil)
-	if err != nil {
-		return nil, err
-	}
-	httpResponse, err := m.client.httpClient.Do(request)
-	if err != nil {
-		return nil, err
-	}
-	defer httpResponse.Body.Close()
-	resp := &MessageContentResponse{}
-	err = m.client.parseApiResponse(httpResponse, resp)
-	if err != nil {
-		return nil, err
-	}
-	return resp, nil
-}
+// func (m *messagesService) GetContent(ctx context.Context, messageID string) (*MessageContentResponse, error) {
+// 	urlStr := m.messageContentURL(messageID)
+// 	request, err := m.client.prepareHttpRequest("GET", urlStr, nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	httpResponse, err := m.client.httpClient.Do(request)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer httpResponse.Body.Close()
+// 	resp := &MessageContentResponse{}
+// 	err = m.client.parseApiResponse(httpResponse, resp)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return resp, nil
+// }

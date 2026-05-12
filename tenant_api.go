@@ -245,11 +245,12 @@ type TenantPreferenceCategoryUpdateBody struct {
 	EnabledForTenant *bool    `json:"enabled_for_tenant,omitempty"`
 	BlockedChannels  []string `json:"blocked_channels"`
 	//
-	VisibleToSubscriber *bool       `json:"visible_to_subscriber,omitempty"`
-	Preference          *string     `json:"preference,omitempty"`
-	MandatoryChannels   []string    `json:"mandatory_channels"`
-	OptInChannels       []string    `json:"opt_in_channels"`
-	DigestSchedule      interface{} `json:"digest_schedule,omitempty"`
+	VisibleToSubscriber  *bool            `json:"visible_to_subscriber,omitempty"`
+	Preference           *string          `json:"preference,omitempty"`
+	MandatoryChannels    []string         `json:"mandatory_channels"`
+	OptInChannels        []string         `json:"opt_in_channels"`
+	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
+	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
 }
 
 func (t *tenantsService) UpdatePreferenceCategory(ctx context.Context, tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategoryPreference, error) {

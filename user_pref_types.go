@@ -115,8 +115,9 @@ type UserCategoryPreference struct {
 		Preference string `json:"preference"`
 		IsEditable bool   `json:"is_editable"`
 	} `json:"channels"`
-	Tags          []string `json:"tags"`
-	EffectiveTags []string `json:"effective_tags"`
+	Tags                 []string         `json:"tags"`
+	EffectiveTags        []string         `json:"effective_tags"`
+	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
 }
 
 // ------------------------------------------------------------
@@ -140,8 +141,10 @@ func (opts *UserCategoryPreferenceOptions) BuildQuery() string {
 }
 
 type UserUpdateCategoryPreferenceBody struct {
-	Preference     string   `json:"preference"`
-	OptOutChannels []string `json:"opt_out_channels"`
+	Preference           string           `json:"preference"`
+	OptOutChannels       []string         `json:"opt_out_channels"`
+	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
+	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
 }
 
 // ------------------------------------------------------------

@@ -141,21 +141,22 @@ type TenantCategoriesPreferenceResponse struct {
 }
 
 type TenantCategoryPreference struct {
-	Name                     string   `json:"name"`
-	Category                 string   `json:"category"`
-	Description              string   `json:"description"`
-	RootCategory             string   `json:"root_category"`
-	DefaultPreference        string   `json:"default_preference"`
-	DefaultMandatoryChannels []string `json:"default_mandatory_channels"`
-	DefaultOptInChannels     []string `json:"default_opt_in_channels"`
-	EnabledForTenant         bool     `json:"enabled_for_tenant"`
-	VisibleToSubscriber      bool     `json:"visible_to_subscriber"`
-	Preference               *string  `json:"preference"`
-	MandatoryChannels        []string `json:"mandatory_channels"`
-	OptInChannels            []string `json:"opt_in_channels"`
-	BlockedChannels          []string `json:"blocked_channels"`
-	Tags                     []string `json:"tags"`
-	EffectiveTags            []string `json:"effective_tags"`
+	Name                     string           `json:"name"`
+	Category                 string           `json:"category"`
+	Description              string           `json:"description"`
+	RootCategory             string           `json:"root_category"`
+	DefaultPreference        string           `json:"default_preference"`
+	DefaultMandatoryChannels []string         `json:"default_mandatory_channels"`
+	DefaultOptInChannels     []string         `json:"default_opt_in_channels"`
+	EnabledForTenant         bool             `json:"enabled_for_tenant"`
+	VisibleToSubscriber      bool             `json:"visible_to_subscriber"`
+	Preference               *string          `json:"preference"`
+	MandatoryChannels        []string         `json:"mandatory_channels"`
+	OptInChannels            []string         `json:"opt_in_channels"`
+	BlockedChannels          []string         `json:"blocked_channels"`
+	Tags                     []string         `json:"tags"`
+	EffectiveTags            []string         `json:"effective_tags"`
+	PreferenceConditions     []map[string]any `json:"preference_conditions,omitempty"`
 }
 
 type TenantCategoriesPreferenceOptions struct {

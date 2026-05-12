@@ -167,9 +167,10 @@ type UserBulkPreferenceUpdateBody struct {
 }
 
 type UserCategoryPreferenceIn struct {
-	Category       string   `json:"category"`
-	Preference     string   `json:"preference"`
-	OptOutChannels []string `json:"opt_out_channels"`
+	Category       string      `json:"category"`
+	Preference     string      `json:"preference"`
+	OptOutChannels []string    `json:"opt_out_channels"`
+	DigestSchedule interface{} `json:"digest_schedule,omitempty"`
 }
 
 type UserBulkPreferenceUpdateResponse struct {

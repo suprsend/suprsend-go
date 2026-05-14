@@ -121,31 +121,31 @@ func (m *messagesService) List(ctx context.Context, opts *MessageListOptions) (*
 	return resp, nil
 }
 
-// MessagePatchItem is a single message status update in a bulk patch request.
-type MessagePatchItem struct {
+// MessageUpdateItem is a single message status update in a bulk update request.
+type MessageUpdateItem struct {
 	MessageID string `json:"message_id"`
 	Action    string `json:"action"`
 }
 
-// MessagePatchError describes the failure reason for one item in a bulk patch response.
-type MessagePatchError struct {
+// MessageUpdateError describes the failure reason for one item in a bulk update response.
+type MessageUpdateError struct {
 	Type    string `json:"type"`
 	Message string `json:"message"`
 }
 
-// MessagePatchRecord is the per-item result from a bulk patch.
-type MessagePatchRecord struct {
-	MessageID  string             `json:"message_id"`
-	StatusCode int                `json:"status_code"`
-	Error      *MessagePatchError `json:"error"`
+// MessageUpdateRecord is the per-item result from a bulk update.
+type MessageUpdateRecord struct {
+	MessageID  string              `json:"message_id"`
+	StatusCode int                 `json:"status_code"`
+	Error      *MessageUpdateError `json:"error"`
 }
 
-// MessageBulkPatchResponse is the response from the bulk patch API.
-type MessageBulkPatchResponse struct {
-	Records []MessagePatchRecord `json:"records"`
+// MessageBulkUpdateResponse is the response from the bulk update API.
+type MessageBulkUpdateResponse struct {
+	Records []MessageUpdateRecord `json:"records"`
 }
 
-func (m *messagesService) BulkPatch(ctx context.Context, messages []MessagePatchItem) (*MessageBulkPatchResponse, error) {
+func (m *messagesService) BulkUpdate(ctx context.Context, messages []MessageUpdateItem) (*MessageBulkUpdateResponse, error) {
 	payload := map[string]any{"messages": messages}
 	request, err := m.client.prepareHttpRequest("PATCH", m._bulkUrl, payload)
 	if err != nil {
@@ -156,7 +156,7 @@ func (m *messagesService) BulkPatch(ctx context.Context, messages []MessagePatch
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &MessageBulkPatchResponse{}
+	resp := &MessageBulkUpdateResponse{}
 	err = m.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err

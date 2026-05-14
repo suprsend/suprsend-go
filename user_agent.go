@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"runtime"
+	"strings"
 )
 
 // AppInfo describes the user's application integrating the SDK.
@@ -36,12 +37,12 @@ type userAgentInfo struct {
 }
 
 func formatAppInfo(info *AppInfo) string {
-	if info == nil || info.Name == "" {
+	if info == nil || strings.TrimSpace(info.Name) == "" {
 		return ""
 	}
-	s := info.Name
-	if info.Version != "" {
-		s += "/" + info.Version
+	s := strings.TrimSpace(info.Name)
+	if strings.TrimSpace(info.Version) != "" {
+		s += "/" + strings.TrimSpace(info.Version)
 	}
 	return s
 }

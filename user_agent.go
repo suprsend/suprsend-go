@@ -56,7 +56,7 @@ func buildUserAgent(appInfo *AppInfo) (userAgent string, clientUserAgent string)
 		Lang:        "go",
 		LangVersion: runtime.Version(),
 		Platform:    "server",
-		OS:          String(runtime.GOOS),
+		OS:          String(strings.ToLower(runtime.GOOS)),
 		OSVersion:   String(""),
 		AppInfo:     appInfo,
 	}

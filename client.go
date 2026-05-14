@@ -32,6 +32,7 @@ type Client struct {
 	Objects         *objectsService
 	SubscriberLists *subscriberListsService
 	Workflows       *workflowsService
+	Messages        *messagesService
 	// todo: Deprecated: this
 	BulkWorkflows *bulkWorkflowsService
 	//
@@ -98,6 +99,7 @@ func (c *Client) init(opts ...ClientOption) error {
 	c.Tenants = newTenantsService(c)
 	c.Brands = newBrandService(c)
 	c.Objects = newObjectsService(c)
+	c.Messages = newMessagesService(c)
 	//
 	c.Workflows = newWorkflowService(c)
 	//

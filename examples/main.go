@@ -38,6 +38,7 @@ func main() {
 func getSuprsendClient() (*suprsend.Client, error) {
 	opts := []suprsend.ClientOption{
 		suprsend.WithDebug(true),
+		suprsend.WithAppInfo(&suprsend.AppInfo{Name: "MyApp", Version: "0.1.0"}),
 	}
 	suprClient, err := suprsend.NewClient("__api_key__", "__api_secret__", opts...)
 	if err != nil {

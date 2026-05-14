@@ -46,3 +46,10 @@ func WithTimeout(timeoutInSeconds int) ClientOption {
 		return nil
 	}
 }
+
+func WithAppInfo(appInfo *AppInfo) ClientOption {
+	return func(c *Client) error {
+		c.appInfo = appInfo
+		return nil
+	}
+}

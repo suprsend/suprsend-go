@@ -42,8 +42,8 @@ type Subscriber interface {
 	AddAndroidpush(value, provider string)
 	RemoveAndroidpush(value, provider string)
 	//
-	AddIospush(value, provider string)
-	RemoveIospush(value, provider string)
+	AddIospush(value, provider string, bundleId ...string)
+	RemoveIospush(value, provider string, bundleId ...string)
 	//
 	AddWebpush(value map[string]any, provider string)
 	RemoveWebpush(value map[string]any, provider string)
@@ -375,15 +375,23 @@ func (s *subscriber) RemoveAndroidpush(value, provider string) {
 
 // ------------------------ Iospush [providers: apns]
 
-func (s *subscriber) AddIospush(value, provider string) {
+func (s *subscriber) AddIospush(value, provider string, bundleId ...string) {
 	caller := "add_iospush"
-	s._helper.addIospush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	s._helper.addIospush(value, provider, bid, caller)
 	s._collectEvent()
 }
 
-func (s *subscriber) RemoveIospush(value, provider string) {
+func (s *subscriber) RemoveIospush(value, provider string, bundleId ...string) {
 	caller := "remove_iospush"
-	s._helper.removeIospush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	s._helper.removeIospush(value, provider, bid, caller)
 	s._collectEvent()
 }
 

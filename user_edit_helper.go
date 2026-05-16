@@ -23,6 +23,7 @@ var IDENT_KEYS_ALL = []string{IDENT_KEY_EMAIL, IDENT_KEY_SMS, IDENT_KEY_ANDROIDP
 
 const (
 	KEY_ID_PROVIDER        = "$id_provider"
+	KEY_BUNDLE_ID          = "$bundle_id"
 	KEY_PREFERRED_LANGUAGE = "$preferred_language"
 	KEY_LOCALE             = "$locale"
 	KEY_TIMEZONE           = "$timezone"
@@ -209,7 +210,7 @@ func (u *userEditHelper) addIdentity(key string, val any, kvMap map[string]any, 
 		u.addAndroidpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
 
 	case IDENT_KEY_IOSPUSH:
-		u.addIospush(val, kvMap[KEY_ID_PROVIDER], newCaller)
+		u.addIospush(val, kvMap[KEY_ID_PROVIDER], kvMap[KEY_BUNDLE_ID], newCaller)
 
 	case IDENT_KEY_WEBPUSH:
 		u.addWebpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
@@ -238,7 +239,7 @@ func (u *userEditHelper) removeIdentity(key string, val any, kvMap map[string]an
 		u.removeAndroidpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
 
 	case IDENT_KEY_IOSPUSH:
-		u.removeIospush(val, kvMap[KEY_ID_PROVIDER], newCaller)
+		u.removeIospush(val, kvMap[KEY_ID_PROVIDER], kvMap[KEY_BUNDLE_ID], newCaller)
 
 	case IDENT_KEY_WEBPUSH:
 		u.removeWebpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
@@ -295,14 +296,20 @@ func (u *userEditHelper) removeAndroidpush(value any, provider any, caller strin
 
 // ------------------------ Iospush
 
-func (u *userEditHelper) addIospush(value any, provider any, caller string) {
+func (u *userEditHelper) addIospush(value any, provider any, bundleId any, caller string) {
 	u.appendDict[IDENT_KEY_IOSPUSH] = value
 	u.appendDict[KEY_ID_PROVIDER] = provider
+	if s, ok := bundleId.(string); ok && s != "" {
+		u.appendDict[KEY_BUNDLE_ID] = s
+	}
 }
 
-func (u *userEditHelper) removeIospush(value any, provider any, caller string) {
+func (u *userEditHelper) removeIospush(value any, provider any, bundleId any, caller string) {
 	u.removeDict[IDENT_KEY_IOSPUSH] = value
 	u.removeDict[KEY_ID_PROVIDER] = provider
+	if s, ok := bundleId.(string); ok && s != "" {
+		u.removeDict[KEY_BUNDLE_ID] = s
+	}
 }
 
 // ------------------------ Webpush [providers: vapid]

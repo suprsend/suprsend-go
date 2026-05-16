@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -45,8 +44,10 @@ type Client struct {
 	timeout  int
 	proxyUrl *url.URL
 	//
-	sdkVersion string
-	userAgent  string
+	appInfo *AppInfo
+	//
+	userAgent       string
+	clientUserAgent string
 	//
 	workflowTrigger *workflowTrigger
 	eventCollector  *eventsCollector
@@ -69,9 +70,6 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 }
 
 func (c *Client) init(opts ...ClientOption) error {
-	c.sdkVersion = VERSION
-	c.userAgent = fmt.Sprintf("suprsend/%s;go/%s", VERSION, runtime.Version())
-	//
 	var err error
 	for _, opt := range opts {
 		err = opt(c)
@@ -90,9 +88,11 @@ func (c *Client) init(opts ...ClientOption) error {
 	if c.httpClient == nil {
 		c.httpClient = defaultHTTPClient(c.debug, c.timeout, c.proxyUrl)
 	}
+	c.userAgent, c.clientUserAgent = buildUserAgent(c.appInfo)
 	c.commonHeaders = map[string]string{
-		"Content-Type": "application/json; charset=utf-8",
-		"User-Agent":   c.userAgent,
+		"Content-Type":                 "application/json; charset=utf-8",
+		"User-Agent":                   c.userAgent,
+		"X-Suprsend-Client-User-Agent": c.clientUserAgent,
 	}
 	//
 	c.Users = newUsersService(c)

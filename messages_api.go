@@ -7,17 +7,24 @@ import (
 	"strconv"
 )
 
+type MessagesService interface {
+	List(context.Context, *MessageListOptions) (*CursorListApiResponse, error)
+	BulkUpdate(context.Context, []MessageUpdateItem) (*MessageBulkUpdateResponse, error)
+}
+
 type messagesService struct {
 	client   *Client
 	_url     string
 	_bulkUrl string
 }
 
+var _ MessagesService = &messagesService{}
+
 func newMessagesService(client *Client) *messagesService {
 	return &messagesService{
 		client:   client,
-		_url:     fmt.Sprintf("%sv1/message", client.baseUrl),
-		_bulkUrl: fmt.Sprintf("%sv1/bulk/message", client.baseUrl),
+		_url:     fmt.Sprintf("%sv1/message/", client.baseUrl),
+		_bulkUrl: fmt.Sprintf("%sv1/bulk/message/", client.baseUrl),
 	}
 }
 
@@ -127,17 +134,14 @@ type MessageUpdateItem struct {
 	Action    string `json:"action"`
 }
 
-// MessageUpdateError describes the failure reason for one item in a bulk update response.
-type MessageUpdateError struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
-}
-
 // MessageUpdateRecord is the per-item result from a bulk update.
 type MessageUpdateRecord struct {
-	MessageID  string              `json:"message_id"`
-	StatusCode int                 `json:"status_code"`
-	Error      *MessageUpdateError `json:"error"`
+	MessageID  string `json:"message_id"`
+	StatusCode int    `json:"status_code"`
+	Error      *struct {
+		Type    string `json:"type"`
+		Message string `json:"message"`
+	} `json:"error"`
 }
 
 // MessageBulkUpdateResponse is the response from the bulk update API.

@@ -38,8 +38,8 @@ type UserEdit interface {
 	AddAndroidpush(value, provider string)
 	RemoveAndroidpush(value, provider string)
 	//
-	AddIospush(value, provider string)
-	RemoveIospush(value, provider string)
+	AddIospush(value, provider string, bundleId ...string)
+	RemoveIospush(value, provider string, bundleId ...string)
 	//
 	AddWebpush(value map[string]any, provider string)
 	RemoveWebpush(value map[string]any, provider string)
@@ -330,15 +330,23 @@ func (u *userEdit) RemoveAndroidpush(value, provider string) {
 
 // ------------------------ Iospush [providers: apns]
 
-func (u *userEdit) AddIospush(value, provider string) {
+func (u *userEdit) AddIospush(value, provider string, bundleId ...string) {
 	caller := "add_iospush"
-	u._helper.addIospush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	u._helper.addIospush(value, provider, bid, caller)
 	u._collectOperation()
 }
 
-func (u *userEdit) RemoveIospush(value, provider string) {
+func (u *userEdit) RemoveIospush(value, provider string, bundleId ...string) {
 	caller := "remove_iospush"
-	u._helper.removeIospush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	u._helper.removeIospush(value, provider, bid, caller)
 	u._collectOperation()
 }
 

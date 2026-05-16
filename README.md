@@ -111,7 +111,6 @@ if err != nil {
 log.Println(resp)
 
 // With filters
-isCampaign := false
 resp, err = suprClient.Messages.List(context.Background(), &suprsend.MessageListOptions{
     // Pagination
     Limit:  20,             // records per page (default: 1000, max: 1000)
@@ -144,7 +143,7 @@ resp, err = suprClient.Messages.List(context.Background(), &suprsend.MessageList
     // category[]
     Category: []string{"transactional"},
 
-    IsCampaign: &isCampaign,
+    IsCampaign: suprsend.Bool(false),
 
     // Date range filters (RFC3339 format)
     CreatedAtGte: "2026-01-01T00:00:00Z",

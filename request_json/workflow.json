@@ -158,7 +158,8 @@
         },
         "device_id": {
           "type": ["string", "null"]
-        }
+        },
+        "bundle_id":  {"type": ["string", "null"], "description": "iOS app bundle id"}
       },
       "required": ["token", "provider"],
       "additionalProperties": false

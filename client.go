@@ -2,6 +2,7 @@ package suprsend
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -177,14 +178,18 @@ func (c *Client) getWsIdentifierValue() string {
 
 // todo: Deprecated: this
 func (c *Client) TriggerWorkflow(wf *Workflow) (*Response, error) {
-	return c.workflowTrigger.Trigger(wf)
+	return c.workflowTrigger.TriggerWithContext(context.Background(), wf)
 }
 
 func (c *Client) TrackEvent(event *Event) (*Response, error) {
-	return c.eventCollector.Collect(event)
+	return c.eventCollector.CollectWithContext(context.Background(), event)
 }
 
-func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody any,
+func (c *Client) TrackEventWithContext(ctx context.Context, event *Event) (*Response, error) {
+	return c.eventCollector.CollectWithContext(ctx, event)
+}
+
+func (c *Client) prepareHttpRequest(ctx context.Context, httpMethod string, httpUrl string, httpBody any,
 ) (*http.Request, error) {
 	// Headers
 	headers := maps.Clone(c.commonHeaders)
@@ -198,7 +203,7 @@ func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody 
 		}
 		headers["Authorization"] = fmt.Sprintf("%s:%s", c.ApiKey, sig)
 		//
-		request, err = http.NewRequest(httpMethod, httpUrl, bytes.NewBuffer(contentBody))
+		request, err = http.NewRequestWithContext(ctx, httpMethod, httpUrl, bytes.NewBuffer(contentBody))
 		if err != nil {
 			return nil, &Error{Err: err}
 		}

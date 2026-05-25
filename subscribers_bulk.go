@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -23,6 +24,7 @@ func (b *bulkSubscribersService) NewInstance() BulkSubscribers {
 type BulkSubscribers interface {
 	Append(subscribers ...Subscriber)
 	Save() (*BulkResponse, error)
+	SaveWithContext(context.Context) (*BulkResponse, error)
 }
 
 var _ BulkSubscribers = &bulkSubscribers{}
@@ -102,10 +104,18 @@ func (b *bulkSubscribers) Append(subscribers ...Subscriber) {
 }
 
 func (b *bulkSubscribers) Trigger() (*BulkResponse, error) {
-	return b.Save()
+	return b.TriggerWithContext(context.Background())
+}
+
+func (b *bulkSubscribers) TriggerWithContext(ctx context.Context) (*BulkResponse, error) {
+	return b.SaveWithContext(ctx)
 }
 
 func (b *bulkSubscribers) Save() (*BulkResponse, error) {
+	return b.SaveWithContext(context.Background())
+}
+
+func (b *bulkSubscribers) SaveWithContext(ctx context.Context) (*BulkResponse, error) {
 	b._validateSubscriberEvents()
 	if len(b._invalidRecords) > 0 {
 		chResponse := invalidRecordsChunkResponse(b._invalidRecords)
@@ -118,7 +128,7 @@ func (b *bulkSubscribers) Save() (*BulkResponse, error) {
 				log.Printf("DEBUG: triggering api call for chunk: %d", cIdx)
 			}
 			// do api call
-			ch.trigger()
+			ch.trigger(ctx)
 			// merge response
 			b.response.mergeChunkResponse(ch.response)
 		}
@@ -188,9 +198,9 @@ func (b *bulkSubscribersChunk) tryToAddIntoChunk(event map[string]any, eventSize
 	return true
 }
 
-func (b *bulkSubscribersChunk) trigger() {
+func (b *bulkSubscribersChunk) trigger(ctx context.Context) {
 	// prepare http.Request object
-	request, err := b.client.prepareHttpRequest("POST", b._url, b._chunk)
+	request, err := b.client.prepareHttpRequest(ctx, "POST", b._url, b._chunk)
 	if err != nil {
 		suprResponse := b.formatAPIResponse(nil, err)
 		b.response = suprResponse

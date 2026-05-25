@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +14,7 @@ import (
 
 type Subscriber interface {
 	Save() (*Response, error)
+	SaveWithContext(context.Context) (*Response, error)
 	//
 	AppendKV(string, any)
 	Append(map[string]any)
@@ -143,6 +145,10 @@ func (s *subscriber) validateBody(isPartOfBulk bool) ([]string, error) {
 }
 
 func (s *subscriber) Save() (*Response, error) {
+	return s.SaveWithContext(context.Background())
+}
+
+func (s *subscriber) SaveWithContext(ctx context.Context) (*Response, error) {
 	if _, err := s.validateBody(false); err != nil {
 		return nil, err
 	}
@@ -152,7 +158,7 @@ func (s *subscriber) Save() (*Response, error) {
 		return nil, err
 	}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("POST", s._url, event)
+	request, err := s.client.prepareHttpRequest(ctx, "POST", s._url, event)
 	if err != nil {
 		return nil, err
 	}

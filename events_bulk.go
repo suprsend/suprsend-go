@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,6 +26,7 @@ func (b *bulkEventsService) NewInstance() BulkEvents {
 type BulkEvents interface {
 	Append(...*Event)
 	Trigger() (*BulkResponse, error)
+	TriggerWithContext(context.Context) (*BulkResponse, error)
 }
 
 var _ BulkEvents = &bulkEvents{}
@@ -90,6 +92,10 @@ func (b *bulkEvents) Append(events ...*Event) {
 }
 
 func (b *bulkEvents) Trigger() (*BulkResponse, error) {
+	return b.TriggerWithContext(context.Background())
+}
+
+func (b *bulkEvents) TriggerWithContext(ctx context.Context) (*BulkResponse, error) {
 	b._validateEvents()
 	if len(b._invalidRecords) > 0 {
 		chResponse := invalidRecordsChunkResponse(b._invalidRecords)
@@ -102,7 +108,7 @@ func (b *bulkEvents) Trigger() (*BulkResponse, error) {
 				log.Printf("DEBUG: triggering api call for chunk: %d", cIdx)
 			}
 			// do api call
-			ch.trigger()
+			ch.trigger(ctx)
 			// merge response
 			b.response.mergeChunkResponse(ch.response)
 		}
@@ -175,9 +181,9 @@ func (b *bulkEventsChunk) tryToAddIntoChunk(event map[string]any, eventSize int)
 	return true
 }
 
-func (b *bulkEventsChunk) trigger() {
+func (b *bulkEventsChunk) trigger(ctx context.Context) {
 	// prepare http.Request object
-	request, err := b.client.prepareHttpRequest("POST", b._url, b._chunk)
+	request, err := b.client.prepareHttpRequest(ctx, "POST", b._url, b._chunk)
 	if err != nil {
 		suprResponse := parseV2BulkEventResponse(nil, err, b._chunk)
 		b.response = suprResponse

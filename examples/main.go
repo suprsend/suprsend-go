@@ -99,7 +99,7 @@ func triggerWorkflowAPIExample() {
 		log.Fatalln(err)
 	}
 	// Call Workflows.Trigger to send request to Suprsend
-	resp, err := suprClient.Workflows.Trigger(wf)
+	resp, err := suprClient.Workflows.TriggerWithContext(context.Background(), wf)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -195,7 +195,7 @@ func bulkWorkflowTriggerAPIExample() {
 	// add all your workflows to bulkInstance
 	bulkIns.Append(wf1, wf2)
 	// Trigger
-	bulkResponse, err := bulkIns.Trigger()
+	bulkResponse, err := bulkIns.TriggerWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -286,7 +286,7 @@ func sendEventExample() {
 		log.Println(err)
 	}
 	// Send event to Suprsend by calling .TrackEvent
-	resp, err := suprClient.TrackEvent(ev)
+	resp, err := suprClient.TrackEventWithContext(context.Background(), ev)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -417,7 +417,7 @@ func updateUserProfileExample() {
 	user.Increment(map[string]any{"increment_prop1": 5})
 
 	// Save user
-	resp, err := user.Save()
+	resp, err := user.SaveWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -472,7 +472,7 @@ func bulkDynamicWorkflowsExample() {
 	// add all your workflows to bulkInstance
 	bulkIns.Append(wf1, wf2)
 	// Trigger
-	bulkResponse, err := bulkIns.Trigger()
+	bulkResponse, err := bulkIns.TriggerWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -503,7 +503,7 @@ func bulkEventsExample() {
 	// Add all events to bulk Instance
 	bulkIns.Append(ev1, ev2)
 	// call trigger to send all these events to SuprSend
-	bulkResponse, err := bulkIns.Trigger()
+	bulkResponse, err := bulkIns.TriggerWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -534,7 +534,7 @@ func bulkUserProfileUpdateExample() {
 	bulkIns.Append(user1, user2)
 
 	// Call save
-	bulkResponse, err := bulkIns.Save()
+	bulkResponse, err := bulkIns.SaveWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}

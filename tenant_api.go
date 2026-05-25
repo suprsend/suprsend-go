@@ -50,7 +50,7 @@ func (t *tenantsService) prepareQueryParams(opt *TenantListOptions) string {
 func (t *tenantsService) List(ctx context.Context, opts *TenantListOptions) (*TenantList, error) {
 	urlStr := fmt.Sprintf("%s?%s", t._url, t.prepareQueryParams(opts))
 	// prepare http.Request object
-	request, err := t.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := t.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (t *tenantsService) tenantAPIUrl(tenantId string) string {
 func (t *tenantsService) Get(ctx context.Context, tenantId string) (*Tenant, error) {
 	urlStr := t.tenantAPIUrl(tenantId)
 	// prepare http.Request object
-	request, err := t.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := t.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (t *tenantsService) Get(ctx context.Context, tenantId string) (*Tenant, err
 func (t *tenantsService) Upsert(ctx context.Context, tenantId string, payload *Tenant) (*Tenant, error) {
 	urlStr := t.tenantAPIUrl(tenantId)
 	// prepare http.Request object
-	request, err := t.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := t.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (t *tenantsService) Upsert(ctx context.Context, tenantId string, payload *T
 func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
 	urlStr := t.tenantAPIUrl(tenantId)
 	// prepare http.Request object
-	request, err := t.client.prepareHttpRequest("DELETE", urlStr, nil)
+	request, err := t.client.prepareHttpRequest(ctx, "DELETE", urlStr, nil)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (opts *TenantCategoriesPreferenceOptions) BuildQuery() string {
 
 func (t *tenantsService) ListPreferenceCategories(ctx context.Context, tenantId string, opts *TenantCategoriesPreferenceOptions) (*TenantCategoriesPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/", t.tenantAPIUrl(tenantId)), opts.BuildQuery())
-	request, err := t.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := t.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (opts *TenantPreferenceCategoryOptions) BuildQuery() string {
 
 func (t *tenantsService) GetPreferenceCategory(ctx context.Context, tenantId, category string, opts *TenantPreferenceCategoryOptions) (*TenantCategoryPreference, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", t.tenantAPIUrl(tenantId), url.PathEscape(category)), opts.BuildQuery())
-	request, err := t.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := t.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +253,7 @@ type TenantPreferenceCategoryUpdateBody struct {
 
 func (t *tenantsService) UpdatePreferenceCategory(ctx context.Context, tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategoryPreference, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", t.tenantAPIUrl(tenantId), url.PathEscape(category)), opts.BuildQuery())
-	request, err := t.client.prepareHttpRequest("PATCH", urlStr, body)
+	request, err := t.client.prepareHttpRequest(ctx, "PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +273,7 @@ func (t *tenantsService) UpdatePreferenceCategory(ctx context.Context, tenantId,
 // Deprecated: Use ListPreferenceCategories instead.
 func (t *tenantsService) GetAllCategoriesPreference(ctx context.Context, tenantId string, opts *TenantCategoriesPreferenceOptions) (*TenantCategoriesPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%scategory/", t.tenantAPIUrl(tenantId)), opts.BuildQuery())
-	request, err := t.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := t.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +300,7 @@ type TenantCategoryPreferenceUpdateBody struct {
 // Deprecated: Use UpdatePreferenceCategory instead.
 func (t *tenantsService) UpdateCategoryPreference(ctx context.Context, tenantId, category string, body TenantCategoryPreferenceUpdateBody) (*TenantCategoryPreference, error) {
 	urlStr := fmt.Sprintf("%scategory/%s/", t.tenantAPIUrl(tenantId), url.PathEscape(category))
-	request, err := t.client.prepareHttpRequest("PATCH", urlStr, body)
+	request, err := t.client.prepareHttpRequest(ctx, "PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
 	}

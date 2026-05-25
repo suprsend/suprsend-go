@@ -111,7 +111,7 @@ func (o *MessageListOptions) buildQuery() string {
 
 func (m *messagesService) List(ctx context.Context, opts *MessageListOptions) (*CursorListApiResponse, error) {
 	urlStr := appendQueryParamPart(m._url, opts.buildQuery())
-	request, err := m.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := m.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ type MessageBulkUpdateResponse struct {
 
 func (m *messagesService) BulkUpdate(ctx context.Context, messages []MessageUpdateItem) (*MessageBulkUpdateResponse, error) {
 	payload := map[string]any{"messages": messages}
-	request, err := m.client.prepareHttpRequest("PATCH", m._bulkUrl, payload)
+	request, err := m.client.prepareHttpRequest(ctx, "PATCH", m._bulkUrl, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +192,7 @@ func (m *messagesService) BulkUpdate(ctx context.Context, messages []MessageUpda
 
 // func (m *messagesService) GetContent(ctx context.Context, messageID string) (*MessageContentResponse, error) {
 // 	urlStr := m.messageContentURL(messageID)
-// 	request, err := m.client.prepareHttpRequest("GET", urlStr, nil)
+// 	request, err := m.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 // 	if err != nil {
 // 		return nil, err
 // 	}

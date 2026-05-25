@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -102,20 +103,24 @@ func newWorkflowTriggerInstance(client *Client) *workflowTrigger {
 }
 
 func (w *workflowTrigger) Trigger(workflow *Workflow) (*Response, error) {
+	return w.TriggerWithContext(context.Background(), workflow)
+}
+
+func (w *workflowTrigger) TriggerWithContext(ctx context.Context, workflow *Workflow) (*Response, error) {
 	wfBody, _, err := workflow.getFinalJson(w.client, false)
 	if err != nil {
 		return nil, err
 	}
-	suprResp, err := w.send(wfBody)
+	suprResp, err := w.send(ctx, wfBody)
 	if err != nil {
 		return nil, err
 	}
 	return suprResp, nil
 }
 
-func (w *workflowTrigger) send(wfBody map[string]any) (*Response, error) {
+func (w *workflowTrigger) send(ctx context.Context, wfBody map[string]any) (*Response, error) {
 	// prepare http.Request object
-	request, err := w.client.prepareHttpRequest("POST", w._url, wfBody)
+	request, err := w.client.prepareHttpRequest(ctx, "POST", w._url, wfBody)
 	if err != nil {
 		return nil, err
 	}

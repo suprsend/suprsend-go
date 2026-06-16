@@ -117,6 +117,7 @@ type UserCategoryPreference struct {
 	} `json:"channels"`
 	Tags                 []string         `json:"tags"`
 	EffectiveTags        []string         `json:"effective_tags"`
+	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
 	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
 }
 

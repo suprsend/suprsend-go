@@ -115,8 +115,10 @@ type ObjectCategoryPreference struct {
 		Preference string `json:"preference"`
 		IsEditable bool   `json:"is_editable"`
 	} `json:"channels"`
-	Tags          []string `json:"tags"`
-	EffectiveTags []string `json:"effective_tags"`
+	Tags                 []string         `json:"tags"`
+	EffectiveTags        []string         `json:"effective_tags"`
+	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
+	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
 }
 
 // ------------------------------------------------------------

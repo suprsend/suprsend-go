@@ -156,6 +156,7 @@ type TenantCategoryPreference struct {
 	BlockedChannels          []string         `json:"blocked_channels"`
 	Tags                     []string         `json:"tags"`
 	EffectiveTags            []string         `json:"effective_tags"`
+	DigestSchedule           interface{}      `json:"digest_schedule,omitempty"`
 	PreferenceConditions     []map[string]any `json:"preference_conditions,omitempty"`
 }
 

@@ -187,7 +187,7 @@ func (o *objectEditHelper) addIdentity(key string, val any, kvMap map[string]any
 		o.addAndroidpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
 
 	case IDENT_KEY_IOSPUSH:
-		o.addIospush(val, kvMap[KEY_ID_PROVIDER], newCaller)
+		o.addIospush(val, kvMap[KEY_ID_PROVIDER], kvMap[KEY_BUNDLE_ID], newCaller)
 
 	case IDENT_KEY_WEBPUSH:
 		o.addWebpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
@@ -216,7 +216,7 @@ func (o *objectEditHelper) removeIdentity(key string, val any, kvMap map[string]
 		o.removeAndroidpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
 
 	case IDENT_KEY_IOSPUSH:
-		o.removeIospush(val, kvMap[KEY_ID_PROVIDER], newCaller)
+		o.removeIospush(val, kvMap[KEY_ID_PROVIDER], kvMap[KEY_BUNDLE_ID], newCaller)
 
 	case IDENT_KEY_WEBPUSH:
 		o.removeWebpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
@@ -273,14 +273,20 @@ func (o *objectEditHelper) removeAndroidpush(value any, provider any, caller str
 
 // ------------------------ Iospush
 
-func (o *objectEditHelper) addIospush(value any, provider any, caller string) {
+func (o *objectEditHelper) addIospush(value any, provider any, bundleId any, caller string) {
 	o.appendDict[IDENT_KEY_IOSPUSH] = value
 	o.appendDict[KEY_ID_PROVIDER] = provider
+	if s, ok := bundleId.(string); ok && s != "" {
+		o.appendDict[KEY_BUNDLE_ID] = s
+	}
 }
 
-func (o *objectEditHelper) removeIospush(value any, provider any, caller string) {
+func (o *objectEditHelper) removeIospush(value any, provider any, bundleId any, caller string) {
 	o.removeDict[IDENT_KEY_IOSPUSH] = value
 	o.removeDict[KEY_ID_PROVIDER] = provider
+	if s, ok := bundleId.(string); ok && s != "" {
+		o.removeDict[KEY_BUNDLE_ID] = s
+	}
 }
 
 // ------------------------ Webpush [providers: vapid]

@@ -267,7 +267,7 @@ func userEditBulkExample() {
 	bulkIns.Append(user1, user2)
 
 	// Call save
-	bulkResponse, err := bulkIns.Save()
+	bulkResponse, err := bulkIns.SaveWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -44,7 +44,7 @@ func (b *brandsService) prepareQueryParams(opt *BrandListOptions) string {
 func (b *brandsService) List(ctx context.Context, opts *BrandListOptions) (*BrandList, error) {
 	urlStr := fmt.Sprintf("%s?%s", b._url, b.prepareQueryParams(opts))
 	// prepare http.Request object
-	request, err := b.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := b.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (b *brandsService) brandAPIUrl(brandId string) string {
 func (b *brandsService) Get(ctx context.Context, brandId string) (*Brand, error) {
 	urlStr := b.brandAPIUrl(brandId)
 	// prepare http.Request object
-	request, err := b.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := b.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (b *brandsService) Get(ctx context.Context, brandId string) (*Brand, error)
 func (b *brandsService) Upsert(ctx context.Context, brandId string, payload *Brand) (*Brand, error) {
 	urlStr := b.brandAPIUrl(brandId)
 	// prepare http.Request object
-	request, err := b.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := b.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}

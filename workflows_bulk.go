@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -23,6 +24,7 @@ func (b *bulkWorkflowsService) NewInstance() BulkWorkflows {
 type BulkWorkflows interface {
 	Append(...*Workflow)
 	Trigger() (*BulkResponse, error)
+	TriggerWithContext(context.Context) (*BulkResponse, error)
 }
 
 var _ BulkWorkflows = &bulkWorkflows{}
@@ -88,6 +90,10 @@ func (b *bulkWorkflows) Append(workflows ...*Workflow) {
 }
 
 func (b *bulkWorkflows) Trigger() (*BulkResponse, error) {
+	return b.TriggerWithContext(context.Background())
+}
+
+func (b *bulkWorkflows) TriggerWithContext(ctx context.Context) (*BulkResponse, error) {
 	b._validateWorkflows()
 	if len(b._invalidRecords) > 0 {
 		chResponse := invalidRecordsChunkResponse(b._invalidRecords)
@@ -100,7 +106,7 @@ func (b *bulkWorkflows) Trigger() (*BulkResponse, error) {
 				log.Printf("DEBUG: triggering api call for chunk: %d\n", cIdx)
 			}
 			// do api call
-			ch.trigger()
+			ch.trigger(ctx)
 			// merge response
 			b.response.mergeChunkResponse(ch.response)
 		}
@@ -174,9 +180,9 @@ func (b *bulkWorkflowsChunk) tryToAddIntoChunk(body map[string]any, bodySize int
 	return true
 }
 
-func (b *bulkWorkflowsChunk) trigger() {
+func (b *bulkWorkflowsChunk) trigger(ctx context.Context) {
 	// prepare http.Request object
-	request, err := b.client.prepareHttpRequest("POST", b._url, b._chunk)
+	request, err := b.client.prepareHttpRequest(ctx, "POST", b._url, b._chunk)
 	if err != nil {
 		suprResponse := b.formatAPIResponse(nil, err)
 		b.response = suprResponse

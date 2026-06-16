@@ -1,11 +1,13 @@
 package suprsend
 
 import (
+	"context"
 	"fmt"
 )
 
 type WorkflowsService interface {
 	Trigger(*WorkflowTriggerRequest) (*Response, error)
+	TriggerWithContext(context.Context, *WorkflowTriggerRequest) (*Response, error)
 	BulkTriggerInstance() BulkWorkflowsTrigger
 }
 
@@ -23,13 +25,17 @@ func newWorkflowService(client *Client) *workflowsService {
 }
 
 func (w *workflowsService) Trigger(workflow *WorkflowTriggerRequest) (*Response, error) {
+	return w.TriggerWithContext(context.Background(), workflow)
+}
+
+func (w *workflowsService) TriggerWithContext(ctx context.Context, workflow *WorkflowTriggerRequest) (*Response, error) {
 	wfBody, _, err := workflow.getFinalJson(w.client, false)
 	if err != nil {
 		return nil, err
 	}
 	url := fmt.Sprintf("%strigger/", w.client.baseUrl)
 	// prepare http.Request object
-	request, err := w.client.prepareHttpRequest("POST", url, wfBody)
+	request, err := w.client.prepareHttpRequest(ctx, "POST", url, wfBody)
 	if err != nil {
 		return nil, err
 	}

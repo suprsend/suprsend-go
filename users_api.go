@@ -56,7 +56,7 @@ func newUsersService(client *Client) *usersService {
 func (u *usersService) List(ctx context.Context, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
 	urlStr := appendQueryParamPart(u._url, opts.BuildQuery())
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (u *usersService) userDetailAPIUrl(distinctId string) string {
 func (u *usersService) Get(ctx context.Context, distinctId string) (map[string]any, error) {
 	urlStr := u.userDetailAPIUrl(distinctId)
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (u *usersService) Upsert(ctx context.Context, distinctId string, payload ma
 		payload = map[string]any{}
 	}
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := u.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (u *usersService) AsyncEdit(ctx context.Context, editInstance UserEdit) (*R
 	}
 	urlStr := fmt.Sprintf("%sevent/", u.client.baseUrl)
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := u.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +190,7 @@ func (u *usersService) Edit(ctx context.Context, req UserEditRequest) (map[strin
 		urlStr = u.userDetailAPIUrl(req.DistinctId)
 	}
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("PATCH", urlStr, payload)
+	request, err := u.client.prepareHttpRequest(ctx, "PATCH", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +215,7 @@ type UserMergeRequest struct {
 func (u *usersService) Merge(ctx context.Context, distinctId string, payload UserMergeRequest) (map[string]any, error) {
 	urlStr := fmt.Sprintf("%smerge/", u.userDetailAPIUrl(distinctId))
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := u.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (u *usersService) Merge(ctx context.Context, distinctId string, payload Use
 func (u *usersService) Delete(ctx context.Context, distinctId string) error {
 	urlStr := u.userDetailAPIUrl(distinctId)
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("DELETE", urlStr, nil)
+	request, err := u.client.prepareHttpRequest(ctx, "DELETE", urlStr, nil)
 	if err != nil {
 		return err
 	}
@@ -260,7 +260,7 @@ type UserBulkDeletePayload struct {
 // payload: {"distinct_ids": ["id1", "id2"]}
 func (u *usersService) BulkDelete(ctx context.Context, payload UserBulkDeletePayload) error {
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("DELETE", u._bulkUrl, payload)
+	request, err := u.client.prepareHttpRequest(ctx, "DELETE", u._bulkUrl, payload)
 	if err != nil {
 		return err
 	}
@@ -280,7 +280,7 @@ func (u *usersService) BulkDelete(ctx context.Context, payload UserBulkDeletePay
 func (u *usersService) GetObjectsSubscribedTo(ctx context.Context, distinctId string, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%ssubscribed_to/object/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +301,7 @@ func (u *usersService) GetObjectsSubscribedTo(ctx context.Context, distinctId st
 func (u *usersService) GetListsSubscribedTo(ctx context.Context, distinctId string, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%ssubscribed_to/list/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
 	// prepare http.Request object
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +335,7 @@ func (u *usersService) GetInstance(distinctId string) Subscriber {
 // GetFullPreference fetches the current notification preferences for the user across all categories and channels.
 func (u *usersService) GetFullPreference(ctx context.Context, distinctId string, opts *UserFullPreferencesOptions) (*UserFullPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +354,7 @@ func (u *usersService) GetFullPreference(ctx context.Context, distinctId string,
 
 func (u *usersService) GetGlobalChannelsPreference(ctx context.Context, distinctId string, opts *UserGlobalChannelsPreferenceOptions) (*UserGlobalChannelsPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +373,7 @@ func (u *usersService) GetGlobalChannelsPreference(ctx context.Context, distinct
 
 func (u *usersService) UpdateGlobalChannelsPreference(ctx context.Context, distinctId string, body UserGlobalChannelsPreferenceUpdateBody, opts *UserGlobalChannelsPreferenceOptions) (*UserGlobalChannelsPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
-	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
+	request, err := u.client.prepareHttpRequest(ctx, "PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +392,7 @@ func (u *usersService) UpdateGlobalChannelsPreference(ctx context.Context, disti
 
 func (u *usersService) GetAllCategoriesPreference(ctx context.Context, distinctId string, opts *UserCategoriesPreferenceOptions) (*UserCategoriesPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +411,7 @@ func (u *usersService) GetAllCategoriesPreference(ctx context.Context, distinctI
 
 func (u *usersService) GetCategoryPreference(ctx context.Context, distinctId string, category string, opts *UserCategoryPreferenceOptions) (*UserCategoryPreference, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", u.userDetailAPIUrl(distinctId), url.PathEscape(category)), opts.BuildQuery())
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -430,7 +430,7 @@ func (u *usersService) GetCategoryPreference(ctx context.Context, distinctId str
 
 func (u *usersService) UpdateCategoryPreference(ctx context.Context, distinctId string, category string, body UserUpdateCategoryPreferenceBody, opts *UserCategoryPreferenceOptions) (*UserCategoryPreference, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", u.userDetailAPIUrl(distinctId), url.PathEscape(category)), opts.BuildQuery())
-	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
+	request, err := u.client.prepareHttpRequest(ctx, "PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
 	}
@@ -449,7 +449,7 @@ func (u *usersService) UpdateCategoryPreference(ctx context.Context, distinctId 
 
 func (u *usersService) BulkUpdatePreferences(ctx context.Context, body UserBulkPreferenceUpdateBody, opts *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceUpdateResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/", u._bulkUrl), opts.BuildQuery())
-	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
+	request, err := u.client.prepareHttpRequest(ctx, "PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
 	}
@@ -468,7 +468,7 @@ func (u *usersService) BulkUpdatePreferences(ctx context.Context, body UserBulkP
 
 func (u *usersService) ResetPreferences(ctx context.Context, body UserBulkPreferenceResetBody, opts *UserBulkPreferenceUpdateOptions) (*UserBulkPreferenceUpdateResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/reset/", u._bulkUrl), opts.BuildQuery())
-	request, err := u.client.prepareHttpRequest("PATCH", urlStr, body)
+	request, err := u.client.prepareHttpRequest(ctx, "PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
 	}

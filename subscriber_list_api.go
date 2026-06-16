@@ -61,7 +61,7 @@ func (s *subscriberListsService) prepareQueryParams(opt *SubscriberListAllOption
 func (s *subscriberListsService) GetAll(ctx context.Context, opts *SubscriberListAllOptions) (*SubscriberListAll, error) {
 	urlStr := fmt.Sprintf("%s?%s", s._subscriberListUrl, s.prepareQueryParams(opts))
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := s.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (s *subscriberListsService) Create(ctx context.Context, createParams *Subsc
 	}
 	urlStr := s._subscriberListUrl
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("POST", urlStr, createParams)
+	request, err := s.client.prepareHttpRequest(ctx, "POST", urlStr, createParams)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (s *subscriberListsService) Get(ctx context.Context, listId string) (*Subsc
 	}
 	urlStr := s.listDetailAPIUrl(listId)
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := s.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (s *subscriberListsService) Add(ctx context.Context, listId string, distinc
 	urlStr := fmt.Sprintf("%ssubscriber/add/", s.listDetailAPIUrl(listId))
 	payload := map[string]any{"distinct_ids": distinctIds}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := s.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func (s *subscriberListsService) Remove(ctx context.Context, listId string, dist
 	urlStr := fmt.Sprintf("%ssubscriber/remove/", s.listDetailAPIUrl(listId))
 	payload := map[string]any{"distinct_ids": distinctIds}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := s.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func (s *subscriberListsService) Delete(ctx context.Context, listId string) erro
 	urlStr := fmt.Sprintf("%sdelete/", s.listDetailAPIUrl(listId))
 	payload := map[string]any{}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("PATCH", urlStr, payload)
+	request, err := s.client.prepareHttpRequest(ctx, "PATCH", urlStr, payload)
 	if err != nil {
 		return err
 	}
@@ -232,7 +232,7 @@ func (s *subscriberListsService) Broadcast(ctx context.Context, broadcastIns *Su
 		return nil, err
 	}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("POST", s._broadcastUrl, broadcastBody)
+	request, err := s.client.prepareHttpRequest(ctx, "POST", s._broadcastUrl, broadcastBody)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func (s *subscriberListsService) StartSync(ctx context.Context, listId string) (
 	urlStr := fmt.Sprintf("%sstart_sync/", s.listDetailAPIUrl(listId))
 	payload := map[string]any{}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := s.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +299,7 @@ func (s *subscriberListsService) GetVersion(ctx context.Context, listId, version
 	}
 	urlStr := s.listAPIUrlWithVersion(listId, versionId)
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := s.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func (s *subscriberListsService) AddToVersion(ctx context.Context, listId string
 	urlStr := fmt.Sprintf("%ssubscriber/add/", s.listAPIUrlWithVersion(listId, versionId))
 	payload := map[string]any{"distinct_ids": distinctIds}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := s.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -359,7 +359,7 @@ func (s *subscriberListsService) RemoveFromVersion(ctx context.Context, listId s
 	urlStr := fmt.Sprintf("%ssubscriber/remove/", s.listAPIUrlWithVersion(listId, versionId))
 	payload := map[string]any{"distinct_ids": distinctIds}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := s.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +389,7 @@ func (s *subscriberListsService) FinishSync(ctx context.Context, listId string, 
 	urlStr := fmt.Sprintf("%sfinish_sync/", s.listAPIUrlWithVersion(listId, versionId))
 	payload := map[string]any{}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("PATCH", urlStr, payload)
+	request, err := s.client.prepareHttpRequest(ctx, "PATCH", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +419,7 @@ func (s *subscriberListsService) DeleteVersion(ctx context.Context, listId strin
 	urlStr := fmt.Sprintf("%sdelete/", s.listAPIUrlWithVersion(listId, versionId))
 	payload := map[string]any{}
 	// prepare http.Request object
-	request, err := s.client.prepareHttpRequest("PATCH", urlStr, payload)
+	request, err := s.client.prepareHttpRequest(ctx, "PATCH", urlStr, payload)
 	if err != nil {
 		return err
 	}

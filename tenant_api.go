@@ -156,6 +156,9 @@ type TenantCategoryPreference struct {
 	BlockedChannels          []string `json:"blocked_channels"`
 	Tags                     []string `json:"tags"`
 	EffectiveTags            []string `json:"effective_tags"`
+	//
+	DigestSchedule *TenantCategoryDigestScheduleOut `json:"digest_schedule"`
+	Properties     []PreferenceCategoryPropertyOut  `json:"properties"`
 }
 
 type TenantCategoriesPreferenceOptions struct {
@@ -249,6 +252,9 @@ type TenantPreferenceCategoryUpdateBody struct {
 	Preference          *string  `json:"preference,omitempty"`
 	MandatoryChannels   []string `json:"mandatory_channels"`
 	OptInChannels       []string `json:"opt_in_channels"`
+	//
+	DigestSchedule Nullable[TenantCategoryDigestScheduleIn] `json:"digest_schedule,omitzero"`
+	Properties     Nullable[[]PreferenceCategoryPropertyIn] `json:"properties,omitzero"`
 }
 
 func (t *tenantsService) UpdatePreferenceCategory(ctx context.Context, tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategoryPreference, error) {

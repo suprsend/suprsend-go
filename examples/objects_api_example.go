@@ -28,6 +28,12 @@ func objectApisExample() {
 	o1, err := suprClient.Objects.Upsert(ctx, suprsend.ObjectIdentifier{ObjectType: "office_locations", Id: "nyc"},
 		map[string]any{
 			"prop1": "val1",
+			"$androidpush": []map[string]any{
+				{
+					"token":    "__fcm_push_token__",
+					"provider": "fcm",
+				},
+			},
 		})
 	if err != nil {
 		log.Fatalln(err)
@@ -149,7 +155,7 @@ func objectEditApiExample() {
 	// Add androidpush token, token providers: fcm/xiaomi
 	o.AddAndroidpush("__fcm_push_token__", "fcm")
 	// Add iospush token, token providers: apns
-	o.AddIospush("__ios_push_token__", "apns")
+	o.AddIospush("__ios_push_token__", "apns", "com.example.iosapp")
 	// Add webpush token (vapid)
 	o.AddWebpush(map[string]any{
 		"keys": map[string]any{

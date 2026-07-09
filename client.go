@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"slices"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/suprsend/suprsend-go/signature"
-	"golang.org/x/exp/maps"
 )
 
 const (

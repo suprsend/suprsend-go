@@ -141,23 +141,24 @@ type TenantCategoriesPreferenceResponse struct {
 }
 
 type TenantCategoryPreference struct {
-	Name                     string           `json:"name"`
-	Category                 string           `json:"category"`
-	Description              string           `json:"description"`
-	RootCategory             string           `json:"root_category"`
-	DefaultPreference        string           `json:"default_preference"`
-	DefaultMandatoryChannels []string         `json:"default_mandatory_channels"`
-	DefaultOptInChannels     []string         `json:"default_opt_in_channels"`
-	EnabledForTenant         bool             `json:"enabled_for_tenant"`
-	VisibleToSubscriber      bool             `json:"visible_to_subscriber"`
-	Preference               *string          `json:"preference"`
-	MandatoryChannels        []string         `json:"mandatory_channels"`
-	OptInChannels            []string         `json:"opt_in_channels"`
-	BlockedChannels          []string         `json:"blocked_channels"`
-	Tags                     []string         `json:"tags"`
-	EffectiveTags            []string         `json:"effective_tags"`
-	DigestSchedule           interface{}      `json:"digest_schedule,omitempty"`
-	PreferenceConditions     []map[string]any `json:"preference_conditions,omitempty"`
+	Name                     string   `json:"name"`
+	Category                 string   `json:"category"`
+	Description              string   `json:"description"`
+	RootCategory             string   `json:"root_category"`
+	DefaultPreference        string   `json:"default_preference"`
+	DefaultMandatoryChannels []string `json:"default_mandatory_channels"`
+	DefaultOptInChannels     []string `json:"default_opt_in_channels"`
+	EnabledForTenant         bool     `json:"enabled_for_tenant"`
+	VisibleToSubscriber      bool     `json:"visible_to_subscriber"`
+	Preference               *string  `json:"preference"`
+	MandatoryChannels        []string `json:"mandatory_channels"`
+	OptInChannels            []string `json:"opt_in_channels"`
+	BlockedChannels          []string `json:"blocked_channels"`
+	Tags                     []string `json:"tags"`
+	EffectiveTags            []string `json:"effective_tags"`
+	//
+	DigestSchedule *TenantCategoryDigestScheduleOut `json:"digest_schedule"`
+	Properties     []PreferenceCategoryPropertyOut  `json:"properties"`
 }
 
 type TenantCategoriesPreferenceOptions struct {
@@ -247,12 +248,13 @@ type TenantPreferenceCategoryUpdateBody struct {
 	EnabledForTenant *bool    `json:"enabled_for_tenant,omitempty"`
 	BlockedChannels  []string `json:"blocked_channels"`
 	//
-	VisibleToSubscriber  *bool            `json:"visible_to_subscriber,omitempty"`
-	Preference           *string          `json:"preference,omitempty"`
-	MandatoryChannels    []string         `json:"mandatory_channels"`
-	OptInChannels        []string         `json:"opt_in_channels"`
-	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
-	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
+	VisibleToSubscriber *bool    `json:"visible_to_subscriber,omitempty"`
+	Preference          *string  `json:"preference,omitempty"`
+	MandatoryChannels   []string `json:"mandatory_channels"`
+	OptInChannels       []string `json:"opt_in_channels"`
+	//
+	DigestSchedule Nullable[TenantCategoryDigestScheduleIn] `json:"digest_schedule,omitzero"`
+	Properties     Nullable[[]PreferenceCategoryPropertyIn] `json:"properties,omitzero"`
 }
 
 func (t *tenantsService) UpdatePreferenceCategory(ctx context.Context, tenantId, category string, body TenantPreferenceCategoryUpdateBody, opts *TenantPreferenceCategoryOptions) (*TenantCategoryPreference, error) {

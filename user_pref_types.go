@@ -115,10 +115,67 @@ type UserCategoryPreference struct {
 		Preference string `json:"preference"`
 		IsEditable bool   `json:"is_editable"`
 	} `json:"channels"`
-	Tags                 []string         `json:"tags"`
-	EffectiveTags        []string         `json:"effective_tags"`
-	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
-	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
+	Tags          []string `json:"tags"`
+	EffectiveTags []string `json:"effective_tags"`
+	//
+	DigestScheduleOptions *UserCategoryDigestScheduleOptionsOut `json:"digest_schedule_options,omitzero"`
+	DigestSchedule        *UserCategoryDigestScheduleOut        `json:"digest_schedule,omitzero"`
+	Properties            []PreferenceCategoryPropertyOut       `json:"properties,omitzero"`
+}
+
+type UserCategoryDigestScheduleOptionsOut struct {
+	Options []UserCategoryDigestScheduleOptionOut `json:"options"`
+}
+
+type UserCategoryDigestScheduleOptionOut struct {
+	Id        string                                  `json:"id"`
+	Label     string                                  `json:"label"`
+	Frequency string                                  `json:"frequency"`
+	Interval  int                                     `json:"interval,omitempty"`
+	IsDefault bool                                    `json:"is_default"`
+	Time      *UserCategoryDigestScheduleTimeOut      `json:"time,omitempty"`
+	Weekdays  *UserCategoryDigestScheduleWeekdaysOut  `json:"weekdays,omitempty"`
+	Monthdays *UserCategoryDigestScheduleMonthdaysOut `json:"monthdays,omitempty"`
+	//
+	IsUserSelected bool `json:"is_user_selected"`
+}
+
+type UserCategoryDigestScheduleTimeOut struct {
+	EditPolicy   string `json:"edit_policy"`
+	DefaultValue string `json:"default_value"`
+	Value        string `json:"value,omitempty"`
+}
+
+type UserCategoryDigestScheduleWeekdaysOut struct {
+	EditPolicy   string   `json:"edit_policy"`
+	DefaultValue []string `json:"default_value"`
+	Value        []string `json:"value,omitempty"`
+}
+
+type UserCategoryDigestScheduleMonthdaysOut struct {
+	EditPolicy   string                            `json:"edit_policy"`
+	DefaultValue []DigestScheduleMonthdayComponent `json:"default_value"`
+	Value        []DigestScheduleMonthdayComponent `json:"value,omitempty"`
+}
+
+type UserCategoryDigestScheduleOut struct {
+	Id        string                            `json:"id"`
+	Label     string                            `json:"label"`
+	Frequency string                            `json:"frequency"`
+	Interval  int                               `json:"interval,omitempty"`
+	IsDefault bool                              `json:"is_default"`
+	Time      string                            `json:"time,omitempty"`
+	Weekdays  []string                          `json:"weekdays,omitempty"`
+	Monthdays []DigestScheduleMonthdayComponent `json:"monthdays,omitempty"`
+	//
+	IsUserSelected bool `json:"is_user_selected"`
+}
+
+type UserCategoryDigestScheduleIn struct {
+	Id        string                            `json:"id"`
+	Time      string                            `json:"time,omitempty"`
+	Weekdays  []string                          `json:"weekdays,omitempty"`
+	Monthdays []DigestScheduleMonthdayComponent `json:"monthdays,omitempty"`
 }
 
 // ------------------------------------------------------------
@@ -142,10 +199,11 @@ func (opts *UserCategoryPreferenceOptions) BuildQuery() string {
 }
 
 type UserUpdateCategoryPreferenceBody struct {
-	Preference           string           `json:"preference"`
-	OptOutChannels       []string         `json:"opt_out_channels"`
-	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
-	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
+	Preference     string   `json:"preference"`
+	OptOutChannels []string `json:"opt_out_channels"`
+	//
+	DigestSchedule Nullable[UserCategoryDigestScheduleIn]   `json:"digest_schedule,omitzero"`
+	Properties     Nullable[[]PreferenceCategoryPropertyIn] `json:"properties,omitzero"`
 }
 
 // ------------------------------------------------------------
@@ -171,11 +229,12 @@ type UserBulkPreferenceUpdateBody struct {
 }
 
 type UserCategoryPreferenceIn struct {
-	Category             string           `json:"category"`
-	Preference           string           `json:"preference"`
-	OptOutChannels       []string         `json:"opt_out_channels"`
-	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
-	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
+	Category       string   `json:"category"`
+	Preference     string   `json:"preference"`
+	OptOutChannels []string `json:"opt_out_channels"`
+	//
+	DigestSchedule Nullable[UserCategoryDigestScheduleIn]   `json:"digest_schedule,omitzero"`
+	Properties     Nullable[[]PreferenceCategoryPropertyIn] `json:"properties,omitzero"`
 }
 
 type UserBulkPreferenceUpdateResponse struct {

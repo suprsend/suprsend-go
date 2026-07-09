@@ -115,10 +115,12 @@ type ObjectCategoryPreference struct {
 		Preference string `json:"preference"`
 		IsEditable bool   `json:"is_editable"`
 	} `json:"channels"`
-	Tags                 []string         `json:"tags"`
-	EffectiveTags        []string         `json:"effective_tags"`
-	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
-	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
+	Tags          []string `json:"tags"`
+	EffectiveTags []string `json:"effective_tags"`
+	//
+	DigestScheduleOptions *UserCategoryDigestScheduleOptionsOut `json:"digest_schedule_options,omitzero"`
+	DigestSchedule        *UserCategoryDigestScheduleOut        `json:"digest_schedule,omitzero"`
+	Properties            []PreferenceCategoryPropertyOut       `json:"properties,omitzero"`
 }
 
 // ------------------------------------------------------------
@@ -142,8 +144,9 @@ func (opts *ObjectCategoryPreferenceOptions) BuildQuery() string {
 }
 
 type ObjectUpdateCategoryPreferenceBody struct {
-	Preference           string           `json:"preference"`
-	OptOutChannels       []string         `json:"opt_out_channels"`
-	DigestSchedule       interface{}      `json:"digest_schedule,omitempty"`
-	PreferenceConditions []map[string]any `json:"preference_conditions,omitempty"`
+	Preference     string   `json:"preference"`
+	OptOutChannels []string `json:"opt_out_channels"`
+	//
+	DigestSchedule Nullable[UserCategoryDigestScheduleIn]   `json:"digest_schedule,omitzero"`
+	Properties     Nullable[[]PreferenceCategoryPropertyIn] `json:"properties,omitzero"`
 }

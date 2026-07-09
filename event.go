@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/google/uuid"
-	"golang.org/x/exp/maps"
 )
 
 var RESERVED_EVENT_NAMES = []string{

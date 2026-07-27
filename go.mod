@@ -1,6 +1,6 @@
 module github.com/suprsend/suprsend-go
 
-go 1.23.0
+go 1.25.0
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.8
@@ -8,7 +8,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/xeipuuv/gojsonschema v1.2.0
-	golang.org/x/exp v0.0.0-20260211191109-2735e65f0518
 )
 
 require (
@@ -17,5 +16,5 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
-	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/net v0.56.0 // indirect
 )

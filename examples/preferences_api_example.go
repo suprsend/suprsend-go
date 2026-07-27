@@ -86,6 +86,14 @@ func userPreferencesApiExample() {
 		suprsend.UserUpdateCategoryPreferenceBody{
 			Preference:     "opt_in",
 			OptOutChannels: []string{"email", "sms"},
+			// DigestSchedule: suprsend.NewNull[suprsend.UserCategoryDigestScheduleIn](),
+			// DigestSchedule: suprsend.NewValue(suprsend.UserCategoryDigestScheduleIn{
+			// 	Id: "option-1",
+			// }),
+			// Properties: suprsend.NewValue([]suprsend.PreferenceCategoryPropertyIn{
+			// 	{Key: "prop_1", Value: "v1"},
+			// 	{Key: "prop_2", Value: []string{"v2"}},
+			// }),
 		},
 		&suprsend.UserCategoryPreferenceOptions{
 			TenantId: "__tenant_id1__",
@@ -104,7 +112,17 @@ func userPreferencesApiExample() {
 			{Channel: "inbox", IsRestricted: false},
 		},
 		Categories: []*suprsend.UserCategoryPreferenceIn{
-			{Category: "__category_slug__", Preference: "opt_out", OptOutChannels: []string{"email", "sms"}},
+			{
+				Category: "__category_slug__", Preference: "opt_out", OptOutChannels: []string{"email", "sms"},
+				// DigestSchedule: suprsend.NewNull[suprsend.UserCategoryDigestScheduleIn](),
+				// DigestSchedule: suprsend.NewValue(suprsend.UserCategoryDigestScheduleIn{
+				// 	Id: "option-1",
+				// }),
+				// Properties: suprsend.NewValue([]suprsend.PreferenceCategoryPropertyIn{
+				// 	{Key: "prop_1", Value: "v1"},
+				// 	{Key: "prop_2", Value: []string{"v2"}},
+				// }),
+			},
 		},
 	}
 	bulkPreferenceUpdateResponse, err := suprClient.Users.BulkUpdatePreferences(ctx, bulkUpdateBody,
@@ -213,6 +231,14 @@ func objectPreferencesApiExample() {
 		suprsend.ObjectUpdateCategoryPreferenceBody{
 			Preference:     "opt_in",
 			OptOutChannels: []string{"iospush", "slack"},
+			// DigestSchedule: suprsend.NewNull[suprsend.UserCategoryDigestScheduleIn](),
+			// DigestSchedule: suprsend.NewValue(suprsend.UserCategoryDigestScheduleIn{
+			// 	Id: "option-1",
+			// }),
+			// Properties: suprsend.NewValue([]suprsend.PreferenceCategoryPropertyIn{
+			// 	{Key: "prop_1", Value: "v1"},
+			// 	{Key: "prop_2", Value: []string{"v2"}},
+			// }),
 		},
 		&suprsend.ObjectCategoryPreferenceOptions{
 			TenantId: "__tenant_id1__",
@@ -261,6 +287,21 @@ func tenantPreferencesApiExample() {
 		VisibleToSubscriber: suprsend.Bool(true),
 		MandatoryChannels:   []string{"email", "sms", "inbox"},
 		BlockedChannels:     []string{"slack"},
+		// DigestSchedule: suprsend.NewValue(suprsend.TenantCategoryDigestScheduleIn{
+		// 	Options: []*suprsend.TenantCategoryDigestScheduleOptionIn{
+		// 		{
+		// 			Id: "option-2",
+		// 			Time: &suprsend.TenantCategoryDigestScheduleOptionFieldConfig[string]{
+		// 				DefaultValue: "05:00",
+		// 			},
+		// 			IsDefault: true,
+		// 		},
+		// 	},
+		// }),
+		// Properties: suprsend.NewValue([]suprsend.PreferenceCategoryPropertyIn{
+		// 	{Key: "prop_1", Value: "v1"},
+		// 	{Key: "prop_2", Value: nil},
+		// }),
 	}
 	preferences_c_t, err := suprClient.Tenants.UpdatePreferenceCategory(ctx, "__tenant_id__", "__category_slug__", body_c_t, opts)
 	if err != nil {

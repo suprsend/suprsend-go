@@ -27,6 +27,12 @@ func userApisExample() {
 	// -- Upsert user
 	userProps := map[string]any{
 		"prop1": "val1",
+		"$androidpush": []map[string]any{
+			{
+				"token":    "__fcm_push_token__",
+				"provider": "fcm",
+			},
+		},
 	}
 	user2, err := suprClient.Users.Upsert(ctx, "__distinct_id1__", userProps)
 	if err != nil {
@@ -121,7 +127,7 @@ func userEditApiExample() {
 	// Add androidpush token, token providers: fcm/xiaomi
 	user.AddAndroidpush("__fcm_push_token__", "fcm")
 	// Add iospush token, token providers: apns
-	user.AddIospush("__ios_push_token__", "apns")
+	user.AddIospush("__ios_push_token__", "apns", "com.example.iosapp")
 	// Add webpush token (vapid)
 	user.AddWebpush(map[string]any{
 		"keys": map[string]any{
@@ -267,7 +273,7 @@ func userEditBulkExample() {
 	bulkIns.Append(user1, user2)
 
 	// Call save
-	bulkResponse, err := bulkIns.Save()
+	bulkResponse, err := bulkIns.SaveWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}

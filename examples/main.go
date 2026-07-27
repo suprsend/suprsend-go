@@ -32,11 +32,15 @@ func main() {
 	objectEditApiExample()
 
 	preferencesApiExample()
+	messagesApisExample()
+	//
+	contextCancellationExample()
 }
 
 func getSuprsendClient() (*suprsend.Client, error) {
 	opts := []suprsend.ClientOption{
 		suprsend.WithDebug(true),
+		suprsend.WithAppInfo(&suprsend.AppInfo{Name: "MyApp", Version: "0.1.0"}),
 	}
 	suprClient, err := suprsend.NewClient("__api_key__", "__api_secret__", opts...)
 	if err != nil {
@@ -97,7 +101,7 @@ func triggerWorkflowAPIExample() {
 		log.Fatalln(err)
 	}
 	// Call Workflows.Trigger to send request to Suprsend
-	resp, err := suprClient.Workflows.Trigger(wf)
+	resp, err := suprClient.Workflows.TriggerWithContext(context.Background(), wf)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -193,7 +197,7 @@ func bulkWorkflowTriggerAPIExample() {
 	// add all your workflows to bulkInstance
 	bulkIns.Append(wf1, wf2)
 	// Trigger
-	bulkResponse, err := bulkIns.Trigger()
+	bulkResponse, err := bulkIns.TriggerWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -284,7 +288,7 @@ func sendEventExample() {
 		log.Println(err)
 	}
 	// Send event to Suprsend by calling .TrackEvent
-	resp, err := suprClient.TrackEvent(ev)
+	resp, err := suprClient.TrackEventWithContext(context.Background(), ev)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -415,7 +419,7 @@ func updateUserProfileExample() {
 	user.Increment(map[string]any{"increment_prop1": 5})
 
 	// Save user
-	resp, err := user.Save()
+	resp, err := user.SaveWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -470,7 +474,7 @@ func bulkDynamicWorkflowsExample() {
 	// add all your workflows to bulkInstance
 	bulkIns.Append(wf1, wf2)
 	// Trigger
-	bulkResponse, err := bulkIns.Trigger()
+	bulkResponse, err := bulkIns.TriggerWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -501,7 +505,7 @@ func bulkEventsExample() {
 	// Add all events to bulk Instance
 	bulkIns.Append(ev1, ev2)
 	// call trigger to send all these events to SuprSend
-	bulkResponse, err := bulkIns.Trigger()
+	bulkResponse, err := bulkIns.TriggerWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -532,7 +536,7 @@ func bulkUserProfileUpdateExample() {
 	bulkIns.Append(user1, user2)
 
 	// Call save
-	bulkResponse, err := bulkIns.Save()
+	bulkResponse, err := bulkIns.SaveWithContext(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -546,15 +550,16 @@ func tenantExample() {
 		log.Println(err)
 		return
 	}
+	ctx := context.Background()
 	// ================= Fetch existing tenant by ID
-	tenant1, err := suprClient.Tenants.Get(context.Background(), "__tenant_id__")
+	tenant1, err := suprClient.Tenants.Get(ctx, "__tenant_id__")
 	if err != nil {
 		log.Println(err)
 	}
 	log.Println(tenant1)
 
 	// ================= Fetch all tenants
-	tenantsList, err := suprClient.Tenants.List(context.Background(), &suprsend.TenantListOptions{Limit: 10})
+	tenantsList, err := suprClient.Tenants.List(ctx, &suprsend.TenantListOptions{Limit: 10})
 	if err != nil {
 		log.Println(err)
 	}
@@ -581,13 +586,13 @@ func tenantExample() {
 			"k2": "tenant settings 2",
 		},
 	}
-	res, err := suprClient.Tenants.Upsert(context.Background(), "__tenant_id__", tenantPayload)
+	res, err := suprClient.Tenants.Upsert(ctx, "__tenant_id__", tenantPayload)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println(res)
 	// -- Delete tenant
-	err = suprClient.Tenants.Delete(context.Background(), "__tenant_id__")
+	err = suprClient.Tenants.Delete(ctx, "__tenant_id__")
 	if err != nil {
 		log.Fatalln(err)
 	}

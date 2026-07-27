@@ -2,18 +2,18 @@ package suprsend
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
-	"runtime"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/suprsend/suprsend-go/signature"
-	"golang.org/x/exp/maps"
 )
 
 const (
@@ -33,6 +33,7 @@ type Client struct {
 	Objects         *objectsService
 	SubscriberLists *subscriberListsService
 	Workflows       *workflowsService
+	Messages        *messagesService
 	// todo: Deprecated: this
 	BulkWorkflows *bulkWorkflowsService
 	//
@@ -44,8 +45,10 @@ type Client struct {
 	timeout  int
 	proxyUrl *url.URL
 	//
-	sdkVersion string
-	userAgent  string
+	appInfo *AppInfo
+	//
+	userAgent       string
+	clientUserAgent string
 	//
 	workflowTrigger *workflowTrigger
 	eventCollector  *eventsCollector
@@ -68,9 +71,6 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 }
 
 func (c *Client) init(opts ...ClientOption) error {
-	c.sdkVersion = VERSION
-	c.userAgent = fmt.Sprintf("suprsend/%s;go/%s", VERSION, runtime.Version())
-	//
 	var err error
 	for _, opt := range opts {
 		err = opt(c)
@@ -89,15 +89,18 @@ func (c *Client) init(opts ...ClientOption) error {
 	if c.httpClient == nil {
 		c.httpClient = defaultHTTPClient(c.debug, c.timeout, c.proxyUrl)
 	}
+	c.userAgent, c.clientUserAgent = buildUserAgent(c.appInfo)
 	c.commonHeaders = map[string]string{
-		"Content-Type": "application/json; charset=utf-8",
-		"User-Agent":   c.userAgent,
+		"Content-Type":                 "application/json; charset=utf-8",
+		"User-Agent":                   c.userAgent,
+		"X-Suprsend-Client-User-Agent": c.clientUserAgent,
 	}
 	//
 	c.Users = newUsersService(c)
 	c.Tenants = newTenantsService(c)
 	c.Brands = newBrandService(c)
 	c.Objects = newObjectsService(c)
+	c.Messages = newMessagesService(c)
 	//
 	c.Workflows = newWorkflowService(c)
 	//
@@ -175,14 +178,18 @@ func (c *Client) getWsIdentifierValue() string {
 
 // todo: Deprecated: this
 func (c *Client) TriggerWorkflow(wf *Workflow) (*Response, error) {
-	return c.workflowTrigger.Trigger(wf)
+	return c.workflowTrigger.TriggerWithContext(context.Background(), wf)
 }
 
 func (c *Client) TrackEvent(event *Event) (*Response, error) {
-	return c.eventCollector.Collect(event)
+	return c.eventCollector.CollectWithContext(context.Background(), event)
 }
 
-func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody any,
+func (c *Client) TrackEventWithContext(ctx context.Context, event *Event) (*Response, error) {
+	return c.eventCollector.CollectWithContext(ctx, event)
+}
+
+func (c *Client) prepareHttpRequest(ctx context.Context, httpMethod string, httpUrl string, httpBody any,
 ) (*http.Request, error) {
 	// Headers
 	headers := maps.Clone(c.commonHeaders)
@@ -196,7 +203,7 @@ func (c *Client) prepareHttpRequest(httpMethod string, httpUrl string, httpBody 
 		}
 		headers["Authorization"] = fmt.Sprintf("%s:%s", c.ApiKey, sig)
 		//
-		request, err = http.NewRequest(httpMethod, httpUrl, bytes.NewBuffer(contentBody))
+		request, err = http.NewRequestWithContext(ctx, httpMethod, httpUrl, bytes.NewBuffer(contentBody))
 		if err != nil {
 			return nil, &Error{Err: err}
 		}

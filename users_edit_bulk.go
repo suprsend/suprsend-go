@@ -1,6 +1,7 @@
 package suprsend
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -12,6 +13,7 @@ import (
 type BulkUsersEdit interface {
 	Append(users ...UserEdit)
 	Save() (*BulkResponse, error)
+	SaveWithContext(context.Context) (*BulkResponse, error)
 }
 
 var _ BulkUsersEdit = &bulkUsersEdit{}
@@ -94,6 +96,10 @@ func (b *bulkUsersEdit) Append(users ...UserEdit) {
 }
 
 func (b *bulkUsersEdit) Save() (*BulkResponse, error) {
+	return b.SaveWithContext(context.Background())
+}
+
+func (b *bulkUsersEdit) SaveWithContext(ctx context.Context) (*BulkResponse, error) {
 	b._validateUsers()
 	if len(b._invalidRecords) > 0 {
 		chResponse := invalidRecordsChunkResponse(b._invalidRecords)
@@ -106,7 +112,7 @@ func (b *bulkUsersEdit) Save() (*BulkResponse, error) {
 				log.Printf("DEBUG: triggering api call for chunk: %d", cIdx)
 			}
 			// do api call
-			ch.trigger()
+			ch.trigger(ctx)
 			// merge response
 			b.response.mergeChunkResponse(ch.response)
 		}
@@ -176,9 +182,9 @@ func (b *bulkUsersEditChunk) tryToAddIntoChunk(event map[string]any, eventSize i
 	return true
 }
 
-func (b *bulkUsersEditChunk) trigger() {
+func (b *bulkUsersEditChunk) trigger(ctx context.Context) {
 	// prepare http.Request object
-	request, err := b.client.prepareHttpRequest("POST", b._url, b._chunk)
+	request, err := b.client.prepareHttpRequest(ctx, "POST", b._url, b._chunk)
 	if err != nil {
 		suprResponse := b.formatAPIResponse(nil, err)
 		b.response = suprResponse

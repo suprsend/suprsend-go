@@ -1,9 +1,11 @@
 package suprsend
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -11,7 +13,6 @@ import (
 
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/google/uuid"
-	"golang.org/x/exp/maps"
 )
 
 var RESERVED_EVENT_NAMES = []string{
@@ -174,20 +175,24 @@ func newEventCollectorInstance(client *Client) *eventsCollector {
 }
 
 func (e *eventsCollector) Collect(event *Event) (*Response, error) {
+	return e.CollectWithContext(context.Background(), event)
+}
+
+func (e *eventsCollector) CollectWithContext(ctx context.Context, event *Event) (*Response, error) {
 	eventMap, _, err := event.getFinalJson(e.client, false)
 	if err != nil {
 		return nil, err
 	}
-	suprResp, err := e.send(eventMap)
+	suprResp, err := e.send(ctx, eventMap)
 	if err != nil {
 		return nil, err
 	}
 	return suprResp, nil
 }
 
-func (e *eventsCollector) send(eventMap map[string]any) (*Response, error) {
+func (e *eventsCollector) send(ctx context.Context, eventMap map[string]any) (*Response, error) {
 	// prepare http.Request object
-	request, err := e.client.prepareHttpRequest("POST", e._url, eventMap)
+	request, err := e.client.prepareHttpRequest(ctx, "POST", e._url, eventMap)
 	if err != nil {
 		return nil, err
 	}

@@ -52,7 +52,7 @@ func newObjectsService(client *Client) *objectsService {
 func (o *objectsService) List(ctx context.Context, objectType string, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%s%s/", o._url, url.PathEscape(objectType)), opts.BuildQuery())
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := o.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (o *objectsService) objectDetailAPIUrl(objectType, id string) string {
 func (o *objectsService) Get(ctx context.Context, obj ObjectIdentifier) (map[string]any, error) {
 	urlStr := o.objectDetailAPIUrl(obj.ObjectType, obj.Id)
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := o.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (o *objectsService) Upsert(ctx context.Context, obj ObjectIdentifier, paylo
 		payload = map[string]any{}
 	}
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := o.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (o *objectsService) Edit(ctx context.Context, req ObjectEditRequest) (map[s
 		urlStr = o.objectDetailAPIUrl(req.Identifier.ObjectType, req.Identifier.Id)
 	}
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("PATCH", urlStr, payload)
+	request, err := o.client.prepareHttpRequest(ctx, "PATCH", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (o *objectsService) Edit(ctx context.Context, req ObjectEditRequest) (map[s
 func (o *objectsService) Delete(ctx context.Context, obj ObjectIdentifier) error {
 	urlStr := o.objectDetailAPIUrl(obj.ObjectType, obj.Id)
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("DELETE", urlStr, nil)
+	request, err := o.client.prepareHttpRequest(ctx, "DELETE", urlStr, nil)
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ type ObjectBulkDeletePayload struct {
 func (o *objectsService) BulkDelete(ctx context.Context, objectType string, payload ObjectBulkDeletePayload) error {
 	urlStr := fmt.Sprintf("%s%s/", o._bulkUrl, url.PathEscape(objectType))
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("DELETE", urlStr, payload)
+	request, err := o.client.prepareHttpRequest(ctx, "DELETE", urlStr, payload)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (o *objectsService) BulkDelete(ctx context.Context, objectType string, payl
 func (o *objectsService) GetSubscriptions(ctx context.Context, obj ObjectIdentifier, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%ssubscription/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := o.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,7 @@ func (o *objectsService) CreateSubscriptions(ctx context.Context, obj ObjectIden
 		payload = map[string]any{}
 	}
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("POST", urlStr, payload)
+	request, err := o.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +280,7 @@ func (o *objectsService) DeleteSubscriptions(ctx context.Context, obj ObjectIden
 		payload = map[string]any{}
 	}
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("DELETE", urlStr, payload)
+	request, err := o.client.prepareHttpRequest(ctx, "DELETE", urlStr, payload)
 	if err != nil {
 		return err
 	}
@@ -300,7 +300,7 @@ func (o *objectsService) DeleteSubscriptions(ctx context.Context, obj ObjectIden
 func (o *objectsService) GetObjectsSubscribedTo(ctx context.Context, obj ObjectIdentifier, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%ssubscribed_to/object/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
 	// prepare http.Request object
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := o.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -325,7 +325,7 @@ func (o *objectsService) GetEditInstance(obj ObjectIdentifier) ObjectEdit {
 
 func (o *objectsService) GetFullPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectFullPreferenceOptions) (*ObjectFullPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := o.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +344,7 @@ func (o *objectsService) GetFullPreference(ctx context.Context, obj ObjectIdenti
 
 func (o *objectsService) GetGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := o.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +363,7 @@ func (o *objectsService) GetGlobalChannelsPreference(ctx context.Context, obj Ob
 
 func (o *objectsService) UpdateGlobalChannelsPreference(ctx context.Context, obj ObjectIdentifier, body ObjectGlobalChannelsPreferenceUpdateBody, opts *ObjectGlobalChannelsPreferenceOptions) (*ObjectGlobalChannelsPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/channel_preference/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
-	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
+	request, err := o.client.prepareHttpRequest(ctx, "PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +382,7 @@ func (o *objectsService) UpdateGlobalChannelsPreference(ctx context.Context, obj
 
 func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj ObjectIdentifier, opts *ObjectCategoriesPreferenceOptions) (*ObjectCategoriesPreferenceResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id)), opts.BuildQuery())
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := o.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -401,7 +401,7 @@ func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj Obj
 
 func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, opts *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id), url.PathEscape(category)), opts.BuildQuery())
-	request, err := o.client.prepareHttpRequest("GET", urlStr, nil)
+	request, err := o.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +420,7 @@ func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectId
 
 func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj ObjectIdentifier, category string, body ObjectUpdateCategoryPreferenceBody, opts *ObjectCategoryPreferenceOptions) (*ObjectCategoryPreference, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%spreference/category/%s/", o.objectDetailAPIUrl(obj.ObjectType, obj.Id), url.PathEscape(category)), opts.BuildQuery())
-	request, err := o.client.prepareHttpRequest("PATCH", urlStr, body)
+	request, err := o.client.prepareHttpRequest(ctx, "PATCH", urlStr, body)
 	if err != nil {
 		return nil, err
 	}

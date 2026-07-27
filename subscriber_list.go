@@ -66,9 +66,9 @@ type SubscriberListCreateInput struct {
 	//
 	TrackUserEntry *bool `json:"track_user_entry,omitempty"`
 	TrackUserExit  *bool `json:"track_user_exit,omitempty"`
-	// list_type enums: query_based, static_list
+	// list_type enums: dynamic_list, static_list
 	ListType *string `json:"list_type,omitempty"`
-	// Query: applicable when list_type='query_based'
+	// Query: applicable when list_type='dynamic_list'
 	Query *string `json:"query,omitempty"`
 }
 

@@ -56,6 +56,7 @@ var _ UserEdit = &userEdit{}
 type userEdit struct {
 	client     *Client
 	distinctId string
+	tenantId   string
 	//
 	_errors    []string
 	_infos     []string
@@ -65,10 +66,11 @@ type userEdit struct {
 	_warningsList []string
 }
 
-func newUserEdit(client *Client, distinctId string) UserEdit {
+func newUserEdit(client *Client, distinctId string, tenantId string) UserEdit {
 	u := &userEdit{
 		client:     client,
 		distinctId: distinctId,
+		tenantId:   tenantId,
 		_helper:    newUserEditHelper(),
 	}
 	return u
@@ -81,7 +83,7 @@ func (u *userEdit) GetPayload() map[string]any {
 }
 
 func (u *userEdit) GetAsyncPayload() map[string]any {
-	return map[string]any{
+	ev := map[string]any{
 		"$schema":          "2",
 		"$insert_id":       uuid.New().String(),
 		"$time":            time.Now().UnixMilli(),
@@ -90,14 +92,22 @@ func (u *userEdit) GetAsyncPayload() map[string]any {
 		"$user_operations": u.operations,
 		"properties":       map[string]any{"$ss_sdk_version": u.client.userAgent},
 	}
+	if u.tenantId != "" {
+		ev["tenant_id"] = u.tenantId
+	}
+	return ev
 }
 
 func (u *userEdit) asJsonAsync() map[string]any {
-	return map[string]any{
+	ev := map[string]any{
 		"distinct_id":      u.distinctId,
 		"$user_operations": u.operations,
 		"warnings":         u._warningsList,
 	}
+	if u.tenantId != "" {
+		ev["tenant_id"] = u.tenantId
+	}
+	return ev
 }
 
 func (u *userEdit) validatePayloadSize(payload map[string]any) (map[string]any, int, error) {

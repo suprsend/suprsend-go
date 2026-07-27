@@ -20,12 +20,15 @@ type UsersService interface {
 	BulkDelete(context.Context, UserBulkDeletePayload) error
 	GetObjectsSubscribedTo(context.Context, string, *CursorListApiOptions) (*CursorListApiResponse, error)
 	GetListsSubscribedTo(context.Context, string, *CursorListApiOptions) (*CursorListApiResponse, error)
-	GetTenants(context.Context, string) (*UserTenantsListResponse, error)
-	GetTenantDetail(context.Context, string, string) (*UserTenantDetailResponse, error)
-	UpsertTenant(context.Context, string, string, UserTenantUpsertBody) (*UserTenantDetailResponse, error)
-	DeleteTenant(context.Context, string, string) error
+	// Linked tenant APIs
+	ListAssociatedTenants(context.Context, string, *CursorListApiOptions) (*CursorListApiResponse, error)
+	GetForTenant(context.Context, string, string, *ApiCommonOptions) (map[string]any, error)
+	UpsertForTenant(context.Context, string, string, map[string]any, *ApiCommonOptions) (map[string]any, error)
+	UnlinkTenant(context.Context, string, string) error
 	//
-	GetEditInstance(string) UserEdit
+	// GetEditInstance returns a UserEdit helper.
+	// Optional UserEditInstanceOptions (e.g. TenantId) scope edits to a user-tenant mapping.
+	GetEditInstance(distinctId string, opts ...UserEditInstanceOptions) UserEdit
 	GetBulkEditInstance() BulkUsersEdit
 	// Old accessor method (to be deprecated)
 	GetInstance(string) Subscriber
@@ -84,14 +87,6 @@ func (u *usersService) userDetailAPIUrl(distinctId string) string {
 		u._url,
 		url.PathEscape(strings.TrimSpace(distinctId)),
 	)
-}
-
-func (u *usersService) userTenantBaseUrl(distinctId string) string {
-	return fmt.Sprintf("%stenant/", u.userDetailAPIUrl(distinctId))
-}
-
-func (u *usersService) userTenantDetailUrl(distinctId, tenantId string) string {
-	return fmt.Sprintf("%s%s/", u.userTenantBaseUrl(distinctId), url.PathEscape(strings.TrimSpace(tenantId)))
 }
 
 func (u *usersService) Get(ctx context.Context, distinctId string) (map[string]any, error) {
@@ -177,11 +172,17 @@ func (u *usersService) asyncAPIResponse(httpRes *http.Response) (*Response, erro
 	return &Response{Success: true, StatusCode: httpRes.StatusCode, Message: string(respBody)}, nil
 }
 
+func (u *usersService) userDetailUrlForTenant(distinctId, tenantId string) string {
+	return fmt.Sprintf("%stenant/%s/", u.userDetailAPIUrl(distinctId), url.PathEscape(strings.TrimSpace(tenantId)))
+}
+
 // Either (distinct_id & payload) OR edit_instance should be provided
 type UserEditRequest struct {
 	DistinctId string
 	// {"operations": [{"$set": {"prop1": "val1"}, {"$append": {"$email": "abc@test.com"}}]}
 	Payload map[string]any
+	// Optional tenant scope for the edit if using Payload directly (when using EditInstance, tenantId must be set at edit-instance).
+	TenantId string
 	//
 	EditInstance UserEdit
 }
@@ -193,13 +194,21 @@ func (u *usersService) Edit(ctx context.Context, req UserEditRequest) (map[strin
 		ue := req.EditInstance.(*userEdit)
 		ue.validateBody()
 		payload = ue.GetPayload()
-		urlStr = u.userDetailAPIUrl(ue.distinctId)
+		if ue.tenantId != "" {
+			urlStr = u.userDetailUrlForTenant(ue.distinctId, ue.tenantId)
+		} else {
+			urlStr = u.userDetailAPIUrl(ue.distinctId)
+		}
 	} else {
 		payload = req.Payload
 		if payload == nil {
 			payload = map[string]any{}
 		}
-		urlStr = u.userDetailAPIUrl(req.DistinctId)
+		if req.TenantId != "" {
+			urlStr = u.userDetailUrlForTenant(req.DistinctId, req.TenantId)
+		} else {
+			urlStr = u.userDetailAPIUrl(req.DistinctId)
+		}
 	}
 	// prepare http.Request object
 	request, err := u.client.prepareHttpRequest(ctx, "PATCH", urlStr, payload)
@@ -331,9 +340,11 @@ func (u *usersService) GetListsSubscribedTo(ctx context.Context, distinctId stri
 	return resp, nil
 }
 
-func (u *usersService) GetTenants(ctx context.Context, distinctId string) (*UserTenantsListResponse, error) {
-	urlStr := u.userTenantBaseUrl(distinctId)
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+// ListAssociatedTenants lists tenants linked to a user.
+// GET /v1/user/{distinct_id}/associated_tenant/
+func (u *usersService) ListAssociatedTenants(ctx context.Context, distinctId string, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
+	urlStr := appendQueryParamPart(fmt.Sprintf("%sassociated_tenant/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +353,8 @@ func (u *usersService) GetTenants(ctx context.Context, distinctId string) (*User
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserTenantsListResponse{}
+	//
+	resp := &CursorListApiResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -350,9 +362,12 @@ func (u *usersService) GetTenants(ctx context.Context, distinctId string) (*User
 	return resp, nil
 }
 
-func (u *usersService) GetTenantDetail(ctx context.Context, distinctId string, tenantId string) (*UserTenantDetailResponse, error) {
-	urlStr := u.userTenantDetailUrl(distinctId, tenantId)
-	request, err := u.client.prepareHttpRequest("GET", urlStr, nil)
+// GetForTenant fetches the user profile scoped to a tenant mapping.
+// GET /v1/user/{distinct_id}/tenant/{tenant_id}/
+func (u *usersService) GetForTenant(ctx context.Context, distinctId string, tenantId string, opts *ApiCommonOptions) (map[string]any, error) {
+	urlStr := u.userDetailUrlForTenant(distinctId, tenantId)
+	urlStr = appendQueryParamPart(urlStr, opts.BuildQuery())
+	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -361,17 +376,24 @@ func (u *usersService) GetTenantDetail(ctx context.Context, distinctId string, t
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserTenantDetailResponse{}
-	err = u.client.parseApiResponse(httpResponse, resp)
+	//
+	resp := map[string]any{}
+	err = u.client.parseApiResponse(httpResponse, &resp)
 	if err != nil {
 		return nil, err
 	}
 	return resp, nil
 }
 
-func (u *usersService) UpsertTenant(ctx context.Context, distinctId string, tenantId string, body UserTenantUpsertBody) (*UserTenantDetailResponse, error) {
-	urlStr := u.userTenantDetailUrl(distinctId, tenantId)
-	request, err := u.client.prepareHttpRequest("POST", urlStr, body)
+// UpsertForTenant creates or updates a user-tenant mapping.
+// POST /v1/user/{distinct_id}/tenant/{tenant_id}/
+func (u *usersService) UpsertForTenant(ctx context.Context, distinctId string, tenantId string, payload map[string]any, opts *ApiCommonOptions) (map[string]any, error) {
+	urlStr := u.userDetailUrlForTenant(distinctId, tenantId)
+	urlStr = appendQueryParamPart(urlStr, opts.BuildQuery())
+	if payload == nil {
+		payload = map[string]any{}
+	}
+	request, err := u.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +402,8 @@ func (u *usersService) UpsertTenant(ctx context.Context, distinctId string, tena
 		return nil, err
 	}
 	defer httpResponse.Body.Close()
-	resp := &UserTenantDetailResponse{}
+	//
+	resp := map[string]any{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
 		return nil, err
@@ -388,9 +411,11 @@ func (u *usersService) UpsertTenant(ctx context.Context, distinctId string, tena
 	return resp, nil
 }
 
-func (u *usersService) DeleteTenant(ctx context.Context, distinctId string, tenantId string) error {
-	urlStr := u.userTenantDetailUrl(distinctId, tenantId)
-	request, err := u.client.prepareHttpRequest("DELETE", urlStr, nil)
+// UnlinkTenant removes a user-tenant mapping.
+// DELETE /v1/user/{distinct_id}/tenant/{tenant_id}/
+func (u *usersService) UnlinkTenant(ctx context.Context, distinctId string, tenantId string) error {
+	urlStr := u.userDetailUrlForTenant(distinctId, tenantId)
+	request, err := u.client.prepareHttpRequest(ctx, "DELETE", urlStr, nil)
 	if err != nil {
 		return err
 	}
@@ -399,11 +424,26 @@ func (u *usersService) DeleteTenant(ctx context.Context, distinctId string, tena
 		return err
 	}
 	defer httpResponse.Body.Close()
-	return u.client.parseApiResponse(httpResponse, nil)
+	//
+	err = u.client.parseApiResponse(httpResponse, nil)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (u *usersService) GetEditInstance(distinctId string) UserEdit {
-	return newUserEdit(u.client, distinctId)
+type UserEditInstanceOptions struct {
+	TenantId string
+}
+
+// GetEditInstance returns a UserEdit helper for the given distinct_id.
+// Optionally pass UserEditInstanceOptions to scope edits (e.g. TenantId).
+func (u *usersService) GetEditInstance(distinctId string, opts ...UserEditInstanceOptions) UserEdit {
+	var o UserEditInstanceOptions
+	if len(opts) > 0 {
+		o = opts[0]
+	}
+	return newUserEdit(u.client, distinctId, strings.TrimSpace(o.TenantId))
 }
 
 func (u *usersService) GetBulkEditInstance() BulkUsersEdit {

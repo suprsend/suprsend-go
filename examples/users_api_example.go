@@ -107,6 +107,65 @@ func userApisExample() {
 		log.Fatalln(err)
 	}
 	log.Println(resp3)
+
+	// ---- Linked tenant APIs (user-tenant mapping) ----
+	tenantOpts := &suprsend.CursorListApiOptions{Limit: 10}
+	associated, err := suprClient.Users.ListAssociatedTenants(ctx, "__distinct_id1__", tenantOpts)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(associated)
+
+	// Upsert user profile under a specific tenant
+	tenantUser, err := suprClient.Users.UpsertForTenant(ctx, "__distinct_id1__", "__tenant_id__", map[string]any{
+		"user_properties": map[string]any{"role": "admin"},
+		"$email":          "user@example.com",
+	}, nil)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(tenantUser)
+
+	// Get user profile for a specific tenant
+	tenantDetail, err := suprClient.Users.GetForTenant(ctx, "__distinct_id1__", "__tenant_id__", nil)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(tenantDetail)
+
+	// Edit user under a tenant (via edit instance)
+	tenantEdit := suprClient.Users.GetEditInstance("__distinct_id1__", suprsend.UserEditInstanceOptions{
+		TenantId: "__tenant_id__",
+	})
+	tenantEdit.SetKV("role", "member")
+	tenantEdit.AddEmail("tenant-user@example.com")
+	editResp, err := suprClient.Users.Edit(ctx, suprsend.UserEditRequest{EditInstance: tenantEdit})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(editResp)
+
+	// Or edit with raw payload + TenantId on the request
+	editResp2, err := suprClient.Users.Edit(ctx, suprsend.UserEditRequest{
+		DistinctId: "__distinct_id1__",
+		TenantId:   "__tenant_id__",
+		Payload: map[string]any{
+			"operations": []map[string]any{
+				{"$set": map[string]any{"dept": "eng"}},
+			},
+		},
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println(editResp2)
+
+	// Unlink tenant from user
+	err = suprClient.Users.UnlinkTenant(ctx, "__distinct_id1__", "__tenant_id__")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("Tenant unlinked from user")
 }
 
 func userEditApiExample() {

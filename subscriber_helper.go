@@ -182,7 +182,7 @@ func (s *subscriberHelper) addIdentity(key string, val any, kvMap map[string]any
 		s.addWhatsapp(val, newCaller)
 
 	case IDENT_KEY_ANDROIDPUSH:
-		s.addAndroidpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
+		s.addAndroidpush(val, kvMap[KEY_ID_PROVIDER], kvMap[KEY_BUNDLE_ID], newCaller)
 
 	case IDENT_KEY_IOSPUSH:
 		s.addIospush(val, kvMap[KEY_ID_PROVIDER], kvMap[KEY_BUNDLE_ID], newCaller)
@@ -211,7 +211,7 @@ func (s *subscriberHelper) removeIdentity(key string, val any, kvMap map[string]
 		s.removeWhatsapp(val, newCaller)
 
 	case IDENT_KEY_ANDROIDPUSH:
-		s.removeAndroidpush(val, kvMap[KEY_ID_PROVIDER], newCaller)
+		s.removeAndroidpush(val, kvMap[KEY_ID_PROVIDER], kvMap[KEY_BUNDLE_ID], newCaller)
 
 	case IDENT_KEY_IOSPUSH:
 		s.removeIospush(val, kvMap[KEY_ID_PROVIDER], kvMap[KEY_BUNDLE_ID], newCaller)
@@ -259,14 +259,20 @@ func (s *subscriberHelper) removeWhatsapp(value any, caller string) {
 
 // ------------------------ Androidpush
 
-func (s *subscriberHelper) addAndroidpush(value any, provider any, caller string) {
+func (s *subscriberHelper) addAndroidpush(value any, provider any, bundleId any, caller string) {
 	s.appendDict[IDENT_KEY_ANDROIDPUSH] = value
 	s.appendDict[KEY_ID_PROVIDER] = provider
+	if v, ok := bundleId.(string); ok && v != "" {
+		s.appendDict[KEY_BUNDLE_ID] = v
+	}
 }
 
-func (s *subscriberHelper) removeAndroidpush(value any, provider any, caller string) {
+func (s *subscriberHelper) removeAndroidpush(value any, provider any, bundleId any, caller string) {
 	s.removeDict[IDENT_KEY_ANDROIDPUSH] = value
 	s.removeDict[KEY_ID_PROVIDER] = provider
+	if v, ok := bundleId.(string); ok && v != "" {
+		s.removeDict[KEY_BUNDLE_ID] = v
+	}
 }
 
 // ------------------------ Iospush

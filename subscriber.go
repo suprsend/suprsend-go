@@ -41,8 +41,8 @@ type Subscriber interface {
 	AddWhatsapp(value string)
 	RemoveWhatsapp(value string)
 	//
-	AddAndroidpush(value, provider string)
-	RemoveAndroidpush(value, provider string)
+	AddAndroidpush(value, provider string, bundleId ...string)
+	RemoveAndroidpush(value, provider string, bundleId ...string)
 	//
 	AddIospush(value, provider string, bundleId ...string)
 	RemoveIospush(value, provider string, bundleId ...string)
@@ -367,15 +367,23 @@ func (s *subscriber) RemoveWhatsapp(value string) {
 
 // ------------------------ Androidpush [providers: fcm]
 
-func (s *subscriber) AddAndroidpush(value, provider string) {
+func (s *subscriber) AddAndroidpush(value, provider string, bundleId ...string) {
 	caller := "add_androidpush"
-	s._helper.addAndroidpush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	s._helper.addAndroidpush(value, provider, bid, caller)
 	s._collectEvent()
 }
 
-func (s *subscriber) RemoveAndroidpush(value, provider string) {
+func (s *subscriber) RemoveAndroidpush(value, provider string, bundleId ...string) {
 	caller := "remove_androidpush"
-	s._helper.removeAndroidpush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	s._helper.removeAndroidpush(value, provider, bid, caller)
 	s._collectEvent()
 }
 

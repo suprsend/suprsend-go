@@ -125,7 +125,7 @@ func userEditApiExample() {
 	// Add whatsapp channel
 	user.AddWhatsapp("+1444455555")
 	// Add androidpush token, token providers: fcm/xiaomi
-	user.AddAndroidpush("__fcm_push_token__", "fcm")
+	user.AddAndroidpush("__fcm_push_token__", "fcm", "com.example.androidapp")
 	// Add iospush token, token providers: apns
 	user.AddIospush("__ios_push_token__", "apns", "com.example.iosapp")
 	// Add webpush token (vapid)

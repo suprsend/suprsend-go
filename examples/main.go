@@ -72,7 +72,7 @@ func triggerWorkflowAPIExample() {
 				// "$channels": []string{"email"},
 				"$email": []string{"user@example.com"},
 				"$androidpush": []map[string]any{
-					{"token": "__android_push_token__", "provider": "fcm", "device_id": ""},
+					{"token": "__android_push_token__", "provider": "fcm", "device_id": "", "bundle_id": "com.example.androidapp"},
 				},
 				"name": "Recipient 1",
 			},
@@ -225,7 +225,7 @@ func triggerDynamicWorkflowExample() {
 				// "$channels": []string{"email"},
 				"$email": []string{"user@example.com"},
 				"$androidpush": []map[string]any{
-					{"token": "__android_push_token__", "provider": "fcm", "device_id": ""},
+					{"token": "__android_push_token__", "provider": "fcm", "device_id": "", "bundle_id": "com.example.androidapp"},
 				},
 			},
 		},
@@ -311,9 +311,9 @@ func updateUserProfileExample() {
 	// Add whatsapp channel
 	user.AddWhatsapp("+1444455555")
 	// Add androidpush token, token providers: fcm/xiaomi
-	user.AddAndroidpush("__fcm_push_token__", "fcm")
+	user.AddAndroidpush("__fcm_push_token__", "fcm", "com.example.androidapp")
 	// Add iospush token, token providers: apns
-	user.AddIospush("__ios_push_token__", "apns")
+	user.AddIospush("__ios_push_token__", "apns", "com.example.iosapp")
 	// Add webpush token (vapid)
 	user.AddWebpush(map[string]any{
 		"keys": map[string]any{

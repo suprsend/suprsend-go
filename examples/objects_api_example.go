@@ -153,7 +153,7 @@ func objectEditApiExample() {
 	// Add whatsapp channel
 	o.AddWhatsapp("+1444455555")
 	// Add androidpush token, token providers: fcm/xiaomi
-	o.AddAndroidpush("__fcm_push_token__", "fcm")
+	o.AddAndroidpush("__fcm_push_token__", "fcm", "com.example.androidapp")
 	// Add iospush token, token providers: apns
 	o.AddIospush("__ios_push_token__", "apns", "com.example.iosapp")
 	// Add webpush token (vapid)

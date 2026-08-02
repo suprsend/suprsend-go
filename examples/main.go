@@ -23,10 +23,13 @@ func main() {
 	//
 	subscriberListExample()
 	subscriberListVersioningExample()
+	subscriberListQuerybasedExample()
 	//
 	userApisExample()
 	userEditApiExample()
 	userEditBulkExample()
+	//
+	userTenantMappingApisExample()
 	//
 	objectApisExample()
 	objectEditApiExample()
@@ -690,6 +693,57 @@ func subscriberListExample() {
 		log.Fatalln(err)
 	}
 	log.Println("delete list")
+}
+
+func subscriberListQuerybasedExample() {
+	// Instantiate Client
+	suprClient, err := getSuprsendClient()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	ctx := context.Background()
+	listId := "users-with-prepaid-vouchers-2" // max length 64 characters
+	// ================= Create query-based subscriber list
+	subscriberListCreated, err := suprClient.SubscriberLists.Create(ctx, &suprsend.SubscriberListCreateInput{
+		ListId:          listId,
+		ListName:        "Users With Prepaid Vouchers above $250",
+		ListDescription: "Users With Prepaid Vouchers above $250",
+		ListType:        "dynamic_list",
+		Query:           suprsend.String("SELECT distinct_id FROM users WHERE user_properties->>'prepaid_voucher_amount' > 350"),
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("query-based list create resp: ", subscriberListCreated)
+
+	// Disable query-based list.
+	// Currently all updates are upserts. So, to disable the list we need to create upsert request with is_enabled=false .
+	disableResp, err := suprClient.SubscriberLists.Create(ctx, &suprsend.SubscriberListCreateInput{
+		ListId:    listId,
+		IsEnabled: suprsend.Bool(false),
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("query-based list disable resp: ", disableResp)
+
+	// Enable query-based list
+	enableResp, err := suprClient.SubscriberLists.Create(ctx, &suprsend.SubscriberListCreateInput{
+		ListId:    listId,
+		IsEnabled: suprsend.Bool(true),
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("query-based list enable resp: ", enableResp)
+
+	// Delete list
+	err = suprClient.SubscriberLists.Delete(ctx, listId)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	log.Println("query-based list deleted")
 }
 
 func subscriberListVersioningExample() {

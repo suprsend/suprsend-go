@@ -26,8 +26,6 @@ type UsersService interface {
 	UpsertForTenant(context.Context, string, string, map[string]any, *ApiCommonOptions) (map[string]any, error)
 	UnlinkTenant(context.Context, string, string) error
 	//
-	// GetEditInstance returns a UserEdit helper.
-	// Optional UserEditInstanceOptions (e.g. TenantId) scope edits to a user-tenant mapping.
 	GetEditInstance(distinctId string, opts ...UserEditInstanceOptions) UserEdit
 	GetBulkEditInstance() BulkUsersEdit
 	// Old accessor method (to be deprecated)
@@ -344,6 +342,7 @@ func (u *usersService) GetListsSubscribedTo(ctx context.Context, distinctId stri
 // GET /v1/user/{distinct_id}/associated_tenant/
 func (u *usersService) ListAssociatedTenants(ctx context.Context, distinctId string, opts *CursorListApiOptions) (*CursorListApiResponse, error) {
 	urlStr := appendQueryParamPart(fmt.Sprintf("%sassociated_tenant/", u.userDetailAPIUrl(distinctId)), opts.BuildQuery())
+	// prepare http.Request object
 	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -367,6 +366,7 @@ func (u *usersService) ListAssociatedTenants(ctx context.Context, distinctId str
 func (u *usersService) GetForTenant(ctx context.Context, distinctId string, tenantId string, opts *ApiCommonOptions) (map[string]any, error) {
 	urlStr := u.userDetailUrlForTenant(distinctId, tenantId)
 	urlStr = appendQueryParamPart(urlStr, opts.BuildQuery())
+	// prepare http.Request object
 	request, err := u.client.prepareHttpRequest(ctx, "GET", urlStr, nil)
 	if err != nil {
 		return nil, err
@@ -393,6 +393,7 @@ func (u *usersService) UpsertForTenant(ctx context.Context, distinctId string, t
 	if payload == nil {
 		payload = map[string]any{}
 	}
+	// prepare http.Request object
 	request, err := u.client.prepareHttpRequest(ctx, "POST", urlStr, payload)
 	if err != nil {
 		return nil, err
@@ -404,7 +405,7 @@ func (u *usersService) UpsertForTenant(ctx context.Context, distinctId string, t
 	defer httpResponse.Body.Close()
 	//
 	resp := map[string]any{}
-	err = u.client.parseApiResponse(httpResponse, resp)
+	err = u.client.parseApiResponse(httpResponse, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -415,6 +416,7 @@ func (u *usersService) UpsertForTenant(ctx context.Context, distinctId string, t
 // DELETE /v1/user/{distinct_id}/tenant/{tenant_id}/
 func (u *usersService) UnlinkTenant(ctx context.Context, distinctId string, tenantId string) error {
 	urlStr := u.userDetailUrlForTenant(distinctId, tenantId)
+	// prepare http.Request object
 	request, err := u.client.prepareHttpRequest(ctx, "DELETE", urlStr, nil)
 	if err != nil {
 		return err
@@ -436,7 +438,7 @@ type UserEditInstanceOptions struct {
 	TenantId string
 }
 
-// GetEditInstance returns a UserEdit helper for the given distinct_id.
+// GetEditInstance returns a UserEdit for the given distinct_id.
 // Optionally pass UserEditInstanceOptions to scope edits (e.g. TenantId).
 func (u *usersService) GetEditInstance(distinctId string, opts ...UserEditInstanceOptions) UserEdit {
 	var o UserEditInstanceOptions

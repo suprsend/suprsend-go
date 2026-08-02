@@ -32,8 +32,8 @@ type ObjectEdit interface {
 	AddWhatsapp(value string)
 	RemoveWhatsapp(value string)
 	//
-	AddAndroidpush(value, provider string)
-	RemoveAndroidpush(value, provider string)
+	AddAndroidpush(value, provider string, bundleId ...string)
+	RemoveAndroidpush(value, provider string, bundleId ...string)
 	//
 	AddIospush(value, provider string, bundleId ...string)
 	RemoveIospush(value, provider string, bundleId ...string)
@@ -274,15 +274,23 @@ func (o *objectEdit) RemoveWhatsapp(value string) {
 
 // ------------------------ Androidpush [providers: fcm]
 
-func (o *objectEdit) AddAndroidpush(value, provider string) {
+func (o *objectEdit) AddAndroidpush(value, provider string, bundleId ...string) {
 	caller := "add_androidpush"
-	o._helper.addAndroidpush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	o._helper.addAndroidpush(value, provider, bid, caller)
 	o._collectOperation()
 }
 
-func (o *objectEdit) RemoveAndroidpush(value, provider string) {
+func (o *objectEdit) RemoveAndroidpush(value, provider string, bundleId ...string) {
 	caller := "remove_androidpush"
-	o._helper.removeAndroidpush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	o._helper.removeAndroidpush(value, provider, bid, caller)
 	o._collectOperation()
 }
 

@@ -49,9 +49,7 @@
     },
     "users": {
       "type": "array",
-      "items": {
-        "$ref": "#/definitions/user_setting"
-      },
+      "items": {"$ref": "#/definitions/user_setting"},
       "minItems": 1,
       "description": "user object to run workflow for. At least 1 user is required"
     },
@@ -146,20 +144,13 @@
     "androidpush_settings": {
       "type": "object",
       "properties": {
-        "token": {
-          "type": "string",
-          "minLength": 1,
-          "description": "androidpush token"
-        },
-        "provider": {
-          "type": "string",
-          "enum": ["fcm", "xiaomi", "oppo"],
+        "token":      {"type": "string", "minLength": 1, "description": "androidpush token"},
+        "provider":   {
+          "type": "string", "enum": ["fcm", "xiaomi", "oppo"],
           "description": "androidpush token provider(fcm/xiaomi)"
         },
-        "device_id": {
-          "type": ["string", "null"]
-        },
-        "bundle_id":  {"type": ["string", "null"], "description": "iOS app bundle id"}
+        "device_id":  {"type": ["string", "null"]},
+        "bundle_id":  {"type": ["string", "null"], "description": "FCM app package name"}
       },
       "required": ["token", "provider"],
       "additionalProperties": false
@@ -167,19 +158,13 @@
     "iospush_settings": {
       "type": "object",
       "properties": {
-        "token": {
-          "type": "string",
-          "minLength": 1,
-          "description": "iospush token"
-        },
-        "provider": {
-          "type": "string",
-          "enum": ["apns"],
+        "token":      {"type": "string", "minLength": 1, "description": "iospush token"},
+        "provider":   {
+          "type": "string", "enum": ["apns"],
           "description": "iospush token provider(apns)"
         },
-        "device_id": {
-          "type": ["string", "null"]
-        }
+        "device_id":  {"type": ["string", "null"]},
+        "bundle_id":  {"type": ["string", "null"], "description": "iOS app bundle id"}
       },
       "required": ["token", "provider"],
       "additionalProperties": false
@@ -211,205 +196,144 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": [
-              "androidpush",
-              "iospush",
-              "webpush",
-              "email",
-              "sms",
-              "whatsapp",
-              "slack",
-              "inbox",
-              "messenger",
-              "ms_teams"
-            ]
+            "enum": ["androidpush", "iospush", "webpush", "email", "sms", "whatsapp", "slack", "inbox", "messenger", "ms_teams"]
           },
           "minItems": 0,
           "description": "user preferred channels. notification will be tried only on specified channels e.g ['email', 'sms']"
         },
         "$email": {
           "oneOf": [
-            {
-              "$ref": "#/definitions/non_empty_string"
-            },
+            {"$ref": "#/definitions/non_empty_string"},
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/non_empty_string"
-              }
+              "items": { "$ref": "#/definitions/non_empty_string" }
             }
           ]
         },
         "$sms": {
           "oneOf": [
-            {
-              "$ref": "#/definitions/non_empty_string"
-            },
+            {"$ref": "#/definitions/non_empty_string"},
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/non_empty_string"
-              }
+              "items": { "$ref": "#/definitions/non_empty_string" }
             }
           ]
         },
         "$androidpush": {
           "oneOf": [
-            {
-              "$ref": "#/definitions/androidpush_settings"
-            },
+            {"$ref": "#/definitions/androidpush_settings"},
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/androidpush_settings"
-              }
+              "items": { "$ref": "#/definitions/androidpush_settings" }
             },
-            {
-              "$ref": "#/definitions/non_empty_string"
-            },
+            {"$ref": "#/definitions/non_empty_string"},
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/non_empty_string"
-              }
+              "items": { "$ref": "#/definitions/non_empty_string" }
             }
           ]
         },
         "$iospush": {
           "oneOf": [
-            {
-              "$ref": "#/definitions/iospush_settings"
-            },
+            {"$ref": "#/definitions/iospush_settings"},
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/iospush_settings"
-              }
+              "items": { "$ref": "#/definitions/iospush_settings" }
             },
-            {
-              "$ref": "#/definitions/non_empty_string"
-            },
+            {"$ref": "#/definitions/non_empty_string"},
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/non_empty_string"
-              }
+              "items": { "$ref": "#/definitions/non_empty_string" }
             }
           ]
         },
         "$whatsapp": {
           "oneOf": [
-            {
-              "$ref": "#/definitions/non_empty_string"
-            },
+            {"$ref": "#/definitions/non_empty_string"},
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/non_empty_string"
-              }
+              "items": { "$ref": "#/definitions/non_empty_string" }
             }
           ]
         },
         "$webpush": {
           "oneOf": [
-            {
-              "type": "object",
-              "minProperties": 1
-            },
+            {"type": "object", "minProperties": 1},
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "type": "object",
-                "minProperties": 1
-              }
+              "items": {"type": "object", "minProperties": 1}
             }
           ]
         },
         "$slack": {
           "oneOf": [
-            {
-              "$ref": "#/definitions/slack_setting"
-            },
+            { "$ref": "#/definitions/slack_setting" },
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/slack_setting"
-              }
+              "items": { "$ref": "#/definitions/slack_setting" }
             }
           ]
         },
         "$ms_teams": {
           "oneOf": [
-            {
-              "$ref": "#/definitions/ms_teams_setting"
-            },
+            { "$ref": "#/definitions/ms_teams_setting" },
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/ms_teams_setting"
-              }
+              "items": { "$ref": "#/definitions/ms_teams_setting" }
             }
           ]
         },
         "$inbox": {
           "oneOf": [
-            {
-              "$ref": "#/definitions/non_empty_string"
-            },
+            { "$ref": "#/definitions/non_empty_string" },
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/non_empty_string"
-              }
+              "items": { "$ref": "#/definitions/non_empty_string" }
             }
           ]
         },
         "$messenger": {
           "oneOf": [
-            {
-              "$ref": "#/definitions/non_empty_string"
-            },
+            {"$ref": "#/definitions/non_empty_string"},
             {
               "type": "array",
               "uniqueItems": false,
               "maxItems": 10,
               "minItems": 1,
-              "items": {
-                "$ref": "#/definitions/non_empty_string"
-              }
+              "items": { "$ref": "#/definitions/non_empty_string" }
             }
           ]
         }
@@ -438,18 +362,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": [
-              "androidpush",
-              "iospush",
-              "webpush",
-              "email",
-              "sms",
-              "whatsapp",
-              "slack",
-              "inbox",
-              "messenger",
-              "ms_teams"
-            ]
+            "enum": ["androidpush", "iospush", "webpush", "email", "sms", "whatsapp", "slack", "inbox", "messenger", "ms_teams"]
           },
           "minItems": 0,
           "description": "e.g ['email', 'sms']. Used if smart=true, notification on these channels must be sent, irrespective of success metric outcome"

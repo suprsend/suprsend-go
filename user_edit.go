@@ -35,8 +35,8 @@ type UserEdit interface {
 	AddWhatsapp(value string)
 	RemoveWhatsapp(value string)
 	//
-	AddAndroidpush(value, provider string)
-	RemoveAndroidpush(value, provider string)
+	AddAndroidpush(value, provider string, bundleId ...string)
+	RemoveAndroidpush(value, provider string, bundleId ...string)
 	//
 	AddIospush(value, provider string, bundleId ...string)
 	RemoveIospush(value, provider string, bundleId ...string)
@@ -316,15 +316,23 @@ func (u *userEdit) RemoveWhatsapp(value string) {
 
 // ------------------------ Androidpush [providers: fcm]
 
-func (u *userEdit) AddAndroidpush(value, provider string) {
+func (u *userEdit) AddAndroidpush(value, provider string, bundleId ...string) {
 	caller := "add_androidpush"
-	u._helper.addAndroidpush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	u._helper.addAndroidpush(value, provider, bid, caller)
 	u._collectOperation()
 }
 
-func (u *userEdit) RemoveAndroidpush(value, provider string) {
+func (u *userEdit) RemoveAndroidpush(value, provider string, bundleId ...string) {
 	caller := "remove_androidpush"
-	u._helper.removeAndroidpush(value, provider, caller)
+	var bid any
+	if len(bundleId) > 0 {
+		bid = bundleId[0]
+	}
+	u._helper.removeAndroidpush(value, provider, bid, caller)
 	u._collectOperation()
 }
 

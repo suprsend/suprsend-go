@@ -59,3 +59,26 @@ func (o *CursorListApiOptions) BuildQuery() string {
 	}
 	return params.Encode()
 }
+
+type ApiCommonOptions struct {
+	// add filters like this: {"key": "val1"}
+	Params map[string]string
+	// For multivalue params: {"key2[]": ["val2", "val3"]}
+	MultiValueParams map[string][]string
+}
+
+func (o *ApiCommonOptions) BuildQuery() string {
+	if o == nil {
+		return ""
+	}
+	params := url.Values{}
+	for k, v := range o.Params {
+		params.Add(k, v)
+	}
+	for k, v := range o.MultiValueParams {
+		for _, vv := range v {
+			params.Add(k, vv)
+		}
+	}
+	return params.Encode()
+}

@@ -13,6 +13,9 @@ type SubscriberList struct {
 	ListDescription string `json:"list_description,omitempty"`
 	ListType        string `json:"list_type,omitempty"`
 	//
+	Query     string `json:"query,omitempty"`
+	IsEnabled bool   `json:"is_enabled"`
+	//
 	SubscribersCount int    `json:"subscribers_count,omitempty"`
 	Source           string `json:"source,omitempty"`
 	IsReadonly       bool   `json:"is_readonly,omitempty"`
@@ -66,10 +69,11 @@ type SubscriberListCreateInput struct {
 	//
 	TrackUserEntry *bool `json:"track_user_entry,omitempty"`
 	TrackUserExit  *bool `json:"track_user_exit,omitempty"`
-	// list_type enums: query_based, static_list
-	ListType *string `json:"list_type,omitempty"`
-	// Query: applicable when list_type='query_based'
-	Query *string `json:"query,omitempty"`
+	// list_type enums: static_list, dynamic_list
+	ListType string `json:"list_type,omitempty"`
+	// Query: applicable when list_type='dynamic_list'
+	Query     *string `json:"query,omitempty"`
+	IsEnabled *bool   `json:"is_enabled,omitempty"`
 }
 
 // Broadcast request params on SubscriberList

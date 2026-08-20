@@ -76,7 +76,12 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 
 // NewWorkspaceClientWithAPIKey returns a client that authenticates with an HTTP API Key.
 // It sends the key as a Bearer token, and the workspace uid in the X-SS-WSUID header.
-// Get both values from SuprSend dashboard -> Developers -> API Keys.
+// The workspace uid is the workspace key. Get both values from SuprSend
+// dashboard -> Developers -> API Keys.
+//
+// The API Key alone identifies the workspace on the server. The workspace uid
+// still fills the "env" body field, and the /{workspace}/trigger/ and
+// /{workspace}/broadcast/ path segments.
 func NewWorkspaceClientWithAPIKey(workspaceUid string, apiKey string, opts ...ClientOption) (*Client, error) {
 	c := &Client{
 		AuthMethod:   AuthMethod_ApiKey,

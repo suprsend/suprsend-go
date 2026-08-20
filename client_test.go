@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	// A realistic workspace uid, matching the example in the SuprSend OpenAPI spec.
-	testWorkspaceUid = "wksp_exampleUid01"
+	// The workspace uid is the workspace key. It is at least 20 characters,
+	// which the "env" field of request_json/event.json requires.
+	testWorkspaceUid = "abcd1234EFGH5678ijkl"
 	testHttpApiKey   = "ss_api_key_xyz"
 )
 

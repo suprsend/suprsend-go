@@ -38,8 +38,8 @@
     },
     "env": {
       "type": "string",
-      "minLength": 20,
-      "description": "Workspace key"
+      "minLength": 1,
+      "description": "Workspace key, or workspace uid for HTTP API Key clients"
     },
     "distinct_id": {
       "type": "string",

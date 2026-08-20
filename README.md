@@ -27,6 +27,41 @@ func main() {
 
 ```
 
+### Authentication
+
+The SDK supports two authentication methods. Both talk to the same APIs.
+
+| Constructor | Credentials | Authorization header |
+| --- | --- | --- |
+| `NewClient` | workspace key + workspace secret | `<workspace_key>:<hmac_sha256_signature>` |
+| `NewWorkspaceClientWithAPIKey` | workspace uid + HTTP API Key | `Bearer <api_key>` |
+
+Use `NewWorkspaceClientWithAPIKey` to authenticate with an
+[HTTP API Key](https://docs.suprsend.com/reference/authentication). Get the
+workspace uid and the API Key from SuprSend dashboard -> Developers -> API Keys.
+
+```go
+import (
+	"log"
+
+	suprsend "github.com/suprsend/suprsend-go"
+)
+
+func main() {
+	opts := []suprsend.ClientOption{
+		// suprsend.WithDebug(true),
+	}
+	suprClient, err := suprsend.NewWorkspaceClientWithAPIKey("__workspace_uid__", "__api_key__", opts...)
+	if err != nil {
+		log.Println(err)
+	}
+}
+```
+
+The client sends the API Key as a Bearer token, and the workspace uid in the
+`X-SS-WSUID` header. It sends no `Date` header, and it computes no signature.
+Every `suprClient` method works the same way with either constructor.
+
 ### Trigger Workflow
 ```go
 package main

@@ -18,14 +18,18 @@ import (
 
 const (
 	AuthMethod_WsKeySecret string = "ws_key_secret"
+	AuthMethod_ApiKey      string = "api_key"
 )
 
 type Client struct {
-	// auth_methods: ws_key_secret
+	// auth_methods: ws_key_secret / api_key
 	AuthMethod string
 	// -- For workspace key/secret clients
 	ApiKey    string
 	ApiSecret string
+	// -- For HTTP API Key (Bearer) clients
+	WorkspaceUid string
+	HttpApiKey   string
 	//
 	Users           *usersService
 	Tenants         *tenantsService
@@ -62,6 +66,22 @@ func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, 
 		AuthMethod: AuthMethod_WsKeySecret,
 		ApiKey:     apiKey,
 		ApiSecret:  apiSecret,
+	}
+	err := c.init(opts...)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// NewWorkspaceClientWithAPIKey returns a client that authenticates with an HTTP API Key.
+// It sends the key as a Bearer token, and the workspace uid in the X-SS-WSUID header.
+// Get both values from SuprSend dashboard -> Developers -> API Keys.
+func NewWorkspaceClientWithAPIKey(workspaceUid string, apiKey string, opts ...ClientOption) (*Client, error) {
+	c := &Client{
+		AuthMethod:   AuthMethod_ApiKey,
+		WorkspaceUid: workspaceUid,
+		HttpApiKey:   apiKey,
 	}
 	err := c.init(opts...)
 	if err != nil {
@@ -152,7 +172,7 @@ func (c *Client) setDerivedBaseUrl() {
 }
 
 func (c *Client) basicValidation() error {
-	if !slices.Contains([]string{AuthMethod_WsKeySecret}, c.AuthMethod) {
+	if !slices.Contains([]string{AuthMethod_WsKeySecret, AuthMethod_ApiKey}, c.AuthMethod) {
 		return ErrInvalidAuthMethod
 	}
 	if c.AuthMethod == AuthMethod_WsKeySecret {
@@ -162,6 +182,13 @@ func (c *Client) basicValidation() error {
 		if c.ApiSecret == "" {
 			return ErrMissingAPISecret
 		}
+	} else if c.AuthMethod == AuthMethod_ApiKey {
+		if c.WorkspaceUid == "" {
+			return ErrMissingWorkspaceUid
+		}
+		if c.HttpApiKey == "" {
+			return ErrMissingAPIKey
+		}
 	}
 	if c.baseUrl == "" {
 		return ErrMissingBaseUrl
@@ -169,9 +196,13 @@ func (c *Client) basicValidation() error {
 	return nil
 }
 
+// getWsIdentifierValue returns the value that identifies the workspace in a
+// request path (e.g /{workspace_key}/broadcast/) and in the "env" body field.
 func (c *Client) getWsIdentifierValue() string {
 	if c.AuthMethod == AuthMethod_WsKeySecret {
 		return c.ApiKey
+	} else if c.AuthMethod == AuthMethod_ApiKey {
+		return c.WorkspaceUid
 	}
 	return ""
 }
@@ -203,6 +234,25 @@ func (c *Client) prepareHttpRequest(ctx context.Context, httpMethod string, http
 		}
 		headers["Authorization"] = fmt.Sprintf("%s:%s", c.ApiKey, sig)
 		//
+		request, err = http.NewRequestWithContext(ctx, httpMethod, httpUrl, bytes.NewBuffer(contentBody))
+		if err != nil {
+			return nil, &Error{Err: err}
+		}
+	} else if c.AuthMethod == AuthMethod_ApiKey {
+		var contentBody []byte
+		if httpMethod == "GET" || signature.SafeCheckNil(httpBody) {
+			contentBody = []byte("")
+		} else {
+			cBytes, err := json.Marshal(httpBody)
+			if err != nil {
+				return nil, &Error{Err: fmt.Errorf("failed to marshal content: %w", err)}
+			}
+			contentBody = cBytes
+		}
+		headers["Authorization"] = fmt.Sprintf("Bearer %s", c.HttpApiKey)
+		headers["X-SS-WSUID"] = c.WorkspaceUid
+		//
+		var err error
 		request, err = http.NewRequestWithContext(ctx, httpMethod, httpUrl, bytes.NewBuffer(contentBody))
 		if err != nil {
 			return nil, &Error{Err: err}

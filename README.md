@@ -37,9 +37,13 @@ The SDK supports two authentication methods. Both talk to the same APIs.
 | `NewWorkspaceClientWithAPIKey` | workspace uid + HTTP API Key | `Bearer <api_key>` |
 
 Use `NewWorkspaceClientWithAPIKey` to authenticate with an
-[HTTP API Key](https://docs.suprsend.com/reference/authentication). The
-workspace uid is your workspace key. Get both values from SuprSend dashboard ->
-Developers -> API Keys.
+[HTTP API Key](https://docs.suprsend.com/reference/authentication). Get the two
+values from the SuprSend dashboard:
+
+| Value | Where to find it |
+| --- | --- |
+| Workspace UID | Settings -> General -> Workspace UID |
+| API Key | Developers -> API Keys |
 
 ```go
 import (

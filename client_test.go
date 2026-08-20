@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	// The workspace uid is the workspace key. It is at least 20 characters,
-	// which the "env" field of request_json/event.json requires.
+	// A placeholder Workspace UID, from SuprSend dashboard -> Settings ->
+	// General -> Workspace UID. It is 20 characters, because the "env" field of
+	// request_json/event.json sets minLength 20.
 	testWorkspaceUid = "abcd1234EFGH5678ijkl"
 	testHttpApiKey   = "ss_api_key_xyz"
 )

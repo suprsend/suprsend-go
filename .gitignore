@@ -17,3 +17,5 @@ tests/
 
 .idea/
 .vscode/*
+
+plan_*.md

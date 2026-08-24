@@ -18,14 +18,18 @@ import (
 
 const (
 	AuthMethod_WsKeySecret string = "ws_key_secret"
+	AuthMethod_ApiKey      string = "api_key"
 )
 
 type Client struct {
-	// auth_methods: ws_key_secret
+	// auth_methods: ws_key_secret / api_key
 	AuthMethod string
 	// -- For workspace key/secret clients
 	ApiKey    string
 	ApiSecret string
+	// -- For HTTP API Key (Bearer) clients
+	WorkspaceUid string
+	HttpApiKey   string
 	//
 	Users           *usersService
 	Tenants         *tenantsService
@@ -57,11 +61,32 @@ type Client struct {
 	commonHeaders map[string]string
 }
 
-func NewClient(apiKey string, apiSecret string, opts ...ClientOption) (*Client, error) {
+func NewClient(workspaceKey string, workspaceSecret string, opts ...ClientOption) (*Client, error) {
 	c := &Client{
 		AuthMethod: AuthMethod_WsKeySecret,
-		ApiKey:     apiKey,
-		ApiSecret:  apiSecret,
+		ApiKey:     workspaceKey,
+		ApiSecret:  workspaceSecret,
+	}
+	err := c.init(opts...)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
+}
+
+// NewClientWithWorkspaceAPIKey returns a client that authenticates with an HTTP API Key.
+// It sends the key as a Bearer token.
+//
+// Get the workspace uid from SuprSend dashboard -> Settings -> General -> Workspace UID.
+// Get the API Key from SuprSend dashboard -> Developers -> API Keys.
+//
+// The API Key alone identifies the workspace on the server. The workspace_uid is for filling
+// few requirements like env/workspace fields in url/body of few apis.
+func NewClientWithWorkspaceAPIKey(workspaceUid string, apiKey string, opts ...ClientOption) (*Client, error) {
+	c := &Client{
+		AuthMethod:   AuthMethod_ApiKey,
+		WorkspaceUid: workspaceUid,
+		HttpApiKey:   apiKey,
 	}
 	err := c.init(opts...)
 	if err != nil {
@@ -152,15 +177,23 @@ func (c *Client) setDerivedBaseUrl() {
 }
 
 func (c *Client) basicValidation() error {
-	if !slices.Contains([]string{AuthMethod_WsKeySecret}, c.AuthMethod) {
+	if !slices.Contains([]string{AuthMethod_WsKeySecret, AuthMethod_ApiKey}, c.AuthMethod) {
 		return ErrInvalidAuthMethod
 	}
-	if c.AuthMethod == AuthMethod_WsKeySecret {
+	switch c.AuthMethod {
+	case AuthMethod_WsKeySecret:
 		if c.ApiKey == "" {
 			return ErrMissingAPIKey
 		}
 		if c.ApiSecret == "" {
 			return ErrMissingAPISecret
+		}
+	case AuthMethod_ApiKey:
+		if c.WorkspaceUid == "" {
+			return ErrMissingWorkspaceUid
+		}
+		if c.HttpApiKey == "" {
+			return ErrMissingHttpAPIKey
 		}
 	}
 	if c.baseUrl == "" {
@@ -170,8 +203,11 @@ func (c *Client) basicValidation() error {
 }
 
 func (c *Client) getWsIdentifierValue() string {
-	if c.AuthMethod == AuthMethod_WsKeySecret {
+	switch c.AuthMethod {
+	case AuthMethod_WsKeySecret:
 		return c.ApiKey
+	case AuthMethod_ApiKey:
+		return c.WorkspaceUid
 	}
 	return ""
 }
@@ -195,7 +231,8 @@ func (c *Client) prepareHttpRequest(ctx context.Context, httpMethod string, http
 	headers := maps.Clone(c.commonHeaders)
 	//
 	var request *http.Request
-	if c.AuthMethod == AuthMethod_WsKeySecret {
+	switch c.AuthMethod {
+	case AuthMethod_WsKeySecret:
 		headers["Date"] = CurrentTimeFormatted()
 		contentBody, sig, err := signature.GetRequestSignature(httpUrl, httpMethod, httpBody, headers, c.ApiSecret)
 		if err != nil {
@@ -207,7 +244,25 @@ func (c *Client) prepareHttpRequest(ctx context.Context, httpMethod string, http
 		if err != nil {
 			return nil, &Error{Err: err}
 		}
-	} else {
+	case AuthMethod_ApiKey:
+		var contentBody []byte
+		if httpMethod == "GET" || signature.SafeCheckNil(httpBody) {
+			contentBody = []byte("")
+		} else {
+			cBytes, err := json.Marshal(httpBody)
+			if err != nil {
+				return nil, &Error{Err: fmt.Errorf("failed to marshal content: %w", err)}
+			}
+			contentBody = cBytes
+		}
+		headers["Authorization"] = fmt.Sprintf("Bearer %s", c.HttpApiKey)
+		//
+		var err error
+		request, err = http.NewRequestWithContext(ctx, httpMethod, httpUrl, bytes.NewBuffer(contentBody))
+		if err != nil {
+			return nil, &Error{Err: err}
+		}
+	default:
 		return nil, ErrInvalidAuthMethod
 	}
 	// Add headers to request

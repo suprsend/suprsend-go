@@ -38,6 +38,8 @@ func main() {
 	messagesApisExample()
 	//
 	contextCancellationExample()
+	//
+	apiKeyAuthExample()
 }
 
 func getSuprsendClient() (*suprsend.Client, error) {
@@ -45,11 +47,43 @@ func getSuprsendClient() (*suprsend.Client, error) {
 		suprsend.WithDebug(true),
 		suprsend.WithAppInfo(&suprsend.AppInfo{Name: "MyApp", Version: "0.1.0"}),
 	}
-	suprClient, err := suprsend.NewClient("__api_key__", "__api_secret__", opts...)
+	suprClient, err := suprsend.NewClient("__workspace_key__", "__workspace_secret__", opts...)
 	if err != nil {
 		return nil, err
 	}
 	return suprClient, nil
+}
+
+// getSuprsendClientWithAPIKey authenticates with an HTTP API Key (Bearer).
+// Get the workspace uid and the API Key from SuprSend dashboard -> Developers -> API Keys.
+func getSuprsendClientWithAPIKey() (*suprsend.Client, error) {
+	opts := []suprsend.ClientOption{
+		suprsend.WithDebug(true),
+		suprsend.WithAppInfo(&suprsend.AppInfo{Name: "MyApp", Version: "0.1.0"}),
+	}
+	suprClient, err := suprsend.NewClientWithWorkspaceAPIKey("__workspace_uid__", "__api_key__", opts...)
+	if err != nil {
+		return nil, err
+	}
+	return suprClient, nil
+}
+
+// apiKeyAuthExample shows the HTTP API Key (Bearer) auth method.
+// The client supports every API that a workspace key/secret client supports.
+func apiKeyAuthExample() {
+	// Instantiate Client
+	suprClient, err := getSuprsendClientWithAPIKey()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	//
+	resp, err := suprClient.Users.Get(context.Background(), "__distinct_id__")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println(resp)
 }
 
 func triggerWorkflowAPIExample() {

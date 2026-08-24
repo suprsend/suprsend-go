@@ -2,7 +2,7 @@ package suprsend
 
 const (
 	//
-	VERSION = "0.12.0"
+	VERSION = "0.13.0"
 	//
 	DEFAULT_URL = "https://hub.suprsend.com/"
 

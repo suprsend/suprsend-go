@@ -47,7 +47,7 @@ func getSuprsendClient() (*suprsend.Client, error) {
 		suprsend.WithDebug(true),
 		suprsend.WithAppInfo(&suprsend.AppInfo{Name: "MyApp", Version: "0.1.0"}),
 	}
-	suprClient, err := suprsend.NewClient("__api_key__", "__api_secret__", opts...)
+	suprClient, err := suprsend.NewClient("__workspace_key__", "__workspace_secret__", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func getSuprsendClientWithAPIKey() (*suprsend.Client, error) {
 		suprsend.WithDebug(true),
 		suprsend.WithAppInfo(&suprsend.AppInfo{Name: "MyApp", Version: "0.1.0"}),
 	}
-	suprClient, err := suprsend.NewWorkspaceClientWithAPIKey("__workspace_uid__", "__api_key__", opts...)
+	suprClient, err := suprsend.NewClientWithWorkspaceAPIKey("__workspace_uid__", "__api_key__", opts...)
 	if err != nil {
 		return nil, err
 	}

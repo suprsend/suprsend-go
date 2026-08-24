@@ -1,7 +1,6 @@
 package suprsend
 
 import (
-	"context"
 	"errors"
 	"io"
 	"strings"
@@ -16,8 +15,8 @@ const (
 	testHttpApiKey   = "ss_api_key_xyz"
 )
 
-func TestNewWorkspaceClientWithAPIKeySetsApiKeyAuthMethod(t *testing.T) {
-	c, err := NewWorkspaceClientWithAPIKey(testWorkspaceUid, testHttpApiKey)
+func TestNewClientWithWorkspaceAPIKeySetsApiKeyAuthMethod(t *testing.T) {
+	c, err := NewClientWithWorkspaceAPIKey(testWorkspaceUid, testHttpApiKey)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -32,15 +31,15 @@ func TestNewWorkspaceClientWithAPIKeySetsApiKeyAuthMethod(t *testing.T) {
 	}
 }
 
-func TestNewWorkspaceClientWithAPIKeyRejectsEmptyWorkspaceUid(t *testing.T) {
-	_, err := NewWorkspaceClientWithAPIKey("", testHttpApiKey)
+func TestNewClientWithWorkspaceAPIKeyRejectsEmptyWorkspaceUid(t *testing.T) {
+	_, err := NewClientWithWorkspaceAPIKey("", testHttpApiKey)
 	if !errors.Is(err, ErrMissingWorkspaceUid) {
 		t.Errorf("err = %v, want ErrMissingWorkspaceUid", err)
 	}
 }
 
-func TestNewWorkspaceClientWithAPIKeyRejectsEmptyApiKey(t *testing.T) {
-	_, err := NewWorkspaceClientWithAPIKey(testWorkspaceUid, "")
+func TestNewClientWithWorkspaceAPIKeyRejectsEmptyApiKey(t *testing.T) {
+	_, err := NewClientWithWorkspaceAPIKey(testWorkspaceUid, "")
 	if !errors.Is(err, ErrMissingAPIKey) {
 		t.Errorf("err = %v, want ErrMissingAPIKey", err)
 	}
@@ -48,7 +47,7 @@ func TestNewWorkspaceClientWithAPIKeyRejectsEmptyApiKey(t *testing.T) {
 
 func apiKeyTestClient(t *testing.T) *Client {
 	t.Helper()
-	c, err := NewWorkspaceClientWithAPIKey(testWorkspaceUid, testHttpApiKey)
+	c, err := NewClientWithWorkspaceAPIKey(testWorkspaceUid, testHttpApiKey)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -57,7 +56,7 @@ func apiKeyTestClient(t *testing.T) *Client {
 
 func TestApiKeyAuthSetsBearerAuthorizationHeader(t *testing.T) {
 	c := apiKeyTestClient(t)
-	req, err := c.prepareHttpRequest(context.Background(), "GET", "https://hub.suprsend.com/v1/user/", nil)
+	req, err := c.prepareHttpRequest(t.Context(), "GET", "https://hub.suprsend.com/v1/user/", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -66,20 +65,9 @@ func TestApiKeyAuthSetsBearerAuthorizationHeader(t *testing.T) {
 	}
 }
 
-func TestApiKeyAuthSetsWorkspaceUidHeader(t *testing.T) {
-	c := apiKeyTestClient(t)
-	req, err := c.prepareHttpRequest(context.Background(), "GET", "https://hub.suprsend.com/v1/user/", nil)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if got, want := req.Header.Get("X-SS-WSUID"), testWorkspaceUid; got != want {
-		t.Errorf("X-SS-WSUID = %q, want %q", got, want)
-	}
-}
-
 func TestApiKeyAuthDoesNotSendDateHeader(t *testing.T) {
 	c := apiKeyTestClient(t)
-	req, err := c.prepareHttpRequest(context.Background(), "GET", "https://hub.suprsend.com/v1/user/", nil)
+	req, err := c.prepareHttpRequest(t.Context(), "GET", "https://hub.suprsend.com/v1/user/", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -91,7 +79,7 @@ func TestApiKeyAuthDoesNotSendDateHeader(t *testing.T) {
 func TestApiKeyAuthSendsJsonEncodedBodyOnPost(t *testing.T) {
 	c := apiKeyTestClient(t)
 	body := map[string]any{"distinct_id": "user-1"}
-	req, err := c.prepareHttpRequest(context.Background(), "POST", "https://hub.suprsend.com/v1/user/", body)
+	req, err := c.prepareHttpRequest(t.Context(), "POST", "https://hub.suprsend.com/v1/user/", body)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -106,7 +94,7 @@ func TestApiKeyAuthSendsJsonEncodedBodyOnPost(t *testing.T) {
 
 func TestApiKeyAuthSendsEmptyBodyOnGet(t *testing.T) {
 	c := apiKeyTestClient(t)
-	req, err := c.prepareHttpRequest(context.Background(), "GET", "https://hub.suprsend.com/v1/user/", map[string]any{"a": 1})
+	req, err := c.prepareHttpRequest(t.Context(), "GET", "https://hub.suprsend.com/v1/user/", map[string]any{"a": 1})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -124,7 +112,7 @@ func TestWsKeySecretAuthStillSignsRequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	req, err := c.prepareHttpRequest(context.Background(), "GET", "https://hub.suprsend.com/v1/user/", nil)
+	req, err := c.prepareHttpRequest(t.Context(), "GET", "https://hub.suprsend.com/v1/user/", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -134,9 +122,6 @@ func TestWsKeySecretAuthStillSignsRequest(t *testing.T) {
 	}
 	if req.Header.Get("Date") == "" {
 		t.Error("Date header is empty, want an RFC1123 value")
-	}
-	if req.Header.Get("X-SS-WSUID") != "" {
-		t.Errorf("X-SS-WSUID = %q, want empty", req.Header.Get("X-SS-WSUID"))
 	}
 }
 

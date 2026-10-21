@@ -58,7 +58,7 @@ func (t *tenantsService) List(ctx context.Context, opts *TenantListOptions) (*Te
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &TenantList{}
 	err = t.client.parseApiResponse(httpResponse, resp)
@@ -84,7 +84,7 @@ func (t *tenantsService) Get(ctx context.Context, tenantId string) (*Tenant, err
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &Tenant{}
 	err = t.client.parseApiResponse(httpResponse, resp)
@@ -105,7 +105,7 @@ func (t *tenantsService) Upsert(ctx context.Context, tenantId string, payload *T
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &Tenant{}
 	err = t.client.parseApiResponse(httpResponse, resp)
@@ -126,7 +126,7 @@ func (t *tenantsService) Delete(ctx context.Context, tenantId string) error {
 	if err != nil {
 		return err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	err = t.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
@@ -202,7 +202,7 @@ func (t *tenantsService) ListPreferenceCategories(ctx context.Context, tenantId 
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &TenantCategoriesPreferenceResponse{}
 	err = t.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -235,7 +235,7 @@ func (t *tenantsService) GetPreferenceCategory(ctx context.Context, tenantId, ca
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &TenantCategoryPreference{}
 	err = t.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -267,7 +267,7 @@ func (t *tenantsService) UpdatePreferenceCategory(ctx context.Context, tenantId,
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &TenantCategoryPreference{}
 	err = t.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -287,7 +287,7 @@ func (t *tenantsService) GetAllCategoriesPreference(ctx context.Context, tenantI
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &TenantCategoriesPreferenceResponse{}
 	err = t.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -314,7 +314,7 @@ func (t *tenantsService) UpdateCategoryPreference(ctx context.Context, tenantId,
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 
 	resp := &TenantCategoryPreference{}
 	err = t.client.parseApiResponse(httpResponse, resp)

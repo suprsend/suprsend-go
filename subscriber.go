@@ -167,7 +167,7 @@ func (s *subscriber) SaveWithContext(ctx context.Context) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	suprResponse, err := s.formatAPIResponse(httpResponse)
 	if err != nil {
 		return nil, err

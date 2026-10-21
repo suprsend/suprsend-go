@@ -86,7 +86,7 @@ func (b *bulkEvents) Append(events ...*Event) {
 			continue
 		}
 		eventCopy := Event{}
-		copier.CopyWithOption(&eventCopy, ev, copier.Option{DeepCopy: true})
+		_ = copier.CopyWithOption(&eventCopy, ev, copier.Option{DeepCopy: true})
 		b._events = append(b._events, eventCopy)
 	}
 }
@@ -194,7 +194,7 @@ func (b *bulkEventsChunk) trigger(ctx context.Context) {
 		b.response = suprResponse
 
 	} else {
-		defer httpResponse.Body.Close()
+		defer closeBody(httpResponse.Body)
 		suprResponse := parseV2BulkEventResponse(httpResponse, nil, b._chunk)
 		b.response = suprResponse
 	}

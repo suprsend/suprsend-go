@@ -43,7 +43,7 @@ func (w *workflowsService) TriggerWithContext(ctx context.Context, workflow *Wor
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	suprResponse, err := parseV2EventResponse(httpResponse)
 	if err != nil {
 		return nil, err

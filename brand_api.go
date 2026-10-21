@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-// Brand has been renamed to Tenant. Brand is kept for backward-compatibilty.
+// Brand has been renamed to Tenant. Brand is kept for backward-compatibility.
 // Use Tenant instead of Brand
 type BrandsService interface {
 	Get(context.Context, string) (*Brand, error)
@@ -52,7 +52,7 @@ func (b *brandsService) List(ctx context.Context, opts *BrandListOptions) (*Bran
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &BrandList{}
 	err = b.client.parseApiResponse(httpResponse, resp)
@@ -78,7 +78,7 @@ func (b *brandsService) Get(ctx context.Context, brandId string) (*Brand, error)
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &Brand{}
 	err = b.client.parseApiResponse(httpResponse, resp)
@@ -99,7 +99,7 @@ func (b *brandsService) Upsert(ctx context.Context, brandId string, payload *Bra
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &Brand{}
 	err = b.client.parseApiResponse(httpResponse, resp)

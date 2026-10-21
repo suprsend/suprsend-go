@@ -140,20 +140,22 @@ func getApparentWorkflowBodySize(body map[string]any, isPartOfBulk bool) (int, e
 					extraBytes += numAttachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
 					// -- remove attachments->data key to calculate data size
 					bodyCopy := map[string]any{}
-					copier.CopyWithOption(&bodyCopy, &body, copier.Option{DeepCopy: true})
+					if err := copier.CopyWithOption(&bodyCopy, &body, copier.Option{DeepCopy: true}); err != nil {
+						return 0, &Error{Err: err}
+					}
 					attachs := bodyCopy["data"].(map[string]any)["$attachments"].([]map[string]any)
 					for _, a := range attachs {
 						delete(a, "data")
 					}
 					apparentBody = bodyCopy
-
-				} else {
-					// if auto upload is not enabled, attachment data will be passed as it is.
 				}
+				// if auto upload is not enabled, attachment data will be passed as it is.
 			} else {
 				// If attachment not allowed, then remove data->$attachments before calculating size
 				bodyCopy := map[string]any{}
-				copier.CopyWithOption(&bodyCopy, &body, copier.Option{DeepCopy: true})
+				if err := copier.CopyWithOption(&bodyCopy, &body, copier.Option{DeepCopy: true}); err != nil {
+					return 0, &Error{Err: err}
+				}
 
 				delete(bodyCopy["data"].(map[string]any), "$attachments")
 				apparentBody = bodyCopy
@@ -164,16 +166,16 @@ func getApparentWorkflowBodySize(body map[string]any, isPartOfBulk bool) (int, e
 				extraBytes += numAttachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
 				// -- remove attachments->data key to calculate data size
 				bodyCopy := map[string]any{}
-				copier.CopyWithOption(&bodyCopy, &body, copier.Option{DeepCopy: true})
+				if err := copier.CopyWithOption(&bodyCopy, &body, copier.Option{DeepCopy: true}); err != nil {
+					return 0, &Error{Err: err}
+				}
 				attachs := bodyCopy["data"].(map[string]any)["$attachments"].([]map[string]any)
 				for _, a := range attachs {
 					delete(a, "data")
 				}
 				apparentBody = bodyCopy
-
-			} else {
-				// if auto upload is not enabled, attachment data will be passed as it is.
 			}
+			// if auto upload is not enabled, attachment data will be passed as it is.
 		}
 	}
 	// ------
@@ -211,19 +213,22 @@ func getApparentEventSize(event map[string]any, isPartOfBulk bool) (int, error) 
 					extraBytes += numAttachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
 					// -- remove attachments->data key to calculate data size
 					eventCopy := map[string]any{}
-					copier.CopyWithOption(&eventCopy, &event, copier.Option{DeepCopy: true})
+					if err := copier.CopyWithOption(&eventCopy, &event, copier.Option{DeepCopy: true}); err != nil {
+						return 0, &Error{Err: err}
+					}
 					attachs := eventCopy["properties"].(map[string]any)["$attachments"].([]map[string]any)
 					for _, a := range attachs {
 						delete(a, "data")
 					}
 					apparentBody = eventCopy
-				} else {
-					// if auto upload is not enabled, attachment data will be passed as it is.
 				}
+				// if auto upload is not enabled, attachment data will be passed as it is.
 			} else {
 				// If attachment not allowed, then remove data->$attachments before calculating size
 				eventCopy := map[string]any{}
-				copier.CopyWithOption(&eventCopy, &event, copier.Option{DeepCopy: true})
+				if err := copier.CopyWithOption(&eventCopy, &event, copier.Option{DeepCopy: true}); err != nil {
+					return 0, &Error{Err: err}
+				}
 
 				delete(eventCopy["properties"].(map[string]any), "$attachments")
 				apparentBody = eventCopy
@@ -234,15 +239,16 @@ func getApparentEventSize(event map[string]any, isPartOfBulk bool) (int, error) 
 				extraBytes += numAttachments * ATTACHMENT_URL_POTENTIAL_SIZE_IN_BYTES
 				// -- remove attachments->data key to calculate data size
 				eventCopy := map[string]any{}
-				copier.CopyWithOption(&eventCopy, &event, copier.Option{DeepCopy: true})
+				if err := copier.CopyWithOption(&eventCopy, &event, copier.Option{DeepCopy: true}); err != nil {
+					return 0, &Error{Err: err}
+				}
 				attachs := eventCopy["properties"].(map[string]any)["$attachments"].([]map[string]any)
 				for _, a := range attachs {
 					delete(a, "data")
 				}
 				apparentBody = eventCopy
-			} else {
-				// if auto upload is not enabled, attachment data will be passed as it is.
 			}
+			// if auto upload is not enabled, attachment data will be passed as it is.
 		}
 	}
 	// ------

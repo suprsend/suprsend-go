@@ -97,7 +97,7 @@ func (b *bulkSubscribers) Append(subscribers ...Subscriber) {
 		}
 		if subStruct, ok := sub.(*subscriber); ok {
 			subCopy := subscriber{}
-			copier.CopyWithOption(&subCopy, subStruct, copier.Option{DeepCopy: true})
+			_ = copier.CopyWithOption(&subCopy, subStruct, copier.Option{DeepCopy: true})
 			b._subscribers = append(b._subscribers, subCopy)
 		}
 	}
@@ -212,7 +212,7 @@ func (b *bulkSubscribersChunk) trigger(ctx context.Context) {
 		b.response = suprResponse
 
 	} else {
-		defer httpResponse.Body.Close()
+		defer closeBody(httpResponse.Body)
 		suprResponse := b.formatAPIResponse(httpResponse, nil)
 		b.response = suprResponse
 	}

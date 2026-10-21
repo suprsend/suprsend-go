@@ -1,0 +1,36 @@
+version: "2"
+
+run:
+  timeout: 10m
+
+linters:
+  # Enabled by default, in addition to the list below: errcheck, govet, ineffassign, staticcheck.
+  # unused is disabled.
+  # Line length 120 is a guideline, not a failing check. lll reports findings, and every finding fails the run.
+  disable:
+    - unused
+  enable:
+    - asciicheck
+    - bodyclose
+    - copyloopvar
+    - durationcheck
+    - errchkjson
+    - errorlint
+    - loggercheck
+    - mirror
+    - misspell
+    - nilerr
+    - noctx
+    - rowserrcheck
+    - sqlclosecheck
+    - testifylint
+    - unconvert
+    - wastedassign
+
+formatters:
+  enable:
+    - goimports
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

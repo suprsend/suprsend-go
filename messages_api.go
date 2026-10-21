@@ -119,7 +119,7 @@ func (m *messagesService) List(ctx context.Context, opts *MessageListOptions) (*
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &CursorListApiResponse{}
 	err = m.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -159,7 +159,7 @@ func (m *messagesService) BulkUpdate(ctx context.Context, messages []MessageUpda
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &MessageBulkUpdateResponse{}
 	err = m.client.parseApiResponse(httpResponse, resp)
 	if err != nil {

@@ -69,7 +69,7 @@ func (u *usersService) List(ctx context.Context, opts *CursorListApiOptions) (*C
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &CursorListApiResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
@@ -98,7 +98,7 @@ func (u *usersService) Get(ctx context.Context, distinctId string) (map[string]a
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = u.client.parseApiResponse(httpResponse, &resp)
@@ -122,7 +122,7 @@ func (u *usersService) Upsert(ctx context.Context, distinctId string, payload ma
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = u.client.parseApiResponse(httpResponse, &resp)
@@ -150,7 +150,7 @@ func (u *usersService) AsyncEdit(ctx context.Context, editInstance UserEdit) (*R
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp, err := u.asyncAPIResponse(httpResponse)
 	if err != nil {
@@ -217,7 +217,7 @@ func (u *usersService) Edit(ctx context.Context, req UserEditRequest) (map[strin
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = u.client.parseApiResponse(httpResponse, &resp)
@@ -242,7 +242,7 @@ func (u *usersService) Merge(ctx context.Context, distinctId string, payload Use
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = u.client.parseApiResponse(httpResponse, &resp)
@@ -263,7 +263,7 @@ func (u *usersService) Delete(ctx context.Context, distinctId string) error {
 	if err != nil {
 		return err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	err = u.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
@@ -287,7 +287,7 @@ func (u *usersService) BulkDelete(ctx context.Context, payload UserBulkDeletePay
 	if err != nil {
 		return err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	err = u.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
@@ -307,7 +307,7 @@ func (u *usersService) GetObjectsSubscribedTo(ctx context.Context, distinctId st
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &CursorListApiResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
@@ -328,7 +328,7 @@ func (u *usersService) GetListsSubscribedTo(ctx context.Context, distinctId stri
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &CursorListApiResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
@@ -351,7 +351,7 @@ func (u *usersService) ListAssociatedTenants(ctx context.Context, distinctId str
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &CursorListApiResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
@@ -375,7 +375,7 @@ func (u *usersService) GetForTenant(ctx context.Context, distinctId string, tena
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = u.client.parseApiResponse(httpResponse, &resp)
@@ -402,7 +402,7 @@ func (u *usersService) UpsertForTenant(ctx context.Context, distinctId string, t
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = u.client.parseApiResponse(httpResponse, &resp)
@@ -425,7 +425,7 @@ func (u *usersService) UnlinkTenant(ctx context.Context, distinctId string, tena
 	if err != nil {
 		return err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	err = u.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
@@ -468,7 +468,7 @@ func (u *usersService) GetFullPreference(ctx context.Context, distinctId string,
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &UserFullPreferenceResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -487,7 +487,7 @@ func (u *usersService) GetGlobalChannelsPreference(ctx context.Context, distinct
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &UserGlobalChannelsPreferenceResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -506,7 +506,7 @@ func (u *usersService) UpdateGlobalChannelsPreference(ctx context.Context, disti
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &UserGlobalChannelsPreferenceResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -525,7 +525,7 @@ func (u *usersService) GetAllCategoriesPreference(ctx context.Context, distinctI
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &UserCategoriesPreferenceResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -544,7 +544,7 @@ func (u *usersService) GetCategoryPreference(ctx context.Context, distinctId str
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &UserCategoryPreference{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -563,7 +563,7 @@ func (u *usersService) UpdateCategoryPreference(ctx context.Context, distinctId 
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &UserCategoryPreference{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -582,7 +582,7 @@ func (u *usersService) BulkUpdatePreferences(ctx context.Context, body UserBulkP
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &UserBulkPreferenceUpdateResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -601,7 +601,7 @@ func (u *usersService) ResetPreferences(ctx context.Context, body UserBulkPrefer
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &UserBulkPreferenceUpdateResponse{}
 	err = u.client.parseApiResponse(httpResponse, resp)
 	if err != nil {

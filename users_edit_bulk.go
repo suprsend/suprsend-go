@@ -89,7 +89,7 @@ func (b *bulkUsersEdit) Append(users ...UserEdit) {
 		}
 		if ue, ok := u.(*userEdit); ok {
 			ueCopy := userEdit{}
-			copier.CopyWithOption(&ueCopy, ue, copier.Option{DeepCopy: true})
+			_ = copier.CopyWithOption(&ueCopy, ue, copier.Option{DeepCopy: true})
 			b._users = append(b._users, ueCopy)
 		}
 	}
@@ -196,7 +196,7 @@ func (b *bulkUsersEditChunk) trigger(ctx context.Context) {
 		b.response = suprResponse
 
 	} else {
-		defer httpResponse.Body.Close()
+		defer closeBody(httpResponse.Body)
 		suprResponse := b.formatAPIResponse(httpResponse, nil)
 		b.response = suprResponse
 	}

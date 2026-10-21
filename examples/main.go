@@ -340,7 +340,7 @@ func updateUserProfileExample() {
 		return
 	}
 	//
-	user := suprClient.Users.GetInstance("__distinct_id__")
+	user := suprClient.Users.GetInstance("__distinct_id__") //nolint:staticcheck // deprecated subscriber API example
 	// Add email channel
 	user.AddEmail("user@example.com")
 	// add sms channel
@@ -560,12 +560,12 @@ func bulkUserProfileUpdateExample() {
 	bulkIns := suprClient.BulkUsers.NewInstance()
 
 	// Prepare user1
-	user1 := suprClient.Users.GetInstance("distinct_id_1")
+	user1 := suprClient.Users.GetInstance("distinct_id_1") //nolint:staticcheck // deprecated subscriber API example
 	user1.AddEmail("user1@example.com")
 	user1.AddWhatsapp("+1909090900")
 
 	// prepare user 2
-	user2 := suprClient.Users.GetInstance("distinct_id_2")
+	user2 := suprClient.Users.GetInstance("distinct_id_2") //nolint:staticcheck // deprecated subscriber API example
 	user2.AddEmail("user2@example.com")
 	user2.AddWhatsapp("+2909090900")
 

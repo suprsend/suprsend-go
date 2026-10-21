@@ -52,7 +52,7 @@ func formatAppInfo(info *AppInfo) string {
 func buildUserAgent(appInfo *AppInfo) (userAgent string, clientUserAgent string) {
 	info := userAgentInfo{
 		SDK:         "suprsend-go",
-		SDKVersion:  VERSION,
+		SDKVersion:  Version(),
 		Lang:        "go",
 		LangVersion: runtime.Version(),
 		Platform:    "server",

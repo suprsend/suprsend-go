@@ -38,7 +38,7 @@ func loadJsonSchema(schemaName string) (*gojsonschema.Schema, error) {
 		return nil, &Error{Message: fmt.Sprintf("SuprsendMissingSchema: %s. %v", schemaName, "empty content")}
 	}
 	// loading the schema
-	var res gojsonschema.JSONLoader = gojsonschema.NewBytesLoader(content)
+	res := gojsonschema.NewBytesLoader(content)
 	schema, err := gojsonschema.NewSchema(res)
 	if err != nil {
 		return nil, &Error{Message: fmt.Sprintf("SuprsendInvalidSchema: %s. %v", schemaName, err), Err: err}

@@ -225,6 +225,14 @@ func (c *Client) TrackEventWithContext(ctx context.Context, event *Event) (*Resp
 	return c.eventCollector.CollectWithContext(ctx, event)
 }
 
+// closeBody closes an HTTP response body. The error is ignored because the caller has already read the body.
+func closeBody(body io.Closer) {
+	if body == nil {
+		return
+	}
+	_ = body.Close()
+}
+
 func (c *Client) prepareHttpRequest(ctx context.Context, httpMethod string, httpUrl string, httpBody any,
 ) (*http.Request, error) {
 	// Headers

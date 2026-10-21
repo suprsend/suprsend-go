@@ -81,7 +81,7 @@ type SubscriberListBroadcast struct {
 	Body           map[string]any
 	IdempotencyKey string
 	TenantId       string
-	// Brand has been renamed to Tenant. BrandId is kept for backward-compatibilty.
+	// Brand has been renamed to Tenant. BrandId is kept for backward-compatibility.
 	// Use TenantId instead of BrandId
 	BrandId string
 }

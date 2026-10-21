@@ -37,7 +37,11 @@ func (b *bulkWorkflowsTrigger) _validateWorkflows() {
 	for _, wf := range b._workflows {
 		wfJson, bodySize, err := wf.getFinalJson(b.client, true)
 		if err != nil {
-			invRec := invalidRecordJson(wf.asJson(), err)
+			record, jsonErr := wf.asJson()
+			if jsonErr != nil {
+				err = jsonErr
+			}
+			invRec := invalidRecordJson(record, err)
 			b._invalidRecords = append(b._invalidRecords, invRec)
 		} else {
 			b._pendingRecords = append(
@@ -71,7 +75,7 @@ func (b *bulkWorkflowsTrigger) Append(workflows ...*WorkflowTriggerRequest) {
 			continue
 		}
 		wfCopy := WorkflowTriggerRequest{}
-		copier.CopyWithOption(&wfCopy, wf, copier.Option{DeepCopy: true})
+		_ = copier.CopyWithOption(&wfCopy, wf, copier.Option{DeepCopy: true})
 		b._workflows = append(b._workflows, wfCopy)
 	}
 }
@@ -180,7 +184,7 @@ func (b *bulkWorkflowsRequestChunk) trigger(ctx context.Context) {
 		b.response = suprResponse
 
 	} else {
-		defer httpResponse.Body.Close()
+		defer closeBody(httpResponse.Body)
 		suprResponse := parseV2BulkEventResponse(httpResponse, nil, b._chunk)
 		b.response = suprResponse
 	}

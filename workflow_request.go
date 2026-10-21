@@ -64,9 +64,11 @@ func (w *WorkflowTriggerRequest) getFinalJson(client *Client, isPartOfBulk bool)
 	return w.Body, apparentSize, nil
 }
 
-func (w *WorkflowTriggerRequest) asJson() map[string]any {
+func (w *WorkflowTriggerRequest) asJson() (map[string]any, error) {
 	body := map[string]any{}
-	copier.CopyWithOption(&body, w.Body, copier.Option{DeepCopy: true})
+	if err := copier.CopyWithOption(&body, w.Body, copier.Option{DeepCopy: true}); err != nil {
+		return nil, &Error{Err: err}
+	}
 
 	// Add idempotency_key if present
 	if w.IdempotencyKey != "" {
@@ -79,5 +81,5 @@ func (w *WorkflowTriggerRequest) asJson() map[string]any {
 	if w.CancellationKey != "" {
 		body["cancellation_key"] = w.CancellationKey
 	}
-	return body
+	return body, nil
 }

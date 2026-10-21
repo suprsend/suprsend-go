@@ -73,7 +73,7 @@ func SafeCheckNil(input any) bool {
 	}
 	v := reflect.ValueOf(input)
 	// Only call IsNil on types that can be nil
-	return (v.Kind() == reflect.Ptr || v.Kind() == reflect.Slice ||
+	return (v.Kind() == reflect.Pointer || v.Kind() == reflect.Slice ||
 		v.Kind() == reflect.Map || v.Kind() == reflect.Chan ||
 		v.Kind() == reflect.Interface || v.Kind() == reflect.Func) &&
 		v.IsNil()

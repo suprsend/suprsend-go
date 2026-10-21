@@ -61,7 +61,7 @@ func (o *objectsService) List(ctx context.Context, objectType string, opts *Curs
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &CursorListApiResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
@@ -92,7 +92,7 @@ func (o *objectsService) Get(ctx context.Context, obj ObjectIdentifier) (map[str
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = o.client.parseApiResponse(httpResponse, &resp)
@@ -117,7 +117,7 @@ func (o *objectsService) Upsert(ctx context.Context, obj ObjectIdentifier, paylo
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = o.client.parseApiResponse(httpResponse, &resp)
@@ -160,7 +160,7 @@ func (o *objectsService) Edit(ctx context.Context, req ObjectEditRequest) (map[s
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = o.client.parseApiResponse(httpResponse, &resp)
@@ -181,7 +181,7 @@ func (o *objectsService) Delete(ctx context.Context, obj ObjectIdentifier) error
 	if err != nil {
 		return err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	err = o.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
@@ -206,7 +206,7 @@ func (o *objectsService) BulkDelete(ctx context.Context, objectType string, payl
 	if err != nil {
 		return err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	err = o.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
@@ -227,7 +227,7 @@ func (o *objectsService) GetSubscriptions(ctx context.Context, obj ObjectIdentif
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &CursorListApiResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
@@ -259,7 +259,7 @@ func (o *objectsService) CreateSubscriptions(ctx context.Context, obj ObjectIden
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := map[string]any{}
 	err = o.client.parseApiResponse(httpResponse, &resp)
@@ -288,7 +288,7 @@ func (o *objectsService) DeleteSubscriptions(ctx context.Context, obj ObjectIden
 	if err != nil {
 		return err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	err = o.client.parseApiResponse(httpResponse, nil)
 	if err != nil {
@@ -309,7 +309,7 @@ func (o *objectsService) GetObjectsSubscribedTo(ctx context.Context, obj ObjectI
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	resp := &CursorListApiResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
@@ -333,7 +333,7 @@ func (o *objectsService) GetFullPreference(ctx context.Context, obj ObjectIdenti
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &ObjectFullPreferenceResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -352,7 +352,7 @@ func (o *objectsService) GetGlobalChannelsPreference(ctx context.Context, obj Ob
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &ObjectGlobalChannelsPreferenceResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -371,7 +371,7 @@ func (o *objectsService) UpdateGlobalChannelsPreference(ctx context.Context, obj
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &ObjectGlobalChannelsPreferenceResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -390,7 +390,7 @@ func (o *objectsService) GetAllCategoriesPreference(ctx context.Context, obj Obj
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &ObjectCategoriesPreferenceResponse{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -409,7 +409,7 @@ func (o *objectsService) GetCategoryPreference(ctx context.Context, obj ObjectId
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &ObjectCategoryPreference{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {
@@ -428,7 +428,7 @@ func (o *objectsService) UpdateCategoryPreference(ctx context.Context, obj Objec
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	resp := &ObjectCategoryPreference{}
 	err = o.client.parseApiResponse(httpResponse, resp)
 	if err != nil {

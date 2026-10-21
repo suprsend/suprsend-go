@@ -2,6 +2,7 @@ package suprsend
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -98,14 +99,20 @@ func TestLoggingRoundTripperRedactsAuthorizationInLogs(t *testing.T) {
 		}),
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "https://hub.suprsend.com/v1/user/", strings.NewReader(`{"a":1}`))
+	req, err := http.NewRequestWithContext(
+		context.Background(), http.MethodPost, "https://hub.suprsend.com/v1/user/", strings.NewReader(`{"a":1}`),
+	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+secret)
 	req.Header.Set("Content-Type", "application/json")
 
-	if _, err := rt.RoundTrip(req); err != nil {
+	resp, err := rt.RoundTrip(req)
+	if resp != nil {
+		defer closeBody(resp.Body)
+	}
+	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
@@ -147,12 +154,18 @@ func TestLoggingRoundTripperNilBody(t *testing.T) {
 		}),
 	}
 
-	req, err := http.NewRequest(http.MethodGet, "https://hub.suprsend.com/v1/user/", nil)
+	req, err := http.NewRequestWithContext(
+		context.Background(), http.MethodGet, "https://hub.suprsend.com/v1/user/", nil,
+	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if _, err := rt.RoundTrip(req); err != nil {
+	resp, err := rt.RoundTrip(req)
+	if resp != nil {
+		defer closeBody(resp.Body)
+	}
+	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if proxiedBody != nil {

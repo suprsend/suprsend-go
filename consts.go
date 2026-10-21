@@ -2,8 +2,6 @@ package suprsend
 
 const (
 	//
-	VERSION = "0.13.0"
-	//
 	DEFAULT_URL = "https://hub.suprsend.com/"
 
 	// a API call should not have apparent body size of more than 800KB

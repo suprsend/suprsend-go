@@ -27,7 +27,7 @@ type Event struct {
 	Properties     map[string]any
 	IdempotencyKey string
 	TenantId       string
-	// Brand has been renamed to Tenant. Brand is kept for backward-compatibilty.
+	// Brand has been renamed to Tenant. Brand is kept for backward-compatibility.
 	// Use Tenant instead of Brand
 	BrandId string
 }
@@ -201,7 +201,7 @@ func (e *eventsCollector) send(ctx context.Context, eventMap map[string]any) (*R
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	//
 	suprResponse, err := parseV2EventResponse(httpResponse)
 	if err != nil {

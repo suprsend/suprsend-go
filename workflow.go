@@ -14,7 +14,7 @@ type Workflow struct {
 	Body           map[string]any
 	IdempotencyKey string
 	TenantId       string
-	// Brand has been renamed to Tenant. Brand is kept for backward-compatibilty.
+	// Brand has been renamed to Tenant. Brand is kept for backward-compatibility.
 	// Use TenantId instead of BrandId
 	BrandId string
 }
@@ -70,9 +70,11 @@ func (w *Workflow) getFinalJson(client *Client, isPartOfBulk bool) (map[string]a
 	return w.Body, apparentSize, nil
 }
 
-func (w *Workflow) asJson() map[string]any {
+func (w *Workflow) asJson() (map[string]any, error) {
 	body := map[string]any{}
-	copier.CopyWithOption(&body, w.Body, copier.Option{DeepCopy: true})
+	if err := copier.CopyWithOption(&body, w.Body, copier.Option{DeepCopy: true}); err != nil {
+		return nil, &Error{Err: err}
+	}
 
 	// Add idempotency_key if present
 	if w.IdempotencyKey != "" {
@@ -85,7 +87,7 @@ func (w *Workflow) asJson() map[string]any {
 	if w.BrandId != "" {
 		body["brand_id"] = w.BrandId
 	}
-	return body
+	return body, nil
 }
 
 type workflowTrigger struct {
@@ -128,7 +130,7 @@ func (w *workflowTrigger) send(ctx context.Context, wfBody map[string]any) (*Res
 	if err != nil {
 		return nil, err
 	}
-	defer httpResponse.Body.Close()
+	defer closeBody(httpResponse.Body)
 	suprResponse, err := w.formatAPIResponse(httpResponse)
 	if err != nil {
 		return nil, err
